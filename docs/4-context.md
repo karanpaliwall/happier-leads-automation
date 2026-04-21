@@ -123,6 +123,14 @@ Read this first when resuming work to get back up to speed.
 - Leads: shows EmptyState when `stats.total === 0 && !typeFilter && !search`; shows "No leads match your filters" when filters active but no results
 - Files affected: `src/components/EmptyState.jsx` (created), `src/app/page.jsx` (EmptyState import + conditional rendering), `src/app/leads/page.jsx` (EmptyState import + conditional), `src/styles/custom.css` (empty-onboarding styles)
 
+## 2026-04-22 — Pushed to GitHub
+
+- What changed: Initialized git repo, created README.md, created public GitHub repo, pushed all 28 files as initial commit
+- Repo: https://github.com/karanpaliwall/happier-leads-automation
+- `.env.local` excluded (in .gitignore) — credentials never committed
+- README covers: what it does, feature list, stack, setup steps (install → schema → ngrok → HL config), all routes, Vercel deploy instructions, Phase 2 placeholder note
+- Files affected: `README.md` (created), git history initialized
+
 ## Current Status
 
 - [x] `npm install` — done (Next.js 16.2.4, React 19.2.5)
@@ -144,6 +152,7 @@ Read this first when resuming work to get back up to speed.
 - [x] Backfill endpoint — POST /api/admin/backfill-scores (run once after deploy)
 - [x] Next.js devtools button hidden (devIndicators: false)
 - [x] First-time empty state — onboarding guide on Overview + Leads pages when no leads exist
+- [x] Pushed to GitHub — https://github.com/karanpaliwall/happier-leads-automation
 
 ## Architecture — current file map
 
