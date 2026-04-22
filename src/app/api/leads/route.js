@@ -23,13 +23,15 @@ export async function GET(req) {
   const offset = (page - 1) * limit;
   const searchPattern = search ? `%${search}%` : '%';
 
-  const [leads, countRows, statsRows] = await Promise.all([
+  // Two queries instead of three — window function gives filtered total alongside the rows
+  const [leads, statsRows] = await Promise.all([
     sql`
       SELECT
         id, received_at, first_name, last_name, full_name, email, linkedin_url,
         company_name, company_domain, company_logo_url,
         lead_type, fit_score, engagement_score, activity_at,
-        pushed_to_smart_lead, pushed_at
+        pushed_to_smart_lead, pushed_at, raw_payload,
+        COUNT(*) OVER() AS _total
       FROM leads
       WHERE (${type}::text IS NULL OR lead_type = ${type})
         AND (
@@ -38,15 +40,6 @@ export async function GET(req) {
         )
       ORDER BY received_at DESC
       LIMIT ${limit} OFFSET ${offset}
-    `,
-    sql`
-      SELECT COUNT(*) AS count
-      FROM leads
-      WHERE (${type}::text IS NULL OR lead_type = ${type})
-        AND (
-          company_name ILIKE ${searchPattern}
-          OR full_name  ILIKE ${searchPattern}
-        )
     `,
     sql`
       SELECT
@@ -58,9 +51,12 @@ export async function GET(req) {
     `,
   ]);
 
+  const total = leads.length > 0 ? parseInt(leads[0]._total) : 0;
+  const cleanLeads = leads.map(({ _total, ...l }) => l);
+
   return Response.json({
-    leads,
-    total:  parseInt(countRows[0].count),
+    leads: cleanLeads,
+    total,
     stats: {
       total:     parseInt(statsRows[0].total),
       newToday:  parseInt(statsRows[0].new_today),

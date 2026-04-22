@@ -179,29 +179,8 @@ function DetailItem({ label, value }) {
   );
 }
 
-function LeadDetailPanel({ leadId, colSpan = 7 }) {
-  const [fullLead, setFullLead] = useState(null);
-
-  useEffect(() => {
-    fetch(`/api/leads/${leadId}`)
-      .then(r => r.json())
-      .then(setFullLead)
-      .catch(() => {});
-  }, [leadId]);
-
-  if (!fullLead) {
-    return (
-      <tr className="detail-row">
-        <td colSpan={colSpan} className="detail-row-cell">
-          <div className="detail-panel" style={{ justifyContent: 'center', alignItems: 'center', minHeight: 80 }}>
-            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Loading details…</span>
-          </div>
-        </td>
-      </tr>
-    );
-  }
-
-  const rp = fullLead.raw_payload || {};
+function LeadDetailPanel({ lead, colSpan = 7 }) {
+  const rp = lead.raw_payload || {};
   const contact = rp.contact || {};
   const company = rp.company || {};
   const scores = Array.isArray(rp.scores) ? rp.scores : [];
@@ -454,7 +433,7 @@ function LeadRow({ lead, selected, onToggle }) {
           </div>
         </td>
       </tr>
-      {expanded && <LeadDetailPanel leadId={lead.id} colSpan={8} />}
+      {expanded && <LeadDetailPanel lead={lead} colSpan={8} />}
     </>
   );
 }
