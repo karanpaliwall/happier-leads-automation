@@ -12,17 +12,19 @@ When Happier Leads identifies a visitor on your website, it fires a webhook to t
 Website visitor → Happier Leads identifies them
     → POST /api/webhook/happierleads
     → Deduplicate + store in Neon PostgreSQL
-    → Dashboard updates every 30s
+    → Dashboard auto-refreshes every 10s
 ```
 
 ## Features
 
-- **Real-time dashboard** — Overview with stat cards, pipeline status, and recent leads feed
-- **Full lead details** — Click any row to expand contact info, company details, fit score breakdown, visit intelligence, and UTM attribution — all from the raw Happier Leads payload
+- **Real-time dashboard** — Overview with stat cards, pipeline status, and recent leads feed; polls every 10s
+- **Full lead details** — Click any row to expand contact info, company details, fit score breakdown, visit intelligence, and UTM attribution — instant, no extra fetch
 - **Fit Score & Engagement** — Fit score summed from Happier Leads' ICP criteria; engagement derived from visit count and time on site (0–20 scale)
 - **Waterfall Verified badge** — shown on emails when Happier Leads confirms an exact match
 - **Bulk delete** — checkbox multi-select with confirm dialog
 - **Layered deduplication** — checks HL ID → email → LinkedIn → name+company before inserting
+- **Collapsible sidebar** — collapses to icon-only rail; brand area shows Growleads logo + current section label
+- **Instant tab switching** — module-level cache keeps data visible while navigating between pages
 - **First-time onboarding** — step-by-step setup guide shown when no leads exist yet
 - **Mobile responsive** — hamburger menu + sidebar overlay on small screens
 
