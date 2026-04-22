@@ -131,6 +131,22 @@ Read this first when resuming work to get back up to speed.
 - README covers: what it does, feature list, stack, setup steps (install → schema → ngrok → HL config), all routes, Vercel deploy instructions, Phase 2 placeholder note
 - Files affected: `README.md` (created), git history initialized
 
+## 2026-04-22 — Deployed to Vercel
+
+- What changed: Production deployment live on Vercel
+- URL: https://happier-leads-automation.vercel.app
+- `DATABASE_URL` added to Vercel production environment via CLI
+- Build passes clean on Vercel (Next.js 16.2.4, Turbopack, Washington DC / iad1 region)
+- `/api/leads` smoke-tested against live URL — returns correct data from Neon DB
+- Files affected: `.vercel/` directory created (linked project config, gitignored)
+
+## 2026-04-22 — Happier Leads webhook updated to Vercel URL + README updated
+
+- What changed: Webhook URL in Happier Leads Automations updated from ngrok → `https://happier-leads-automation.vercel.app/api/webhook/happierleads`. Test webhook confirmed successful (green "Success" banner in HL UI). README updated with live production URL prominently at the top and Vercel CLI deploy instructions.
+- Why: ngrok URL changes on every restart; Vercel URL is permanent
+- Pipeline is now fully live with no local dependency
+- Files affected: `README.md`
+
 ## Current Status
 
 - [x] `npm install` — done (Next.js 16.2.4, React 19.2.5)
@@ -153,6 +169,7 @@ Read this first when resuming work to get back up to speed.
 - [x] Next.js devtools button hidden (devIndicators: false)
 - [x] First-time empty state — onboarding guide on Overview + Leads pages when no leads exist
 - [x] Pushed to GitHub — https://github.com/karanpaliwall/happier-leads-automation
+- [x] Deployed to Vercel — https://happier-leads-automation.vercel.app
 
 ## Architecture — current file map
 

@@ -1,5 +1,7 @@
 # Happier Leads Automation
 
+**Live:** [https://happier-leads-automation.vercel.app](https://happier-leads-automation.vercel.app)
+
 A self-hosted pipeline that captures identified website visitors from [Happier Leads](https://happierleads.com) via webhook, stores them in a PostgreSQL database, and displays them in a real-time dashboard — with full lead detail, fit score breakdown, engagement scoring, and bulk management.
 
 ## What it does
@@ -110,11 +112,24 @@ Leads will appear in the dashboard within seconds of a visitor being identified.
 
 ## Deploying to Vercel
 
+This app is already deployed at [https://happier-leads-automation.vercel.app](https://happier-leads-automation.vercel.app).
+
+To deploy your own instance:
+
 1. Push this repo to GitHub
 2. Connect the repo in [vercel.com](https://vercel.com)
 3. Add `DATABASE_URL` as an environment variable in Vercel's project settings
 4. Deploy — your app gets a permanent URL (e.g. `https://your-app.vercel.app`)
 5. Update the webhook URL in Happier Leads from ngrok → your Vercel URL
+
+Or use the Vercel CLI:
+
+```bash
+npm i -g vercel
+vercel deploy --prod --yes
+vercel env add DATABASE_URL production
+vercel deploy --prod --yes   # redeploy to pick up the env var
+```
 
 ## Phase 2 — Smart Lead integration
 
