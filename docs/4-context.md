@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-22 — Sidebar vertical brand stack + favicon
+
+- What changed: Redesigned sidebar brand area from horizontal row to vertical stack (logo → "Growleads" → page label). Replaced `growleads-logo.png` with `favicon.png` from Downloads. Updated browser tab favicon via `metadata.icons` in layout.jsx. Updated page title to "Growleads — Lead Dashboard".
+- Why: User wanted Heyreach-style sidebar branding — big logo on top, company name, then current section label below, all stacked vertically. Also wanted the favicon.png in the browser tab instead of the default globe.
+- Files affected:
+  - `public/favicon.png` — new logo file (copied from user's Downloads)
+  - `src/app/layout.jsx` — added `icons: { icon: '/favicon.png' }` to metadata, updated title
+  - `src/components/Sidebar.jsx` — restructured brand area: `.sidebar-brand-row` (logo + actions), `.sidebar-brand-stack` (name + sub label), collapse/expand buttons split by state
+  - `src/styles/custom.css` — overrode `.sidebar-brand` to `flex-direction: column`, added `.sidebar-brand-row`, `.sidebar-brand-actions`, `.sidebar-brand-stack`, `.sidebar-brand-name`, updated `.sidebar-brand-sub` to muted 11px
+
+---
+
 ## 2026-04-22 — Project initialized
 
 - What changed: Full project scaffolded from scratch

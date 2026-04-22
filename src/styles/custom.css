@@ -661,31 +661,61 @@
 .sidebar-collapsed {
   width: 60px;
 }
+/* collapsed brand overridden above in brand section */
+
+/* Sidebar brand — vertical stack: logo → name → page label */
+.sidebar-brand {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px 14px 16px;
+  gap: 0;
+}
 .sidebar-collapsed .sidebar-brand {
-  padding: 14px 0;
+  align-items: center;
+  padding: 14px 0 12px;
+  justify-content: flex-start;
+}
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0;
+}
+.sidebar-collapsed .sidebar-brand-row {
+  width: auto;
   justify-content: center;
 }
-
-/* Sidebar brand — logo icon + dynamic page label */
 .sidebar-brand-icon {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.sidebar-brand-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
+.sidebar-brand-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.sidebar-brand-stack {
+  margin-top: 10px;
+}
+.sidebar-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 .sidebar-brand-sub {
-  font-size: 13px;
-  color: var(--text-primary);
-  font-weight: 600;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
   white-space: nowrap;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 .sidebar-collapse-btn {
   background: none;

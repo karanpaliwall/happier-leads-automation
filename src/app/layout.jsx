@@ -4,8 +4,9 @@ import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 
 export const metadata = {
-  title: 'Happier Leads — Lead Dashboard',
+  title: 'Growleads — Lead Dashboard',
   description: 'Capture and manage website visitor leads from Happier Leads',
+  icons: { icon: '/favicon.png' },
 };
 
 export default function RootLayout({ children }) {
