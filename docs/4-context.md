@@ -176,6 +176,12 @@ Read this first when resuming work to get back up to speed.
 - Why: An earlier iteration fetched raw_payload on-demand per row expand, causing 1-3s cold-start lag on every expansion. Reverted to inline approach with the query count optimisation.
 - Files affected: `src/app/api/leads/route.js`, `src/app/api/leads/[id]/route.js` (created), `src/app/leads/page.jsx`
 
+## 2026-04-23 — Happier Leads automation confirmed correctly configured
+
+- Automation settings verified: When = "A new lead is identified", Then = "Trigger webhook", Visits = "Only on first visit", Segment = "All leads", URL = Vercel production endpoint.
+- The 2 existing leads in the DB ("Niclas Österling" and "Joe Recomendes") are both synthetic test payloads created by clicking "Test Webhook (POST Request)" in HL Automations. Neither appears in the real HL leads list.
+- Pipeline is live. New real visitors to the tracked site will flow into the dashboard automatically going forward.
+
 ## 2026-04-23 — Performance: instant tab switching + no sidebar flash
 
 - What changed:
