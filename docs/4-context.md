@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Logo size fix + tab title rename
+
+- What changed: Reduced collapsed sidebar logo from 40px → 28px so it's proportional to the nav icons. Renamed browser tab title from "Growleads — Lead Dashboard" to "Website Traffic Signal".
+- Why: Logo was too large in collapsed state. User wants the tab title to reflect the product name with no em dash.
+- Files affected:
+  - `src/styles/custom.css` — `.sidebar-collapsed .sidebar-brand-icon img { width: 28px; height: 28px; }`
+  - `src/app/layout.jsx` — title updated
+
+---
+
 ## 2026-04-23 — Sidebar brand redesign + favicon
 
 - What changed: Replaced `growleads-logo.png` with `favicon.png`. Redesigned sidebar brand area to match Heyreach reference: horizontal row — `[icon 40px]` | `[Growleads bold / page label muted]` | `[< collapse btn]`. Page label is dynamic (Overview / Leads / Filter) via `usePathname`. Updated browser tab favicon and page title to "Growleads — Lead Dashboard".

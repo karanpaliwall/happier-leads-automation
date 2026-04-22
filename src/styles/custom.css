@@ -666,6 +666,10 @@
   justify-content: center;
   gap: 0;
 }
+.sidebar-collapsed .sidebar-brand-icon img {
+  width: 28px;
+  height: 28px;
+}
 
 /* Sidebar brand — row: [icon] [Growleads / page label] [< collapse btn] */
 .sidebar-brand {
