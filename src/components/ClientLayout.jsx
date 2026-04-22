@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 
 export default function ClientLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="app-layout">
@@ -23,9 +24,14 @@ export default function ClientLayout({ children }) {
         <div className="nav-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(c => !c)}
+      />
 
-      <main className="main-content">
+      <main className={`main-content${collapsed ? ' main-collapsed' : ''}`}>
         {children}
       </main>
     </div>

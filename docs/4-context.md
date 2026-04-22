@@ -147,6 +147,12 @@ Read this first when resuming work to get back up to speed.
 - Pipeline is now fully live with no local dependency
 - Files affected: `README.md`
 
+## 2026-04-22 — Collapsible sidebar
+
+- What changed: Desktop sidebar is now collapsible. A chevron toggle button in the brand area collapses the sidebar to 60px (icons only) and expands it back to 240px. Smooth CSS transition on width and main-content margin. "Filtered" nav label renamed to "Filter". Mobile behavior unchanged (hamburger overlay still used on ≤768px).
+- Why: User requested collapsible sidebar for more screen real estate
+- Files affected: `src/components/Sidebar.jsx`, `src/components/ClientLayout.jsx`, `src/styles/custom.css`
+
 ## Current Status
 
 - [x] `npm install` — done (Next.js 16.2.4, React 19.2.5)

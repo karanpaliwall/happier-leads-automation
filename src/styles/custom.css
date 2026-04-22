@@ -643,6 +643,48 @@
   cursor: not-allowed;
 }
 
+/* ── Collapsible sidebar (desktop) ── */
+.sidebar {
+  transition: width 0.22s ease;
+}
+.sidebar-collapsed {
+  width: 60px;
+}
+.sidebar-collapsed .sidebar-brand {
+  padding: 20px 10px 24px;
+  justify-content: center;
+}
+.sidebar-collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius);
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.sidebar-collapse-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+.sidebar-collapsed .sidebar-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+.sidebar-collapsed .sidebar-item svg {
+  width: 20px;
+  height: 20px;
+}
+.main-content {
+  transition: margin-left 0.22s ease;
+}
+.main-collapsed {
+  margin-left: 60px !important;
+}
+
 /* ── Mobile hamburger ── */
 .hamburger-btn {
   display: none;
@@ -691,6 +733,7 @@
 @media (max-width: 768px) {
   .hamburger-btn { display: flex; }
   .nav-overlay { display: block; }
+  .sidebar-collapse-btn { display: none; }
 
   .sidebar {
     transform: translateX(-100%);

@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   },
   {
     href: '/filtered',
-    label: 'Filtered',
+    label: 'Filter',
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
@@ -38,14 +38,31 @@ const NAV_ITEMS = [
   },
 ];
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const pathname = usePathname();
 
   return (
-    <aside className={`sidebar${open ? ' sidebar-open' : ''}`}>
+    <aside className={`sidebar${open ? ' sidebar-open' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="sidebar-brand">
-        <img src="/growleads-logo.png" alt="Growleads" style={{ height: 28, objectFit: 'contain' }} />
-        {open && (
+        {!collapsed && (
+          <img src="/growleads-logo.png" alt="Growleads" style={{ height: 28, objectFit: 'contain', flex: 1 }} />
+        )}
+        <button
+          className="sidebar-collapse-btn"
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          )}
+        </button>
+        {open && !collapsed && (
           <button
             className="sidebar-close-btn"
             onClick={onClose}
@@ -60,24 +77,33 @@ export default function Sidebar({ open, onClose }) {
       </div>
 
       <nav className="sidebar-nav">
-        <p className="sidebar-section-label">Pipeline</p>
+        {!collapsed && <p className="sidebar-section-label">Pipeline</p>}
         {NAV_ITEMS.map(item => (
           <Link
             key={item.href}
             href={item.href}
             className={`sidebar-item${pathname === item.href ? ' active' : ''}`}
             onClick={onClose}
+            title={collapsed ? item.label : undefined}
           >
             {item.icon}
-            {item.label}
+            {!collapsed && <span>{item.label}</span>}
           </Link>
         ))}
       </nav>
 
       <div className="sidebar-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 16px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+        }}>
           <span className="dot-green" />
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--green-400)' }}>Connected</span>
+          {!collapsed && (
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--green-400)' }}>Connected</span>
+          )}
         </div>
       </div>
     </aside>
