@@ -153,6 +153,38 @@ Read this first when resuming work to get back up to speed.
 - Why: User requested collapsible sidebar for more screen real estate
 - Files affected: `src/components/Sidebar.jsx`, `src/components/ClientLayout.jsx`, `src/styles/custom.css`
 
+## 2026-04-22 — Fit score fix + 10s polling + HL API sync route
+
+- What changed:
+  - Webhook + backfill now try `s.fitScore ?? s.score` — real payloads use `fitScore`, HL test payloads use `score`. Both fields now handled.
+  - Polling interval reduced from 30s → 10s on all three pages (Overview, Leads, Filter)
+  - `POST /api/admin/sync-from-hl` created — fetches leads from Happier Leads REST API by date range and upserts them with the same dedup logic as the webhook. Requires `HL_API_KEY` env var.
+  - Backfill ran on production (`{"ok":true,"updated":2}`) — Niclas Österling test lead now shows correct fit score (9/30)
+- Why: HL test webhook uses `s.score` field name, real webhooks use `s.fitScore`; missed both
+- Files affected: `src/app/api/webhook/happierleads/route.js`, `src/app/api/admin/backfill-scores/route.js`, `src/app/api/admin/sync-from-hl/route.js` (created), all three page.jsx files
+
+## 2026-04-22 — Niclas Österling test lead explained
+
+- The "Niclas Österling / ibm-test-company.com" lead is a **synthetic test payload** sent by Happier Leads when the "Test Webhook (POST Request)" button is clicked in Automations. It uses fake data (`@test.com` email, fake IBM domain). It will never appear in HL's real leads list. Delete it via the bulk-delete checkbox on the Leads page if desired.
+
+## 2026-04-23 — Performance: instant row expansion + fewer DB queries
+
+- What changed:
+  - `GET /api/leads` list query now uses `COUNT(*) OVER()` window function — 2 DB queries per poll instead of 3 (eliminated separate `COUNT(*)` query)
+  - `raw_payload` re-included in list response so row expansion is instant (data already on client, no second network call)
+  - `GET /api/leads/[id]` single-lead endpoint also created (not used by UI currently but available)
+- Why: An earlier iteration fetched raw_payload on-demand per row expand, causing 1-3s cold-start lag on every expansion. Reverted to inline approach with the query count optimisation.
+- Files affected: `src/app/api/leads/route.js`, `src/app/api/leads/[id]/route.js` (created), `src/app/leads/page.jsx`
+
+## 2026-04-23 — Performance: instant tab switching + no sidebar flash
+
+- What changed:
+  - **Module-level cache** added to all three pages — on navigation back to a page, last-known data shows instantly (no blank/zero state) while the background fetch refreshes
+  - **Sidebar/logo expand flash fixed** — `transition: width 0.22s ease` and `transition: margin-left 0.22s ease` now only apply under `.app-mounted` class. `ClientLayout` adds this class after first `useEffect` (post-hydration). Prevents CSS transition firing during initial browser render.
+  - Overview subtitle corrected: "auto-refreshes every 30s" → "auto-refreshes every 10s"
+- Why: Each page remounted on navigation, resetting state to empty defaults and showing 0s until the API responded. CSS transitions were firing during hydration causing visible sidebar animation on every hard reload.
+- Files affected: `src/components/ClientLayout.jsx`, `src/styles/custom.css`, `src/app/page.jsx`, `src/app/leads/page.jsx`, `src/app/filtered/page.jsx`
+
 ## Workflow Convention (as of 2026-04-22)
 
 All changes are made locally and immediately committed + pushed to GitHub (`main`). Vercel auto-deploys on every push. **Do not test against localhost — always verify against https://happier-leads-automation.vercel.app.**
@@ -174,8 +206,10 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 - [x] DELETE /api/leads endpoint
 - [x] Fit Score + Engagement tooltips (position:fixed, never clipped)
 - [x] Engagement score calculated from visit data (not null anymore)
-- [x] Fit score extraction tries score/value/points fallbacks
-- [x] Backfill endpoint — POST /api/admin/backfill-scores (run once after deploy)
+- [x] Fit score extraction tries s.fitScore ?? s.score (handles both real + test payloads)
+- [x] Backfill endpoint — POST /api/admin/backfill-scores (fixes existing leads)
+- [x] HL API sync endpoint — POST /api/admin/sync-from-hl (requires HL_API_KEY env var)
+- [x] GET /api/leads/[id] — single-lead endpoint with full raw_payload
 - [x] Next.js devtools button hidden (devIndicators: false)
 - [x] First-time empty state — onboarding guide on Overview + Leads pages when no leads exist
 - [x] GitHub — https://github.com/karanpaliwall/happier-leads-automation
@@ -187,8 +221,12 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 src/
 ├── app/
 │   ├── api/
-│   │   ├── admin/backfill-scores/route.js  ← one-time backfill for existing leads
-│   │   ├── leads/route.js                  ← GET (paginated list) + DELETE (bulk)
+│   │   ├── admin/
+│   │   │   ├── backfill-scores/route.js    ← recalculates fit+engagement from raw_payload
+│   │   │   └── sync-from-hl/route.js       ← imports leads from HL REST API (needs HL_API_KEY)
+│   │   ├── leads/
+│   │   │   ├── route.js                    ← GET (paginated, window-fn count) + DELETE (bulk)
+│   │   │   └── [id]/route.js               ← GET single lead with full raw_payload
 │   │   └── webhook/happierleads/route.js   ← inbound webhook, dedup, insert
 │   ├── filtered/page.jsx                   ← Filter tab (tabs-pill, debounced search)
 │   ├── leads/page.jsx                      ← Leads tab (expandable rows, checkboxes, tooltips)
