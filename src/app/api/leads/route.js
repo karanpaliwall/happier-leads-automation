@@ -29,7 +29,7 @@ export async function GET(req) {
         id, received_at, first_name, last_name, full_name, email, linkedin_url,
         company_name, company_domain, company_logo_url,
         lead_type, fit_score, engagement_score, activity_at,
-        pushed_to_smart_lead, pushed_at, raw_payload
+        pushed_to_smart_lead, pushed_at
       FROM leads
       WHERE (${type}::text IS NULL OR lead_type = ${type})
         AND (
