@@ -5,7 +5,7 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
-## 2026-04-22 — Sidebar vertical brand stack + favicon
+## 2026-04-23 — Sidebar vertical brand stack + favicon
 
 - What changed: Redesigned sidebar brand area from horizontal row to vertical stack (logo → "Growleads" → page label). Replaced `growleads-logo.png` with `favicon.png` from Downloads. Updated browser tab favicon via `metadata.icons` in layout.jsx. Updated page title to "Growleads — Lead Dashboard".
 - Why: User wanted Heyreach-style sidebar branding — big logo on top, company name, then current section label below, all stacked vertically. Also wanted the favicon.png in the browser tab instead of the default globe.
