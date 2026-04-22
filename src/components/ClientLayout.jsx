@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 
 export default function ClientLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
