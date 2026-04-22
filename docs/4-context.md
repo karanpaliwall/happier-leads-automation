@@ -191,6 +191,27 @@ Read this first when resuming work to get back up to speed.
 - Why: Each page remounted on navigation, resetting state to empty defaults and showing 0s until the API responded. CSS transitions were firing during hydration causing visible sidebar animation on every hard reload.
 - Files affected: `src/components/ClientLayout.jsx`, `src/styles/custom.css`, `src/app/page.jsx`, `src/app/leads/page.jsx`, `src/app/filtered/page.jsx`
 
+## 2026-04-23 — Sidebar: defaults collapsed + Heyreach-style brand area
+
+- What changed:
+  - Sidebar now starts **collapsed** (60px icon-only) by default on every hard reload
+  - Brand area redesigned: logo icon (fixed 38×38px) + dynamic page name subtitle — no "Growleads" text
+  - Dynamic subtitle reads `usePathname()` and shows the active page label (`Overview`, `Leads`, `Filter`)
+  - Collapsed brand area centered correctly; collapse button always visible
+- Why: Logo was "expanding" on every reload due to the CSS width transition firing during hydration. Defaulting to collapsed means the logo image never renders until the user explicitly expands, eliminating the flash entirely.
+- Files affected: `src/components/Sidebar.jsx`, `src/components/ClientLayout.jsx`, `src/styles/custom.css`
+
+## 2026-04-23 — UI polish: badges, avatars, score bars, row states
+
+- What changed:
+  - **Badges** — Exact (green) and Suggested (orange) now have a subtle border + slightly brighter text for more contrast
+  - **Avatars** — gradient background + border ring for visual depth
+  - **Score bars** — 5px tall (was 4px), smoother fill transition
+  - **Expanded row** — blue left-border accent (2px, rgba blue) instead of plain background, clearly marks which row is open
+  - **Row hover** — softer rgba value for subtler feel
+- Why: User requested general UX polish pass
+- Files affected: `src/styles/custom.css`
+
 ## Workflow Convention (as of 2026-04-22)
 
 All changes are made locally and immediately committed + pushed to GitHub (`main`). Vercel auto-deploys on every push. **Do not test against localhost — always verify against https://happier-leads-automation.vercel.app.**
@@ -207,7 +228,8 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 - [x] Growleads logo in sidebar
 - [x] Expandable lead rows — all Happier Leads data visible (contact, company, scores, visits, UTM)
 - [x] Mobile responsive — hamburger menu + sidebar overlay
-- [x] Collapsible sidebar — chevron toggle, collapses to 60px icon-only, smooth transition
+- [x] Collapsible sidebar — defaults collapsed on load, chevron toggle, 60px icon-only or 240px full
+- [x] Sidebar brand area — logo only (38px), dynamic page name subtitle (changes per route), no text clutter
 - [x] Checkbox multi-select + bulk delete on Leads page
 - [x] DELETE /api/leads endpoint
 - [x] Fit Score + Engagement tooltips (position:fixed, never clipped)
