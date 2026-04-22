@@ -661,29 +661,16 @@
 .sidebar-collapsed {
   width: 60px;
 }
-/* collapsed brand overridden above in brand section */
-
-/* Sidebar brand — vertical stack: logo → name → page label */
-.sidebar-brand {
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 18px 14px 16px;
+.sidebar-collapsed .sidebar-brand {
+  padding: 14px 0;
+  justify-content: center;
   gap: 0;
 }
-.sidebar-collapsed .sidebar-brand {
-  align-items: center;
-  padding: 14px 0 12px;
-  justify-content: flex-start;
-}
-.sidebar-brand-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 0;
-}
-.sidebar-collapsed .sidebar-brand-row {
-  width: auto;
-  justify-content: center;
+
+/* Sidebar brand — row: [icon] [Growleads / page label] [< collapse btn] */
+.sidebar-brand {
+  padding: 16px 14px;
+  gap: 10px;
 }
 .sidebar-brand-icon {
   width: 40px;
@@ -693,14 +680,13 @@
   align-items: center;
   justify-content: center;
 }
-.sidebar-brand-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-}
 .sidebar-brand-stack {
-  margin-top: 10px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 .sidebar-brand-name {
   font-size: 14px;
@@ -708,7 +694,7 @@
   color: var(--text-primary);
   letter-spacing: 0.01em;
   line-height: 1.2;
-  margin-bottom: 2px;
+  white-space: nowrap;
 }
 .sidebar-brand-sub {
   font-size: 11px;
