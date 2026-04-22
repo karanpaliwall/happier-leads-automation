@@ -153,19 +153,23 @@ Read this first when resuming work to get back up to speed.
 - Why: User requested collapsible sidebar for more screen real estate
 - Files affected: `src/components/Sidebar.jsx`, `src/components/ClientLayout.jsx`, `src/styles/custom.css`
 
+## Workflow Convention (as of 2026-04-22)
+
+All changes are made locally and immediately committed + pushed to GitHub (`main`). Vercel auto-deploys on every push. **Do not test against localhost — always verify against https://happier-leads-automation.vercel.app.**
+
 ## Current Status
 
 - [x] `npm install` — done (Next.js 16.2.4, React 19.2.5)
 - [x] Build passes clean — `npm run build` succeeds
 - [x] CLAUDE.md created
 - [x] Neon DB schema — created (leads table + 3 indexes, production branch)
-- [x] ngrok — installed and working (URL changes on each restart)
-- [x] Happier Leads automation — created and activated, webhook confirmed working
+- [x] Happier Leads automation — created and activated, webhook confirmed working (permanent Vercel URL)
 - [x] First webhook received and payload confirmed — field extraction updated in webhook/route.js
-- [x] Three-tab UI — Overview / Leads / Filtered routes
+- [x] Three-tab UI — Overview / Leads / Filter routes
 - [x] Growleads logo in sidebar
 - [x] Expandable lead rows — all Happier Leads data visible (contact, company, scores, visits, UTM)
 - [x] Mobile responsive — hamburger menu + sidebar overlay
+- [x] Collapsible sidebar — chevron toggle, collapses to 60px icon-only, smooth transition
 - [x] Checkbox multi-select + bulk delete on Leads page
 - [x] DELETE /api/leads endpoint
 - [x] Fit Score + Engagement tooltips (position:fixed, never clipped)
@@ -174,8 +178,8 @@ Read this first when resuming work to get back up to speed.
 - [x] Backfill endpoint — POST /api/admin/backfill-scores (run once after deploy)
 - [x] Next.js devtools button hidden (devIndicators: false)
 - [x] First-time empty state — onboarding guide on Overview + Leads pages when no leads exist
-- [x] Pushed to GitHub — https://github.com/karanpaliwall/happier-leads-automation
-- [x] Deployed to Vercel — https://happier-leads-automation.vercel.app
+- [x] GitHub — https://github.com/karanpaliwall/happier-leads-automation
+- [x] Production — https://happier-leads-automation.vercel.app
 
 ## Architecture — current file map
 
@@ -186,16 +190,16 @@ src/
 │   │   ├── admin/backfill-scores/route.js  ← one-time backfill for existing leads
 │   │   ├── leads/route.js                  ← GET (paginated list) + DELETE (bulk)
 │   │   └── webhook/happierleads/route.js   ← inbound webhook, dedup, insert
-│   ├── filtered/page.jsx                   ← Filtered tab (tabs-pill, debounced search)
+│   ├── filtered/page.jsx                   ← Filter tab (tabs-pill, debounced search)
 │   ├── leads/page.jsx                      ← Leads tab (expandable rows, checkboxes, tooltips)
 │   ├── page.jsx                            ← Overview tab (stat cards, pipeline status, recent leads)
 │   ├── layout.jsx                          ← server root layout
 │   └── globals.css
 ├── components/
-│   ├── ClientLayout.jsx                    ← client wrapper (mobile sidebar state)
+│   ├── ClientLayout.jsx                    ← client wrapper (sidebar open + collapsed state)
 │   ├── EmptyState.jsx                      ← first-time onboarding guide (4 setup steps)
-│   ├── Sidebar.jsx                         ← nav with Growleads logo + 3 items
-│   └── StatsBar.jsx                        ← legacy stat cards (used nowhere currently)
+│   ├── Sidebar.jsx                         ← collapsible nav with Growleads logo + 3 items
+│   └── StatsBar.jsx                        ← legacy stat cards (unused)
 ├── styles/
 │   ├── reference.css                       ← Growleads design system (do not edit)
 │   └── custom.css                          ← all app-specific overrides and additions
@@ -209,4 +213,3 @@ public/
 
 - Wire up "Push to Smart Lead" button — needs Smart Lead API key + contact import endpoint
 - Add `PATCH /api/leads/[id]/push` route that calls Smart Lead and sets `pushed_to_smart_lead = true`
-- Vercel deploy — push to GitHub, connect repo, add DATABASE_URL env var, update HL webhook URL
