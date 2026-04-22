@@ -5,15 +5,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
-## 2026-04-23 — Sidebar vertical brand stack + favicon
+## 2026-04-23 — Sidebar brand redesign + favicon
 
-- What changed: Redesigned sidebar brand area from horizontal row to vertical stack (logo → "Growleads" → page label). Replaced `growleads-logo.png` with `favicon.png` from Downloads. Updated browser tab favicon via `metadata.icons` in layout.jsx. Updated page title to "Growleads — Lead Dashboard".
-- Why: User wanted Heyreach-style sidebar branding — big logo on top, company name, then current section label below, all stacked vertically. Also wanted the favicon.png in the browser tab instead of the default globe.
+- What changed: Replaced `growleads-logo.png` with `favicon.png`. Redesigned sidebar brand area to match Heyreach reference: horizontal row — `[icon 40px]` | `[Growleads bold / page label muted]` | `[< collapse btn]`. Page label is dynamic (Overview / Leads / Filter) via `usePathname`. Updated browser tab favicon and page title to "Growleads — Lead Dashboard".
+- Why: User provided reference screenshots showing icon + two-line text stack (name above, section label below) in a row, with collapse chevron at far right.
 - Files affected:
-  - `public/favicon.png` — new logo file (copied from user's Downloads)
-  - `src/app/layout.jsx` — added `icons: { icon: '/favicon.png' }` to metadata, updated title
-  - `src/components/Sidebar.jsx` — restructured brand area: `.sidebar-brand-row` (logo + actions), `.sidebar-brand-stack` (name + sub label), collapse/expand buttons split by state
-  - `src/styles/custom.css` — overrode `.sidebar-brand` to `flex-direction: column`, added `.sidebar-brand-row`, `.sidebar-brand-actions`, `.sidebar-brand-stack`, `.sidebar-brand-name`, updated `.sidebar-brand-sub` to muted 11px
+  - `public/favicon.png` — new logo (copied from user's Downloads, replaces growleads-logo.png)
+  - `src/app/layout.jsx` — `metadata.icons: { icon: '/favicon.png' }`, title updated
+  - `src/components/Sidebar.jsx` — brand area: icon + `.sidebar-brand-stack` (name + sub) + collapse btn in a flex row; mobile close btn appended when `open`
+  - `src/styles/custom.css` — `.sidebar-brand` padding/gap, `.sidebar-brand-icon` 40px, `.sidebar-brand-stack` flex-column, `.sidebar-brand-name` 14px bold, `.sidebar-brand-sub` 11px muted
 
 ---
 
