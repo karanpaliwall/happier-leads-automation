@@ -35,11 +35,16 @@ const TABS = [
   { label: 'Suggested', value: 'suggested' },
 ];
 
+const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0 };
+
+// Module-level cache — survives tab navigation, shows instantly on remount
+let _cache = { leads: [], stats: DEFAULT_STATS, total: 0 };
+
 export default function FilteredPage() {
-  const [leads, setLeads] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState({ total: 0, newToday: 0, exact: 0, suggested: 0 });
-  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState(_cache.leads);
+  const [total, setTotal] = useState(_cache.total);
+  const [stats, setStats] = useState(_cache.stats);
+  const [loading, setLoading] = useState(_cache.leads.length === 0);
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState('');
   const [search, setSearch] = useState('');
@@ -75,9 +80,10 @@ export default function FilteredPage() {
     try {
       const res = await fetch(`/api/leads?${params}`);
       const data = await res.json();
-      setLeads(data.leads ?? []);
-      setTotal(data.total ?? 0);
-      setStats(data.stats ?? { total: 0, newToday: 0, exact: 0, suggested: 0 });
+      _cache = { leads: data.leads ?? [], total: data.total ?? 0, stats: data.stats ?? DEFAULT_STATS };
+      setLeads(_cache.leads);
+      setTotal(_cache.total);
+      setStats(_cache.stats);
     } catch (err) {
       console.error('Failed to fetch:', err);
     } finally {

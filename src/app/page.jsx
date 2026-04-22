@@ -5,6 +5,9 @@ import EmptyState from '@/components/EmptyState';
 
 const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0 };
 
+// Module-level cache — survives tab navigation, shows instantly on remount
+let _cache = { leads: [], stats: DEFAULT_STATS, lastReceived: null };
+
 function timeAgo(dateStr) {
   if (!dateStr) return '—';
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -32,18 +35,23 @@ function StatCard({ label, value, color, accent, icon }) {
 }
 
 export default function OverviewPage() {
-  const [leads, setLeads] = useState([]);
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  const [loading, setLoading] = useState(true);
-  const [lastReceived, setLastReceived] = useState(null);
+  const [leads, setLeads] = useState(_cache.leads);
+  const [stats, setStats] = useState(_cache.stats);
+  const [loading, setLoading] = useState(_cache.leads.length === 0);
+  const [lastReceived, setLastReceived] = useState(_cache.lastReceived);
 
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch('/api/leads?limit=5');
       const data = await res.json();
-      setLeads(data.leads ?? []);
-      setStats(data.stats ?? DEFAULT_STATS);
-      if (data.leads?.length > 0) setLastReceived(data.leads[0].received_at);
+      _cache = {
+        leads: data.leads ?? [],
+        stats: data.stats ?? DEFAULT_STATS,
+        lastReceived: data.leads?.[0]?.received_at ?? null,
+      };
+      setLeads(_cache.leads);
+      setStats(_cache.stats);
+      setLastReceived(_cache.lastReceived);
     } catch (err) {
       console.error('Failed to fetch:', err);
     } finally {
@@ -63,7 +71,7 @@ export default function OverviewPage() {
         <div className="page-header-top">
           <div>
             <h1 className="page-title">Overview</h1>
-            <p className="page-subtitle">Pipeline health and recent lead activity · auto-refreshes every 30s</p>
+            <p className="page-subtitle">Pipeline health and recent lead activity · auto-refreshes every 10s</p>
           </div>
         </div>
       </div>

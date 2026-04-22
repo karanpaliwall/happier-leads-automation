@@ -49,6 +49,9 @@ function ColHeader({ label, tip }) {
 
 const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0 };
 
+// Module-level cache — survives tab navigation, shows instantly on remount
+let _cache = { leads: [], stats: DEFAULT_STATS, total: 0 };
+
 function timeAgo(dateStr) {
   if (!dateStr) return '—';
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -439,10 +442,10 @@ function LeadRow({ lead, selected, onToggle }) {
 }
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState(_cache.leads);
+  const [total, setTotal] = useState(_cache.total);
+  const [stats, setStats] = useState(_cache.stats);
+  const [loading, setLoading] = useState(_cache.leads.length === 0);
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -456,9 +459,10 @@ export default function LeadsPage() {
     try {
       const res = await fetch(`/api/leads?${params}`);
       const data = await res.json();
-      setLeads(data.leads ?? []);
-      setTotal(data.total ?? 0);
-      setStats(data.stats ?? DEFAULT_STATS);
+      _cache = { leads: data.leads ?? [], total: data.total ?? 0, stats: data.stats ?? DEFAULT_STATS };
+      setLeads(_cache.leads);
+      setTotal(_cache.total);
+      setStats(_cache.stats);
     } catch (err) {
       console.error('Failed to fetch leads:', err);
     } finally {

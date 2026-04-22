@@ -645,6 +645,9 @@
 
 /* ── Collapsible sidebar (desktop) ── */
 .sidebar {
+  /* transition added only after mount — prevents flash on initial load */
+}
+.app-mounted .sidebar {
   transition: width 0.22s ease;
 }
 .sidebar-collapsed {
@@ -679,6 +682,9 @@
   height: 20px;
 }
 .main-content {
+  /* transition added only after mount */
+}
+.app-mounted .main-content {
   transition: margin-left 0.22s ease;
 }
 .main-collapsed {

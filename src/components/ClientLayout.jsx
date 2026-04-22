@@ -1,13 +1,15 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 
 export default function ClientLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout${mounted ? ' app-mounted' : ''}`}>
       <button
         className="hamburger-btn"
         onClick={() => setSidebarOpen(true)}
