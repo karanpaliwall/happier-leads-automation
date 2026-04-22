@@ -88,7 +88,7 @@ export default function FilteredPage() {
   useEffect(() => {
     setLoading(true);
     fetchLeads();
-    const interval = setInterval(fetchLeads, 30000);
+    const interval = setInterval(fetchLeads, 10000);
     return () => clearInterval(interval);
   }, [fetchLeads]);
 

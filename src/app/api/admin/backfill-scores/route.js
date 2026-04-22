@@ -10,10 +10,10 @@ export async function POST() {
   for (const lead of leads) {
     const rp = lead.raw_payload;
 
-    // Fit score — confirmed field name is 'fitScore'
+    // Fit score — real payloads use s.fitScore; HL test payloads use s.score
     const scores = Array.isArray(rp?.scores) ? rp.scores : [];
     const fitScore = scores.length
-      ? scores.reduce((sum, s) => sum + (Number(s.fitScore) || 0), 0)
+      ? scores.reduce((sum, s) => sum + (Number(s.fitScore ?? s.score) || 0), 0)
       : null;
 
     // Engagement — derived from visit activity (0–20 scale)

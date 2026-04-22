@@ -28,10 +28,10 @@ export async function POST(req) {
   const contactType = body?.contact?.contactType ?? '';
   const leadType    = contactType.toLowerCase().includes('exact') ? 'exact' : 'suggested';
 
-  // Fit score = sum of all s.fitScore values (confirmed field name from real payload)
+  // Fit score — real payloads use s.fitScore; HL test payloads use s.score. Try both.
   const scores   = Array.isArray(body?.scores) ? body.scores : [];
   const fitScore = scores.length
-    ? scores.reduce((sum, s) => sum + (Number(s.fitScore) || 0), 0)
+    ? scores.reduce((sum, s) => sum + (Number(s.fitScore ?? s.score) || 0), 0)
     : null;
 
   // Engagement score — not sent by HL. Derived from visit activity (0–20 scale).

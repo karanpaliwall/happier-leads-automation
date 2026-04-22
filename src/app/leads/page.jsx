@@ -468,7 +468,7 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchLeads();
-    const interval = setInterval(fetchLeads, 30000);
+    const interval = setInterval(fetchLeads, 10000);
     return () => clearInterval(interval);
   }, [fetchLeads]);
 
