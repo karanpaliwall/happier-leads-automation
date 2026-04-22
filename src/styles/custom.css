@@ -2,49 +2,56 @@
 
 /* ── Lead type badges ── */
 .badge-exact {
-  background: rgba(34, 197, 94, 0.12);
-  color: var(--green-400);
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 .badge-suggested {
-  background: rgba(249, 115, 22, 0.12);
-  color: var(--orange-400);
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* ── Score bar ── */
 .score-bar {
-  height: 4px;
-  background: var(--border-color);
-  border-radius: 2px;
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
   overflow: hidden;
-  width: 60px;
+  width: 64px;
   display: inline-block;
   vertical-align: middle;
-  margin-right: 6px;
 }
 .score-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 3px;
+  transition: width 0.4s ease;
 }
 .score-cell {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-variant-numeric: tabular-nums;
 }
 
 /* ── Person avatar ── */
 .avatar-initials {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-full);
-  background: rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(99,102,241,0.2));
   color: var(--blue-400);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
+  border: 1px solid rgba(59,130,246,0.2);
 }
 .person-cell {
   display: flex;
@@ -288,8 +295,9 @@
 }
 
 /* ── Expandable row ── */
-.lead-row:hover { background: var(--bg-hover); }
-.lead-row-expanded { background: var(--bg-hover) !important; }
+.lead-row { transition: background 0.12s; }
+.lead-row:hover { background: rgba(255,255,255,0.04); }
+.lead-row-expanded { background: rgba(59,130,246,0.05) !important; border-left: 2px solid rgba(59,130,246,0.4); }
 .expand-chevron {
   color: var(--text-muted);
   display: inline-flex;
@@ -658,10 +666,10 @@
   justify-content: center;
 }
 
-/* Sidebar brand — logo icon + name/subtitle */
+/* Sidebar brand — logo icon + dynamic page label */
 .sidebar-brand-icon {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -669,24 +677,15 @@
 }
 .sidebar-brand-text {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
   min-width: 0;
   overflow: hidden;
 }
-.sidebar-brand-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-  white-space: nowrap;
-}
 .sidebar-brand-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 .sidebar-collapse-btn {
   background: none;

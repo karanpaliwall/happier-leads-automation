@@ -38,19 +38,30 @@ const NAV_ITEMS = [
   },
 ];
 
+function getPageLabel(pathname) {
+  const match = NAV_ITEMS.find(item => item.href === pathname);
+  return match ? match.label : 'Pipeline';
+}
+
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const pathname = usePathname();
+  const pageLabel = getPageLabel(pathname);
 
   return (
     <aside className={`sidebar${open ? ' sidebar-open' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="sidebar-brand">
         <div className="sidebar-brand-icon">
-          <img src="/growleads-logo.png" alt="Growleads" width="30" height="30" style={{ objectFit: 'contain', display: 'block' }} />
+          <img
+            src="/growleads-logo.png"
+            alt="Growleads"
+            width="38"
+            height="38"
+            style={{ objectFit: 'contain', display: 'block' }}
+          />
         </div>
         {!collapsed && (
           <div className="sidebar-brand-text">
-            <span className="sidebar-brand-name">Growleads</span>
-            <span className="sidebar-brand-sub">Overview</span>
+            <span className="sidebar-brand-sub">{pageLabel}</span>
           </div>
         )}
         <button
