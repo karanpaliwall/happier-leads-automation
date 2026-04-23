@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Leads page: click-to-expand rows, checkboxes, delete
+
+- What changed: `src/app/filtered/page.jsx` fully upgraded — added `LeadRow` (click-to-expand with chevron indicator), `LeadDetailPanel` (Contact Details, Company Details, Fit Score Breakdown, Visit Intelligence, UTM Attribution sections), checkbox select-all/individual, bulk delete with confirmation, and `ColHeader` tooltips on Fit Score and Engagement columns. Page title changed from "Filtered" to "Leads" and subtitle updated to match.
+- Why: After removing the old `/leads` page, the `/filtered` page was missing the row-expand detail panel that users relied on.
+- Files affected: `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Removed duplicate Leads page; Filter renamed to Leads
 
 - What changed: Deleted `src/app/leads/` entirely (frontend page + all its components). Sidebar now has 2 nav items: Overview (`/`) and Leads (`/filtered`). The old Filter entry was renamed to "Leads" and given the people icon. Overview page "View all →" link updated from `/leads` to `/filtered`. The `/api/leads` backend API route is untouched.
