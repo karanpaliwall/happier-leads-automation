@@ -19,29 +19,36 @@ Single Next.js 16 App Router project — backend API routes and frontend live in
 **Data flow:**
 1. Happier Leads fires `POST /api/webhook/happierleads` when a new visitor is identified
 2. Webhook handler deduplicates and inserts into Neon PostgreSQL
-3. Frontend (`page.jsx`) polls `GET /api/leads` every 30 seconds and renders the table
+3. Frontend polls `GET /api/leads` every 10 seconds and renders the table
 
 **Database:** Neon PostgreSQL via `@neondatabase/serverless`. The client is a single tagged-template `sql` function exported from `src/lib/db.js`. All queries use this directly — no ORM.
 
 **Styling:** Pure CSS using the Growleads/signal-tracker design system (`src/styles/reference.css`). All design tokens are CSS custom properties on `:root`. App-specific additions are in `src/styles/custom.css`. No Tailwind, no CSS modules.
 
+**Routes:**
+- `app/page.jsx` — Overview (stat cards, pipeline status, recent 5 leads)
+- `app/filtered/page.jsx` — Leads page (full table, tabs/search/filter, click-to-expand rows, Export CSV)
+- `app/login/page.jsx` — password gate (password: `Growleads@admin`, sets `gl_session` cookie)
+
 **Component model:**
-- `layout.jsx` — server component; imports all CSS; renders `<Sidebar>`
-- `page.jsx` — client component (`'use client'`); owns fetch + pagination + filter state
-- `Sidebar.jsx`, `LeadsTable.jsx` — client components (use `usePathname` / event handlers)
-- `StatsBar.jsx` — server-compatible (pure props, no hooks)
+- `layout.jsx` — server component; imports all CSS; renders `<ClientLayout>`
+- `ClientLayout.jsx` — client wrapper; manages sidebar collapsed/open state, `app-mounted` class to prevent hydration flash
+- `Sidebar.jsx` — collapsible nav; defaults collapsed; auto-collapses below 1100px; hamburger drawer on mobile (≤640px)
+- `filtered/page.jsx` — owns `expandedId` state; detail panel renders outside the `<table>` in `.lead-detail-outer` so it never scrolls with the table
 
 ## Key Constraints
 
-**Webhook payload fields are unknown** — Happier Leads API docs are behind auth. The webhook route (`src/app/api/webhook/happierleads/route.js`) does best-effort extraction with multiple fallback key names. After the first real webhook fires, run `SELECT raw_payload FROM leads ORDER BY received_at DESC LIMIT 1;` in Neon to see the actual structure, then update the extraction keys.
+**Webhook payload is confirmed** — first real webhook was received 2026-04-22. See `docs/3-single-source-of-truth.md` for the full payload structure. Extraction keys are already correct in the webhook route.
 
 **Dedup is layered** — the webhook handler checks for duplicates in order: Happier Leads ID → email → LinkedIn URL → full\_name+company\_name. Always returns `200` even for duplicates (prevents Happier Leads from retrying).
 
-**ngrok URL changes on restart** — each `ngrok http 3000` gives a new public URL. After restarting ngrok, update the webhook URL in Happier Leads → Automations → "automation" card.
+**Webhook URL is permanent** — webhook is configured to the Vercel production URL (`https://happier-leads-automation.vercel.app/api/webhook/happierleads`). ngrok is no longer needed.
+
+**Password gate** — all app routes (except `/login` and `/api/*`) require a `gl_session` cookie set by `POST /api/auth/login`. Password: `Growleads@admin`. Cookie is session-scoped (expires when browser closes).
 
 ## Database Setup
 
-Schema has not been created yet. Run this in the Neon SQL console (console.neon.tech) before first use:
+Schema is **already created** in Neon production. For reference (e.g. if recreating from scratch):
 
 ```sql
 CREATE TABLE leads (
@@ -77,4 +84,4 @@ Also update `docs/3-single-source-of-truth.md` if schema or API contracts change
 
 ## Smart Lead Integration (Phase 2 — not yet built)
 
-The `pushed_to_smart_lead` / `pushed_at` columns and the disabled "Push to Smart Lead" button in `LeadsTable.jsx` are placeholders. When ready, add a `PATCH /api/leads/[id]/push` route that calls Smart Lead's API and updates those columns.
+The `pushed_to_smart_lead` / `pushed_at` columns and the disabled "Push to Smart Lead" button in `filtered/page.jsx` are placeholders. When ready, add a `PATCH /api/leads/[id]/push` route that calls Smart Lead's API and updates those columns.

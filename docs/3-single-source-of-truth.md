@@ -41,7 +41,7 @@ CREATE INDEX leads_email_idx       ON leads(email)        WHERE email IS NOT NUL
 CREATE INDEX leads_linkedin_idx    ON leads(linkedin_url) WHERE linkedin_url IS NOT NULL;
 ```
 
-**Status:** Schema not yet created — run this SQL in Neon console to initialize.
+**Status:** Schema is live in Neon production (created 2026-04-22). This SQL is for reference only.
 
 ---
 
@@ -76,11 +76,15 @@ Returns paginated leads for the dashboard.
       "id": "uuid",
       "received_at": "2026-04-22T10:30:00Z",
       "full_name": "John Doe",
+      "email": "john@example.com",
       "company_name": "Acme Corp",
+      "company_domain": "acme.com",
+      "company_logo_url": null,
       "lead_type": "exact",
       "fit_score": 24,
       "engagement_score": 15,
-      "pushed_to_smart_lead": false
+      "pushed_to_smart_lead": false,
+      "raw_payload": { "...": "full Happier Leads payload, used by detail panel" }
     }
   ],
   "total": 42,
@@ -97,11 +101,12 @@ Returns paginated leads for the dashboard.
 
 ## Environment Variables
 
-| Variable       | Where to get it                        | Used in          |
-|----------------|----------------------------------------|------------------|
-| `DATABASE_URL` | Neon console → Connection Details      | `src/lib/db.js`  |
+| Variable          | Where to get it                        | Used in                              |
+|-------------------|----------------------------------------|--------------------------------------|
+| `DATABASE_URL`    | Neon console → Connection Details      | `src/lib/db.js`                      |
+| `AUTH_PASSWORD`   | Set to `Growleads@admin`               | `src/app/api/auth/login/route.js`    |
 
-Only env var needed. Set in `.env.local` for local dev, and in Vercel settings for production.
+Set both in `.env.local` for local dev, and in Vercel environment settings for production.
 
 ---
 
@@ -171,7 +176,18 @@ Happier Leads sends a POST with this structure:
 
 ## Happier Leads Automation Config
 
-- **Automation:** "automation" card (currently Paused)
-- **Trigger:** Identify a Visitor — Every time a new lead is identified
+- **Automation:** "automation" card — **Active** (permanent Vercel URL, no ngrok needed)
+- **Trigger:** A new lead is identified — Only on first visit
 - **Filter:** All Leads (catches both Exact and Suggested)
-- **Action:** Webhook → POST to `<ngrok-or-vercel-url>/api/webhook/happierleads`
+- **Action:** Webhook → POST to `https://happier-leads-automation.vercel.app/api/webhook/happierleads`
+- **Confirmed working:** test webhook + real webhooks both received successfully
+
+## Engagement Score Calculation
+
+`engagement_score` is **not** in the Happier Leads payload — it is calculated by the webhook handler:
+
+```
+engagement_score = min(10, visits × 2) + min(10, floor(durationMs / 60000))
+```
+
+Max 20 pts. `visits` from `summary.visits`, `durationMs` from `summary.duration`.

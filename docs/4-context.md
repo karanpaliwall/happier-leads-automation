@@ -495,26 +495,26 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 
 - [x] `npm install` — done (Next.js 16.2.4, React 19.2.5)
 - [x] Build passes clean — `npm run build` succeeds
-- [x] CLAUDE.md created
+- [x] CLAUDE.md created and up to date
 - [x] Neon DB schema — created (leads table + 3 indexes, production branch)
-- [x] Happier Leads automation — created and activated, webhook confirmed working (permanent Vercel URL)
-- [x] First webhook received and payload confirmed — field extraction updated in webhook/route.js
-- [x] Three-tab UI — Overview / Leads / Filter routes
-- [x] Growleads logo in sidebar
-- [x] Expandable lead rows — all Happier Leads data visible (contact, company, scores, visits, UTM)
-- [x] Mobile responsive — hamburger menu + sidebar overlay
-- [x] Collapsible sidebar — defaults collapsed on load, chevron toggle, 60px icon-only or 240px full
-- [x] Sidebar brand area — logo only (38px), dynamic page name subtitle (changes per route), no text clutter
-- [x] Checkbox multi-select + bulk delete on Leads page
-- [x] DELETE /api/leads endpoint
+- [x] Happier Leads automation — active, permanent Vercel webhook URL, confirmed working
+- [x] First webhook received and payload confirmed — field extraction correct
+- [x] Two-route UI — Overview (`/`) + Leads (`/filtered`)
+- [x] Password gate — `/login` + middleware protecting all app routes
+- [x] Growleads favicon in sidebar + browser tab
+- [x] Expandable lead rows — detail panel outside `<table>` (no horizontal scroll), all HL data visible
+- [x] Export CSV button — top-right of Leads page header
+- [x] Mobile responsive — hamburger drawer (≤640px), safe-area insets, touch-action fixes
+- [x] Cross-device — Android tap delay, notch support, tablet fluid grid
+- [x] Collapsible sidebar — defaults collapsed, auto-collapses <1100px, hamburger on mobile
 - [x] Fit Score + Engagement tooltips (position:fixed, never clipped)
-- [x] Engagement score calculated from visit data (not null anymore)
+- [x] Engagement score calculated from visit data (formula: visits×2 + duration/60s, max 20)
 - [x] Fit score extraction tries s.fitScore ?? s.score (handles both real + test payloads)
-- [x] Backfill endpoint — POST /api/admin/backfill-scores (fixes existing leads)
+- [x] Backfill endpoint — POST /api/admin/backfill-scores
 - [x] HL API sync endpoint — POST /api/admin/sync-from-hl (requires HL_API_KEY env var)
 - [x] GET /api/leads/[id] — single-lead endpoint with full raw_payload
 - [x] Next.js devtools button hidden (devIndicators: false)
-- [x] First-time empty state — onboarding guide on Overview + Leads pages when no leads exist
+- [x] First-time empty state — onboarding guide on Overview when no leads exist
 - [x] GitHub — https://github.com/karanpaliwall/happier-leads-automation
 - [x] Production — https://happier-leads-automation.vercel.app
 
@@ -527,27 +527,34 @@ src/
 │   │   ├── admin/
 │   │   │   ├── backfill-scores/route.js    ← recalculates fit+engagement from raw_payload
 │   │   │   └── sync-from-hl/route.js       ← imports leads from HL REST API (needs HL_API_KEY)
+│   │   ├── auth/login/route.js             ← POST: checks password, sets gl_session cookie
 │   │   ├── leads/
-│   │   │   ├── route.js                    ← GET (paginated, window-fn count) + DELETE (bulk)
+│   │   │   ├── route.js                    ← GET (paginated, window-fn count, includes raw_payload)
 │   │   │   └── [id]/route.js               ← GET single lead with full raw_payload
 │   │   └── webhook/happierleads/route.js   ← inbound webhook, dedup, insert
-│   ├── filtered/page.jsx                   ← Filter tab (tabs-pill, debounced search)
-│   ├── leads/page.jsx                      ← Leads tab (expandable rows, checkboxes, tooltips)
-│   ├── page.jsx                            ← Overview tab (stat cards, pipeline status, recent leads)
-│   ├── layout.jsx                          ← server root layout
+│   ├── filtered/page.jsx                   ← Leads page: tabs/search, expandable rows, Export CSV
+│   │                                           expandedId owned here; detail panel in .lead-detail-outer
+│   │                                           (outside <table> so it never scrolls with table cols)
+│   ├── login/page.jsx                      ← password gate
+│   ├── page.jsx                            ← Overview: stat cards, pipeline status, recent 5 leads
+│   ├── layout.jsx                          ← server root layout; sets viewport + favicon
 │   └── globals.css
 ├── components/
-│   ├── ClientLayout.jsx                    ← client wrapper (sidebar open + collapsed state)
+│   ├── ClientLayout.jsx                    ← client wrapper: sidebar open/collapsed state,
+│   │                                           app-mounted class (prevents hydration transition flash),
+│   │                                           auto-collapse below 1100px on resize
 │   ├── EmptyState.jsx                      ← first-time onboarding guide (4 setup steps)
-│   ├── Sidebar.jsx                         ← collapsible nav with Growleads logo + 3 items
+│   ├── LeadsTable.jsx                      ← legacy table component (not used in current routes)
+│   ├── Sidebar.jsx                         ← collapsible nav; hamburger drawer on mobile ≤640px
 │   └── StatsBar.jsx                        ← legacy stat cards (unused)
+├── middleware.js                           ← protects all routes except /login + /api/*
 ├── styles/
 │   ├── reference.css                       ← Growleads design system (do not edit)
 │   └── custom.css                          ← all app-specific overrides and additions
 └── lib/
     └── db.js                               ← Neon sql tagged-template client
 public/
-└── growleads-logo.png                      ← sidebar logo
+└── favicon.png                             ← Growleads logo (sidebar + browser tab)
 ```
 
 ## Next Steps (Phase 2)
