@@ -810,15 +810,21 @@
   }
   .sidebar.sidebar-open { transform: translateX(0); }
 
-  /* Main content sits below the 52px header bar */
+  /* Main content sits below the 52px header bar.
+     overflow-x: hidden here is the critical fix — it bounds the layout width
+     so iOS/Android can't zoom the page to fit wider table content. */
   .main-content {
     margin-left: 0 !important;
     padding-top: 52px;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   .page-header, .page-body {
     padding-left: 16px;
     padding-right: 16px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .stat-grid-v2 { grid-template-columns: 1fr 1fr; }
@@ -828,17 +834,30 @@
   .filter-bar .form-input,
   .filter-bar .form-select { width: 100% !important; }
 
-  /* Table: nowrap cells so columns don't squash; wrapper scrolls horizontally.
-     Using nowrap instead of min-width prevents iOS from zooming the whole page. */
+  /* Table scrolls horizontally within its wrapper.
+     nowrap prevents column squashing; main-content overflow:hidden stops page zoom. */
   .table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    max-width: 100%;
+    width: 100%;
   }
-  .table-wrap table { white-space: nowrap; }
+  .table-wrap table {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .table-wrap thead th { font-size: 10px; padding: 8px 12px; }
+  .table-wrap tbody td { padding: 8px 12px; font-size: 12px; }
   /* Re-allow wrapping inside flex-based person/company cells */
   .table-wrap .person-cell,
   .table-wrap .company-cell { white-space: normal; }
+
+  /* Prevent long names in flex rows from expanding beyond viewport */
+  .person-cell { min-width: 0; }
+  .person-cell > div:last-child { min-width: 0; overflow: hidden; }
+  .person-cell > div:last-child > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Recent leads list person cell on overview */
+  .recent-lead-row .person-cell { min-width: 0; flex: 1; }
 
   /* Larger touch targets for pagination */
   .page-btn { min-width: 44px; height: 44px; font-size: 14px; }

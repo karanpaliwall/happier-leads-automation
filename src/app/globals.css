@@ -1,6 +1,10 @@
 /* App-level global styles — design system is in src/styles/ */
 /* This file intentionally minimal; all design tokens live in reference.css + custom.css */
 
-/* Prevent horizontal page zoom on iOS/Android — critical for mobile tables */
-html { overflow-x: hidden; }
+/* Prevent iOS font inflation and horizontal page zoom */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+}
 body { overflow-x: hidden; }
