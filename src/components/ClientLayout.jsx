@@ -1,12 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 
 export default function ClientLayout({ children }) {
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
 
   return (
     <div className={`app-layout${mounted ? ' app-mounted' : ''}`}>

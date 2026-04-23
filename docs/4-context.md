@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Password protection + mobile responsiveness
+
+- What changed:
+  - Added password gate (password: `Growleads@admin`). All app routes redirect to `/login` unless `gl_session` cookie is set. Webhook endpoint stays public.
+  - Login page at `/login` matches Growleads brand design: dark bg, centered card with icon/title, password field with eye toggle, blue Sign-in button.
+  - Login sidebar skipped — `ClientLayout` returns children directly for `/login`.
+  - Added mobile polish: at 480px, reduced padding, smaller stat card values, wrapping recent-lead-rows.
+- Why: internal-only tool, password gate prevents unwanted access; phone usability request.
+- Files affected: `src/middleware.js` (new), `src/app/api/auth/login/route.js` (new), `src/app/login/page.jsx` (new), `src/components/ClientLayout.jsx`, `src/styles/custom.css`.
+
 ## 2026-04-23 — Logo size fix + tab title rename
 
 - What changed: Reduced collapsed sidebar logo from 40px → 28px so it's proportional to the nav icons. Renamed browser tab title from "Growleads — Lead Dashboard" to "Website Traffic Signal".
