@@ -1,8 +1,14 @@
 /* custom.css — Happier Leads additions on top of reference.css */
 
-/* Allow horizontal page scroll at high zoom levels (reference.css sets hidden).
-   Mobile keeps overflow-x: hidden via the @media block below. */
-body { overflow-x: auto; }
+/* Body must stay hidden so it doesn't expand to fit the table's min-width.
+   Expansion defeats table-wrap's own overflow-x:auto scroll container.
+   Mobile @media block below also sets hidden. */
+body { overflow-x: hidden; }
+
+/* clip (not hidden) so .card doesn't intercept child scroll containers.
+   overflow:hidden creates a BFC/scroll-container; clip visually clips without one,
+   which lets .table-wrap { overflow-x:auto } show its own scrollbar correctly. */
+.card { overflow: clip; }
 
 /* Compact page header — reference.css uses 24px/20px which is too tall */
 .page-header { padding: 12px 32px 10px; }
@@ -772,6 +778,9 @@ body { overflow-x: auto; }
 }
 .main-content {
   /* transition added only after mount */
+  /* min-width:0 lets this flex item shrink below its content width;
+     default 'auto' would keep it at 860px (table min-width), preventing table-wrap scroll */
+  min-width: 0;
 }
 .app-mounted .main-content {
   transition: margin-left 0.22s ease;

@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Fix table horizontal scroll at high zoom levels
+
+- What changed: Three-part CSS fix in `custom.css`: (1) `body { overflow-x: hidden }` — was `auto`, which caused the body to expand to fit the table's 860px min-width, meaning `.table-wrap`'s own `overflow-x: auto` scrollbar never fired (no overflow detected). (2) `.main-content { min-width: 0 }` — flex items default to `min-width: auto` (content size), which prevented `.main-content` from shrinking below 860px even with body hidden; `min-width: 0` lets it shrink to viewport width. (3) `.card { overflow: clip }` — overrides `reference.css`'s `.card { overflow: hidden }`; `hidden` creates a scroll container that could intercept child scrollers, `clip` visually clips without creating one, allowing `.table-wrap`'s scrollbar to appear correctly.
+- Why: At 150%+ zoom the ENGAGEMENT column was cut off with no visible horizontal scrollbar on the table — the scrollbar was at the very bottom of the full page body, out of view.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fully responsive layout (zoom-adaptive)
 
 - What changed: (1) **Sidebar auto-collapse** — `ClientLayout.jsx` now adds a `resize` listener that calls `setCollapsed(true)` whenever `window.innerWidth < 1100px`. Sidebar auto-collapses on mount if viewport is narrow; user can still manually expand at any time. (2) **Fluid stat grid** — `.stat-grid-v2` changed from `repeat(4, 1fr)` to `repeat(auto-fit, minmax(180px, 1fr))`. Cards reflow from 4 → 2 → 1 columns automatically without hard breakpoints. Removed the now-redundant 900px override. (3) **Fluid overview grid** — `.overview-grid` changed from `280px 1fr` to `repeat(auto-fit, minmax(280px, 1fr))`. Pipeline Status and Recent Leads stack automatically at narrow widths. (4) **Flexible search input** — Leads page search input changed from fixed `width: 240px` to `flex: 1; minWidth: 160px; maxWidth: 320px`. (5) **Mobile breakpoint lowered** — from `768px` → `640px` so full mobile drawer only triggers on phones, not on high-zoom desktops.
