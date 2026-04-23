@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fully responsive layout (zoom-adaptive)
+
+- What changed: (1) **Sidebar auto-collapse** — `ClientLayout.jsx` now adds a `resize` listener that calls `setCollapsed(true)` whenever `window.innerWidth < 1100px`. Sidebar auto-collapses on mount if viewport is narrow; user can still manually expand at any time. (2) **Fluid stat grid** — `.stat-grid-v2` changed from `repeat(4, 1fr)` to `repeat(auto-fit, minmax(180px, 1fr))`. Cards reflow from 4 → 2 → 1 columns automatically without hard breakpoints. Removed the now-redundant 900px override. (3) **Fluid overview grid** — `.overview-grid` changed from `280px 1fr` to `repeat(auto-fit, minmax(280px, 1fr))`. Pipeline Status and Recent Leads stack automatically at narrow widths. (4) **Flexible search input** — Leads page search input changed from fixed `width: 240px` to `flex: 1; minWidth: 160px; maxWidth: 320px`. (5) **Mobile breakpoint lowered** — from `768px` → `640px` so full mobile drawer only triggers on phones, not on high-zoom desktops.
+- Why: At 175%+ zoom the sidebar was staying expanded (eating space) and the stat/overview grids were too rigid. Reference app scales fluidly at any zoom level.
+- Files affected: `src/components/ClientLayout.jsx`, `src/styles/custom.css`, `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Compact page header + Export CSV button on Leads page
 
 - What changed: (1) `.page-header` padding reduced from `24px 32px 20px` → `12px 32px 10px`; `.page-body` padding reduced from `24px 32px` → `16px 32px` — brings header height in line with reference app. (2) `Export CSV` button added top-right of Leads page header; exports current page's leads to a dated `.csv` file with columns: Name, Email, Company, Domain, Type, Fit Score, Engagement Score, Received. Button disabled when no leads are loaded. `.export-csv-btn` CSS class added to `custom.css`.
