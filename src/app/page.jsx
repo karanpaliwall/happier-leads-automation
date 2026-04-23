@@ -95,8 +95,24 @@ function smoothPath(pts2d) {
 // ── LeadsChart ──────────────────────────────────────────────────────────────
 function LeadsChart({ rawPoints, granularity, loading }) {
   const svgRef   = useRef(null);
+  const outerRef = useRef(null);
   const [clipW,    setClipW]    = useState(0);
   const [hoverIdx, setHoverIdx] = useState(null);
+  // localCVH: target ~220px rendered height on narrow containers; CVH on wide ones.
+  // ResizeObserver fires after first paint and keeps it live on resize.
+  const [localCVH, setLocalCVH] = useState(CVH);
+
+  useEffect(() => {
+    if (!outerRef.current) return;
+    const ro = new ResizeObserver(([e]) => {
+      const w = e.contentRect.width;
+      setLocalCVH(w > 0 && w < 520 ? Math.round(220 * CVW / w) : CVH);
+    });
+    ro.observe(outerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const localCPH = localCVH - CM.top - CM.bottom;
 
   const points = useMemo(
     () => granularity === 'day' ? fillGaps(rawPoints ?? []) : fillHourGaps(rawPoints ?? []),
@@ -120,7 +136,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
 
   if (loading) {
     return (
-      <div style={{ height: 180, display: 'flex', alignItems: 'center', padding: '0 8px' }}>
+      <div ref={outerRef} style={{ height: 180, display: 'flex', alignItems: 'center', padding: '0 8px' }}>
         <div className="skeleton-row" style={{ width: '100%', height: 120, borderRadius: 8 }} />
       </div>
     );
@@ -128,7 +144,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
 
   if (!points.length) {
     return (
-      <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+      <div ref={outerRef} style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
         No lead data for this period
       </div>
     );
@@ -138,7 +154,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
   const yMax   = Math.max(Math.ceil(maxVal / 5) * 5, 5);
 
   const xP = (i) => CM.left + (points.length > 1 ? (i / (points.length - 1)) * CPW : CPW / 2);
-  const yP = (v) => CM.top + CPH - (v / yMax) * CPH;
+  const yP = (v) => CM.top + localCPH - (v / yMax) * localCPH;
 
   const coords = (key) => points.map((p, i) => [xP(i), yP(p[key])]);
 
@@ -168,11 +184,11 @@ function LeadsChart({ rawPoints, granularity, loading }) {
   const hx = hoverIdx !== null ? xP(hoverIdx) : null;
 
   return (
-    <div className="chart-outer" onMouseLeave={() => setHoverIdx(null)}>
-      <svg ref={svgRef} viewBox={`0 0 ${CVW} ${CVH}`} className="chart-svg" onMouseMove={handleMove}>
+    <div ref={outerRef} className="chart-outer" onMouseLeave={() => setHoverIdx(null)}>
+      <svg ref={svgRef} viewBox={`0 0 ${CVW} ${localCVH}`} className="chart-svg" onMouseMove={handleMove}>
         <defs>
           <clipPath id="chart-clip">
-            <rect x={CM.left} y={0} width={clipW} height={CVH} />
+            <rect x={CM.left} y={0} width={clipW} height={localCVH} />
           </clipPath>
           <linearGradient id="cg-total" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.28" />
@@ -204,7 +220,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
 
         {/* X labels */}
         {xTicks.map(idx => (
-          <text key={idx} x={xP(idx)} y={CVH - 5} textAnchor="middle"
+          <text key={idx} x={xP(idx)} y={localCVH - 5} textAnchor="middle"
             style={{ fontSize: 9, fill: 'rgba(148,163,184,0.65)', fontFamily: 'inherit' }}>
             {fmtAxisDate(points[idx].date, granularity)}
           </text>
@@ -223,7 +239,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
         {/* Hover crosshair + dots */}
         {hp && (
           <>
-            <line x1={hx} y1={CM.top} x2={hx} y2={CM.top + CPH}
+            <line x1={hx} y1={CM.top} x2={hx} y2={CM.top + localCPH}
               stroke="rgba(148,163,184,0.35)" strokeWidth="1" strokeDasharray="3 3" />
             <circle cx={hx} cy={yP(hp.total)}     r="3.5" fill="#60a5fa" />
             <circle cx={hx} cy={yP(hp.exact)}     r="3.5" fill="#4ade80" />
