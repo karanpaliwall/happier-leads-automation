@@ -5,22 +5,37 @@ import EmptyState from '@/components/EmptyState';
 const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0, newTodayExact: 0, newTodaySuggested: 0 };
 let _cache = { stats: DEFAULT_STATS, lastReceived: null };
 
-function fmtAxisDate(iso) {
-  const d = new Date(iso + 'T00:00:00Z');
+function fmtAxisDate(iso, granularity) {
+  const d = new Date(iso);
+  if (granularity === 'hour') {
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'UTC' });
+  }
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-function fmtTooltipDate(iso) {
-  const d = new Date(iso + 'T00:00:00Z');
+function fmtTooltipDate(iso, granularity) {
+  const d = new Date(iso);
+  if (granularity === 'hour') {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', hour12: true, timeZone: 'UTC' });
+  }
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
+function fmtDate(iso) {
+  if (!iso) return 'No leads yet';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 function getRangeParams(range, from, to) {
-  if (range === 'custom') return { dateFrom: from, dateTo: to };
-  if (range === 'all')    return { dateFrom: '', dateTo: '' };
-  const days = { '7d': 6, '14d': 13, '30d': 29, '90d': 89 }[range] ?? 29;
-  const d = new Date(); d.setDate(d.getDate() - days);
-  return { dateFrom: d.toISOString().slice(0, 10), dateTo: '' };
+  if (range === 'custom') return { since: null, dateFrom: from, dateTo: to };
+  if (range === '24h') {
+    return { since: new Date(Date.now() - 86400000).toISOString(), dateFrom: null, dateTo: null };
+  }
+  if (range === '7d') {
+    const d = new Date(); d.setDate(d.getDate() - 6);
+    return { since: null, dateFrom: d.toISOString().slice(0, 10), dateTo: null };
+  }
+  return { since: null, dateFrom: null, dateTo: null }; // 'all'
 }
 
 // ── Chart helpers ───────────────────────────────────────────────────────────
@@ -56,7 +71,7 @@ function smoothPath(pts2d) {
 }
 
 // ── LeadsChart ──────────────────────────────────────────────────────────────
-function LeadsChart({ rawPoints, loading }) {
+function LeadsChart({ rawPoints, granularity, loading }) {
   const svgRef   = useRef(null);
   const [clipW,    setClipW]    = useState(0);
   const [hoverIdx, setHoverIdx] = useState(null);
@@ -166,7 +181,7 @@ function LeadsChart({ rawPoints, loading }) {
         {xTicks.map(idx => (
           <text key={idx} x={xP(idx)} y={CVH - 5} textAnchor="middle"
             style={{ fontSize: 9, fill: 'rgba(148,163,184,0.65)', fontFamily: 'inherit' }}>
-            {fmtAxisDate(points[idx].date)}
+            {fmtAxisDate(points[idx].date, granularity)}
           </text>
         ))}
 
@@ -201,7 +216,7 @@ function LeadsChart({ rawPoints, loading }) {
             transform: (hx / CVW) > 0.68 ? 'translateX(calc(-100% - 20px))' : 'none',
           }}
         >
-          <div className="chart-tip-date">{fmtTooltipDate(hp.date)}</div>
+          <div className="chart-tip-date">{fmtTooltipDate(hp.date, granularity)}</div>
           <div className="chart-tip-row" style={{ color: '#60a5fa' }}>Total · {hp.total}</div>
           <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {hp.exact}</div>
           <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {hp.suggested}</div>
@@ -220,10 +235,8 @@ function LeadsChart({ rawPoints, loading }) {
 
 // ── Chart date-range filter ─────────────────────────────────────────────────
 const PRESETS = [
-  { key: '7d',  label: 'Last 7 days' },
-  { key: '14d', label: 'Last 14 days' },
-  { key: '30d', label: 'Last 30 days' },
-  { key: '90d', label: 'Last 90 days' },
+  { key: '24h', label: 'Past 24 hours' },
+  { key: '7d',  label: 'Past 7 days' },
   { key: 'all', label: 'All time' },
 ];
 
@@ -303,11 +316,12 @@ export default function OverviewPage() {
   const [loading,      setLoading]     = useState(_cache.stats.total === 0);
   const [lastReceived, setLastReceived]= useState(_cache.lastReceived);
 
-  const [chartRange,   setChartRange]   = useState('30d');
-  const [chartFrom,    setChartFrom]    = useState('');
-  const [chartTo,      setChartTo]      = useState('');
-  const [chartPoints,  setChartPoints]  = useState([]);
-  const [chartLoading, setChartLoading] = useState(true);
+  const [chartRange,       setChartRange]       = useState('all');
+  const [chartFrom,        setChartFrom]        = useState('');
+  const [chartTo,          setChartTo]          = useState('');
+  const [chartPoints,      setChartPoints]      = useState([]);
+  const [chartGranularity, setChartGranularity] = useState('day');
+  const [chartLoading,     setChartLoading]     = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
@@ -324,16 +338,19 @@ export default function OverviewPage() {
   }, []);
 
   const fetchChart = useCallback(async () => {
-    const { dateFrom, dateTo } = getRangeParams(chartRange, chartFrom, chartTo);
+    const { since, dateFrom, dateTo } = getRangeParams(chartRange, chartFrom, chartTo);
     const params = new URLSearchParams();
+    if (since)    params.set('since', since);
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo)   params.set('dateTo', dateTo);
     setChartLoading(true);
     try {
       const res  = await fetch(`/api/leads/chart?${params}`);
+      if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
       setChartPoints(data.points ?? []);
-    } catch (e) { console.error(e); }
+      setChartGranularity(data.granularity ?? 'day');
+    } catch (e) { console.error('chart fetch:', e); }
     finally { setChartLoading(false); }
   }, [chartRange, chartFrom, chartTo]);
 
@@ -436,7 +453,7 @@ export default function OverviewPage() {
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>Last Lead Received</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {lastReceived ? fmtTooltipDate(lastReceived) : 'No leads yet'}
+                        {fmtDate(lastReceived)}
                       </div>
                     </div>
                   </div>
@@ -454,7 +471,7 @@ export default function OverviewPage() {
                     onChange={handleRangeChange}
                   />
                 </div>
-                <LeadsChart rawPoints={chartPoints} loading={chartLoading} />
+                <LeadsChart rawPoints={chartPoints} granularity={chartGranularity} loading={chartLoading} />
               </div>
             </div>
           </>

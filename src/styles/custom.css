@@ -237,15 +237,18 @@ body { overflow-x: hidden; }
   letter-spacing: 0.02em;
 }
 
-/* Fix: reference.css gives main-content min-height:100vh which leaves empty
-   space below short pages. Removing the redundant min-height fixes this since
-   app-layout already has min-height:100vh to keep sidebar full-height. */
+/* Fix bottom spacing: sidebar is position:fixed so main-content is the only
+   in-flow flex child of app-layout. Default align-items:stretch makes it fill
+   100vh even when content is short. flex-start lets it shrink to content height. */
+.app-layout { align-items: flex-start; }
 .main-content { min-height: 0; }
 
 /* ── Lead activity chart card ── */
 .overview-chart-card {
-  margin-bottom: 16px;
   padding: 18px 20px 14px;
+  /* overflow:visible so the date-filter popover can escape the card boundary
+     (.card has overflow:clip which would otherwise clip absolute children) */
+  overflow: visible;
 }
 .chart-subtitle {
   font-size: 11px;
