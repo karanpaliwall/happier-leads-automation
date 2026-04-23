@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Reorder filter bar: time filters before search
+
+- What changed: Swapped the position of the search input and the time-filter-group (24h / 7d / calendar) in the filter bar. New order: Tabs | divider | 24h + 7d + calendar picker | search input | Clear.
+- Why: User wanted time filters first so the bar reads left-to-right: type → time scope → keyword search.
+- Files affected: `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Split calendar trigger into separate From / To field buttons
 
 - What changed: The single calendar toggle button was replaced with two independent clickable field buttons inside `.cal-range-trigger` (a flex container, not a button). Left button = "from" field (calendar icon + date), right button = "to" field (date + calendar icon). `showCal: boolean` state replaced by `editField: 'from' | 'to' | null`. Clicking a field button sets `editField` and opens the `CalendarPicker` targeted to that field. Active field gets a blue highlight (`.cal-field-active`). `CalendarPicker` now receives `editField` prop and uses it in `clickDay`: clicking while editing "from" sets start date and auto-advances to "to" mode; clicking while editing "to" sets end date and closes. A `"Select start date"` / `"Select end date"` hint shows at the top of the popover (`.cal-editing-hint`). `onSelect` callback now takes `(from, to, nextEditField)` — `null` nextField means close.
