@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Responsive chart height via ResizeObserver
+
+- What changed: `LeadsChart` now uses a `ResizeObserver` on `.chart-outer` to measure the container width after mount and on resize. Computes `localCVH = round(220 * CVW / containerW)` when `containerW < 520px`, targeting ~220px rendered height on mobile. On wide containers uses global `CVH=240`. All Y-axis geometry (`yP`, crosshair, clipPath) uses `localCPH = localCVH - margins`. SVG `viewBox` uses `localCVH`. Previously, SVG viewBox aspect ratio (600:240) capped the rendered height at ~120px on ~300px-wide mobile cards regardless of CVH.
+- Why: Earlier attempts to increase CVH from 180→240 still left the chart too short on mobile because the viewBox ratio was the binding constraint, not the raw pixel value.
+- Files affected: `src/app/page.jsx`
+
+---
+
 ## 2026-04-24 — Past 24h chart: relative X-axis labels (−23h → now)
 
 - What changed: `fmtAxisDate` for hourly granularity now returns relative labels (`−23h`, `−19h`, `−15h`, `−12h`, `−8h`, `−4h`, `now`) instead of absolute clock times (`11 PM`, `3 AM`, …). Absolute times confused users when the rolling 24h window crosses midnight — `11 PM` appeared left of `3 AM` even though 11 PM is later in the clock day. Relative labels always increase left→right. Hover tooltip still shows exact clock time.
