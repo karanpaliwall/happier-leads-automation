@@ -912,21 +912,21 @@
 }
 .login-brand {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 36px;
 }
 .login-brand-icon {
   display: inline-block;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   line-height: 0;
 }
 .login-brand-name {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 .login-brand-sub {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 .login-card {
@@ -953,7 +953,7 @@
 .login-input {
   width: 100%;
   padding: 10px 44px 10px 14px;
-  background: var(--bg-secondary);
+  background: var(--bg-hover);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   color: var(--text-primary);
