@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix auto-scroll to bottom when clicking a lead row
+
+- What changed: Reverted the lead detail panel from an external `<div>` (rendered after all 25 rows outside the table) back to an inline `<tr><td colSpan={7}>` inside `<tbody>`. The external approach caused a `scrollIntoView` call to drag the page to the very bottom every time a row was clicked. Also removed: `expandedLead` derived state, `detailRef`, and the `scrollIntoView` `useEffect` from `FilteredPage`. On mobile, `.table-wrap .detail-row-cell` now gets `position: sticky; left: 0; width: 100vw; max-width: 100vw; overflow: hidden` — this (a) keeps the panel anchored at viewport-left even when the table is scrolled right, and (b) makes iOS text-size-adjust calculate boost as 390/390 = 1.0 (no font inflation). Removed `.lead-detail-outer` CSS class.
+- Why: Clicking any lead was auto-scrolling the page to the bottom (past all 25 rows) before showing the detail panel, making the UX unusable.
+- Files affected: `src/app/filtered/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Time-based filters on Leads page (24h, 7d, calendar range)
 
 - What changed: Added three filter controls to the right of the search bar — "24h", "7d" toggle buttons and a calendar icon button that opens a date-range picker (From / To). Active time filter is highlighted in blue. Selecting a quick filter clears the calendar range and vice versa. "Clear" button now resets time filters too. `GET /api/leads` extended with `since` (ISO timestamp), `dateFrom`, `dateTo` (ISO date strings) query params; WHERE clause filters `received_at` accordingly. New CSS classes: `.time-filter-group`, `.time-filter-btn`, `.cal-wrap`, `.cal-popover`, `.cal-field`, `.cal-date-input`, `.cal-footer`, `.cal-clear-btn`, `.cal-apply-btn`.
