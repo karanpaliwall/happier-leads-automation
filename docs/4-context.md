@@ -5,6 +5,30 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Responsive layout: horizontal scroll at high zoom, tighter padding
+
+- What changed: (1) `body { overflow-x: auto }` on desktop overrides the reference.css `hidden` — page now scrolls horizontally at high zoom (150%+) instead of clipping content, matching the reference app behaviour. (2) `page-header-top` gains `flex-wrap: wrap` so the "75 total" counter (and any other header items) wrap rather than being cut off. (3) Padding on `.page-header` and `.page-body` reduces from 32px to 20px at viewport ≤ 1100px to give the table more room before scrolling. (4) Mobile `@media (max-width: 900px)` block re-applies `body { overflow-x: hidden }` to preserve iOS behaviour.
+- Why: At 150% zoom the page clipped the right side of the table and the "75 total" header stat — the reference app scrolls the full page horizontally instead.
+- Files affected: `src/styles/custom.css`
+
+---
+
+## 2026-04-23 — Table scrolls horizontally at any zoom level
+
+- What changed: Added `white-space: nowrap` to `.table-wrap th` and `.table-wrap td` globally (was previously mobile-only). Added `min-width: 860px` to `.table-wrap table`. Detail-row expanded cells keep `white-space: normal` so their content still wraps.
+- Why: At 125% zoom, table cells were squashing and wrapping content (e.g. long company names) instead of triggering the `.table-wrap { overflow-x: auto }` horizontal scroll.
+- Files affected: `src/styles/custom.css`
+
+---
+
+## 2026-04-23 — Sidebar collapsed: hamburger icon, click to expand
+
+- What changed: Collapsed state now shows a ☰ hamburger icon at the top (instead of the company logo or an arrow). Clicking it expands the sidebar. The `<` collapse button only shows when expanded. Active nav icon highlights blue based on current route.
+- Why: User didn't want the company logo or arrow in collapsed state; wanted a standard hamburger affordance.
+- Files affected: `src/components/Sidebar.jsx`
+
+---
+
 ## 2026-04-23 — Sidebar collapsed: only nav icons, click to expand
 
 - What changed: Collapsed sidebar now shows zero chrome — no logo, no arrow button. Only the 3 nav item icons are visible. Clicking anywhere on the collapsed sidebar expands it (nav item clicks still navigate normally via stopPropagation). The `<` collapse button only appears in the expanded state.
