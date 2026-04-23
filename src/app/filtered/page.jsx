@@ -120,7 +120,7 @@ function getCriteriaLabel(detailed) {
   return matched.length > 0 ? matched.join(' + ') : 'Criterion';
 }
 
-function LeadDetailPanel({ lead, colSpan = 8 }) {
+function LeadDetailPanel({ lead }) {
   const rp = lead.raw_payload || {};
   const contact = rp.contact || {};
   const company = rp.company || {};
@@ -136,9 +136,7 @@ function LeadDetailPanel({ lead, colSpan = 8 }) {
   const hasUtm = utm.source || utm.medium || utm.campaign;
 
   return (
-    <tr className="detail-row">
-      <td colSpan={colSpan} className="detail-row-cell">
-        <div className="detail-panel">
+    <div className="detail-panel">
 
           {hasContactDetail && (
             <div className="detail-section">
@@ -293,20 +291,17 @@ function LeadDetailPanel({ lead, colSpan = 8 }) {
             </div>
           )}
 
-        </div>
-      </td>
-    </tr>
+    </div>
   );
 }
 
-function LeadRow({ lead }) {
-  const [expanded, setExpanded] = useState(false);
+function LeadRow({ lead, expanded, onToggle }) {
 
   return (
     <>
       <tr
         className={`lead-row${expanded ? ' lead-row-expanded' : ''}`}
-        onClick={() => setExpanded(e => !e)}
+        onClick={onToggle}
         style={{ cursor: 'pointer' }}
       >
         <td>
@@ -353,7 +348,6 @@ function LeadRow({ lead }) {
           </div>
         </td>
       </tr>
-      {expanded && <LeadDetailPanel lead={lead} colSpan={7} />}
     </>
   );
 }
@@ -401,7 +395,17 @@ export default function FilteredPage() {
   const [activeTab, setActiveTab] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
   const debounceRef = useRef(null);
+  const detailRef = useRef(null);
+
+  const expandedLead = leads.find(l => l.id === expandedId) ?? null;
+
+  useEffect(() => {
+    if (expandedId && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [expandedId]);
 
   function handleSearchChange(e) {
     const val = e.target.value;
@@ -548,11 +552,23 @@ export default function FilteredPage() {
                   </thead>
                   <tbody>
                     {leads.map(lead => (
-                      <LeadRow key={lead.id} lead={lead} />
+                      <LeadRow
+                        key={lead.id}
+                        lead={lead}
+                        expanded={lead.id === expandedId}
+                        onToggle={() => setExpandedId(id => id === lead.id ? null : lead.id)}
+                      />
                     ))}
                   </tbody>
                 </table>
               </div>
+              {/* Detail panel lives OUTSIDE the scroll table so it never scrolls
+                  left/right with the table columns — always full card width */}
+              {expandedLead && (
+                <div ref={detailRef} className="lead-detail-outer">
+                  <LeadDetailPanel lead={expandedLead} />
+                </div>
+              )}
             </div>
 
             {totalPages > 1 && (

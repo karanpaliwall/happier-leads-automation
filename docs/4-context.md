@@ -21,6 +21,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Detail panel moved outside scroll table (fixes mobile horizontal scroll)
+
+- What changed: `LeadDetailPanel` no longer renders as a `<tr>` inside the `<table>`. Instead it renders as a `<div class="lead-detail-outer">` placed after `</div.table-wrap>` but still inside the `.card`. `LeadRow` no longer owns `expanded` state — `FilteredPage` now owns `expandedId` and passes `expanded`/`onToggle` props to each `LeadRow`. A `scrollIntoView` effect fires when `expandedId` changes to bring the panel into view. Removed the `position:sticky; left:0; width:100vw` hack from mobile `.detail-panel` (no longer needed since the panel is outside the scroll container). Added `.lead-detail-outer { border-top, bg }` CSS.
+- Why: `position:sticky` on a `<div>` inside a `<td>` is unreliable in iOS Safari — the detail panel was scrolling left/right with the table. Moving the panel outside the `<table>` entirely is the architecturally correct fix.
+- Files affected: `src/app/filtered/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Mobile detail panel: structured 2-column label/value layout
 
 - What changed: Changed `.detail-grid` to `grid-template-columns: auto 1fr` on mobile. Added `display: contents` to `.detail-item` so each item's label and value become direct grid children — this causes all labels to auto-align in column 1 and all values in column 2 across the entire section, like a structured data form. Previously each item stacked label above value, requiring twice the vertical space and looking unstructured. Also tightened section padding from `16px 20px` → `12px 16px` on mobile. Restored `display: flex` for `.detail-item-row` (email + verified badge row) which is now a direct grid child.
