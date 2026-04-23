@@ -13,6 +13,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix lead detail panel font sizes on iOS (architectural fix)
+
+- What changed: Root cause identified: iOS applies text-size-adjust AFTER the CSS cascade, so `!important` font-size overrides have no effect. The boost factor = scroll-content-width / viewport-width = 860px / 390px ≈ 2.2×. Fix: constrain `.detail-panel` to `width: 100vw; max-width: 100vw` in the mobile media query so iOS sees a 1:1 ratio and applies zero boost. Added `position: sticky; left: 0` so the panel also anchors to the left edge of the visible area when the user scrolls the table sideways. Changed `.detail-panel { text-size-adjust: none }` → `100%` globally (none is ignored in some iOS versions and blocks accessibility zoom). Removed `!important` from font-size overrides now that the architectural fix is in place.
+- Why: Previous !important + text-size-adjust:none approach had no effect — iOS boosts after cascade. The only reliable fix is eliminating the width mismatch that triggers the boost.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix lead detail panel font sizes on iOS (text-size-adjust scroll container bug)
 
 - What changed: Added `-webkit-text-size-adjust: none; text-size-adjust: none` directly on `.detail-panel` (not just `html`). Also added `!important` to all mobile font-size overrides for detail panel elements. Root cause: iOS Safari recalculates text-size adjustment per scroll ancestor. The detail panel lives inside `.table-wrap { overflow-x: auto }` which has a scroll-content width of 860px inside a ~390px viewport — iOS was applying a ~2.2× size boost (860/390). Setting the property on `html` does not prevent this; it must be set on the element inside the scroll container.

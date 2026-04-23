@@ -349,12 +349,11 @@ body { overflow-x: hidden; }
   background: rgba(239, 68, 68, 0.14);
 }
 
-/* iOS Safari boosts text inside overflow scroll containers proportional to the
-   scroll-content width vs viewport width.  Must opt out directly on the panel,
-   not just on html, because the boost is recalculated per scroll-ancestor. */
+/* text-size-adjust on the panel — 100% is the safe value (none can block
+   user zoom and is ignored in some iOS versions) */
 .detail-panel {
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* ── Expandable row ── */
@@ -942,20 +941,38 @@ body { overflow-x: hidden; }
 
   /* Detail row cell MUST reset white-space — it inherits nowrap from the table
      which causes detail panel text to never wrap and appear clipped/huge on iOS */
-  .table-wrap .detail-row-cell { white-space: normal; }
-  .detail-panel { grid-template-columns: 1fr; }
+  .table-wrap .detail-row-cell {
+    white-space: normal;
+    padding: 0 !important;
+  }
+
+  /* KEY FIX: iOS calculates the text-size-adjust boost factor from
+     (scroll-content-width / viewport-width) = 860/390 ≈ 2.2×.
+     Constraining the panel to 100vw makes the factor 1.0 — no boost.
+     position:sticky + left:0 keeps the panel anchored to the visible
+     left edge while the rest of the table scrolls horizontally. */
+  .detail-panel {
+    position: sticky;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    box-sizing: border-box;
+    overflow: hidden;
+    grid-template-columns: 1fr;
+  }
   .detail-section { border-right: none; }
-  /* Explicit font sizes — !important because iOS text-size-adjust inside
-     scroll containers can override even directly-set values */
-  .detail-section-title { font-size: 11px !important; }
-  .detail-item-label { font-size: 11px !important; }
-  .detail-item-value { font-size: 13px !important; }
-  .detail-link { font-size: 13px !important; }
-  .score-breakdown-category { font-size: 12px !important; }
-  .score-breakdown-reason { font-size: 11px !important; }
-  .page-visit-path { font-size: 12px !important; }
-  .page-visit-meta { font-size: 11px !important; }
-  .verified-badge { font-size: 10px !important; }
+
+  /* Font sizes — explicit px values; now that the panel is constrained to
+     100vw these should render at the correct size without boosting */
+  .detail-section-title { font-size: 11px; }
+  .detail-item-label    { font-size: 11px; }
+  .detail-item-value    { font-size: 13px; }
+  .detail-link          { font-size: 13px; }
+  .score-breakdown-category { font-size: 12px; }
+  .score-breakdown-reason   { font-size: 11px; }
+  .page-visit-path { font-size: 12px; }
+  .page-visit-meta { font-size: 11px; }
+  .verified-badge  { font-size: 10px; }
 
   /* Prevent long names in flex rows from expanding beyond viewport */
   .person-cell { min-width: 0; }
