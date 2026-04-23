@@ -179,7 +179,7 @@ body { overflow-x: auto; }
 /* ── Stat cards v2 (Overview, with icon + colored top border) ── */
 .stat-grid-v2 {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -216,7 +216,7 @@ body { overflow-x: auto; }
 /* ── Overview grid layout ── */
 .overview-grid {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
 }
 .overview-status-card, .overview-recent-card {
@@ -837,8 +837,7 @@ body { overflow-x: auto; }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .stat-grid-v2 { grid-template-columns: repeat(2, 1fr); }
-  .overview-grid { grid-template-columns: 1fr; }
+  /* stat-grid-v2 and overview-grid use auto-fit so no override needed */
 }
 
 @media (max-width: 640px) {

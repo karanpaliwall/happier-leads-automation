@@ -493,7 +493,7 @@ export default function FilteredPage() {
           <div className="filter-divider" />
           <input
             className={`form-input${debouncedSearch ? ' has-value' : ''}`}
-            style={{ width: 240 }}
+            style={{ flex: 1, minWidth: 160, maxWidth: 320 }}
             placeholder="Search by name, company, email..."
             value={search}
             onChange={handleSearchChange}

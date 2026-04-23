@@ -8,7 +8,17 @@ export default function ClientLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    // Auto-collapse sidebar when viewport is narrow (high zoom or small screen)
+    function syncCollapse() {
+      if (window.innerWidth < 1100) setCollapsed(true);
+    }
+    syncCollapse();
+    window.addEventListener('resize', syncCollapse);
+    return () => window.removeEventListener('resize', syncCollapse);
+  }, []);
 
   if (pathname === '/login') {
     return <>{children}</>;
