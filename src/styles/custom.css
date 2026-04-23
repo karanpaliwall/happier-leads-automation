@@ -1199,11 +1199,17 @@ body { overflow-x: hidden; }
   .nav-overlay { display: block; }
   .sidebar-collapse-btn { display: none; }
 
-  /* Sidebar slides in as drawer */
+  /* Sidebar slides in as drawer.
+     .app-mounted .sidebar globally sets transition:width which has higher specificity
+     (0,2,0) than .sidebar here (0,1,0) and overrides the transform transition after
+     mount — making close/open instant. Re-declare with matching specificity to win. */
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     z-index: 50;
+  }
+  .app-mounted .sidebar {
+    transition: transform 0.25s ease;
   }
   .sidebar.sidebar-open { transform: translateX(0); }
 
@@ -1346,6 +1352,14 @@ body { overflow-x: hidden; }
 
   /* Larger touch targets for pagination */
   .page-btn { min-width: 44px; height: 44px; font-size: 14px; }
+
+  /* Chart filter: open popover and calendar above the button so they don't
+     push content down and require scrolling on small screens */
+  .overview-chart-card .chart-filter-popover,
+  .overview-chart-card .cal-popover {
+    top: auto;
+    bottom: calc(100% + 6px);
+  }
 }
 
 @media (max-width: 480px) {

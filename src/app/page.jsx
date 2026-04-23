@@ -40,7 +40,7 @@ function getRangeParams(range, from, to) {
 
 // ── Chart helpers ───────────────────────────────────────────────────────────
 const CM = { top: 12, right: 16, bottom: 32, left: 42 };
-const CVW = 600, CVH = 180;
+const CVW = 600, CVH = 240;
 const CPW = CVW - CM.left - CM.right;
 const CPH = CVH - CM.top - CM.bottom;
 
