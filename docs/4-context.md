@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Sidebar collapsed: only nav icons, click to expand
+
+- What changed: Collapsed sidebar now shows zero chrome — no logo, no arrow button. Only the 3 nav item icons are visible. Clicking anywhere on the collapsed sidebar expands it (nav item clicks still navigate normally via stopPropagation). The `<` collapse button only appears in the expanded state.
+- Why: User didn't want arrow; wanted clean 3-icon strip.
+- Files affected: `src/components/Sidebar.jsx`
+
+---
+
 ## 2026-04-23 — Sidebar: static app name + hide logo when collapsed
 
 - What changed: (1) Subtitle below brand name now always shows "Website Traffic Signal" instead of dynamically reflecting the current page. (2) Logo image and brand text are hidden when sidebar is collapsed — only the expand arrow button remains in the brand area.
