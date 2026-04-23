@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Compact page header + Export CSV button on Leads page
+
+- What changed: (1) `.page-header` padding reduced from `24px 32px 20px` → `12px 32px 10px`; `.page-body` padding reduced from `24px 32px` → `16px 32px` — brings header height in line with reference app. (2) `Export CSV` button added top-right of Leads page header; exports current page's leads to a dated `.csv` file with columns: Name, Email, Company, Domain, Type, Fit Score, Engagement Score, Received. Button disabled when no leads are loaded. `.export-csv-btn` CSS class added to `custom.css`.
+- Why: Page header was taking up excessive vertical space compared to the reference. User also requested an Export CSV button matching the reference app's top-right placement.
+- Files affected: `src/styles/custom.css`, `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Leads page: removed checkboxes and delete
 
 - What changed: Stripped checkbox column, select-all, toggleOne, toggleAll, handleDelete, and the "Delete selected" button from `src/app/filtered/page.jsx`. `colSpan` on the detail panel corrected from 8 → 7 to match the reduced column count.
