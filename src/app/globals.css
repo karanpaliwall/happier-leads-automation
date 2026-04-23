@@ -2,9 +2,9 @@
 /* This file intentionally minimal; all design tokens live in reference.css + custom.css */
 
 /* Prevent iOS font inflation and horizontal page zoom */
-html {
+html, body {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  overflow-x: hidden;
 }
+html { overflow-x: hidden; }
 body { overflow-x: hidden; }

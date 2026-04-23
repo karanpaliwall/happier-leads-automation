@@ -851,6 +851,22 @@
   .table-wrap .person-cell,
   .table-wrap .company-cell { white-space: normal; }
 
+  /* Detail row cell MUST reset white-space — it inherits nowrap from the table
+     which causes detail panel text to never wrap and appear clipped/huge on iOS */
+  .table-wrap .detail-row-cell { white-space: normal; }
+  .detail-panel { grid-template-columns: 1fr; }
+  .detail-section { border-right: none; }
+  /* Explicit font sizes so iOS can't boost them */
+  .detail-section-title { font-size: 10px; }
+  .detail-item-label { font-size: 10px; }
+  .detail-item-value { font-size: 12px; }
+  .detail-link { font-size: 12px; }
+  .score-breakdown-category { font-size: 11px; }
+  .score-breakdown-reason { font-size: 10px; }
+  .page-visit-path { font-size: 11px; }
+  .page-visit-meta { font-size: 10px; }
+  .verified-badge { font-size: 9px; }
+
   /* Prevent long names in flex rows from expanding beyond viewport */
   .person-cell { min-width: 0; }
   .person-cell > div:last-child { min-width: 0; overflow: hidden; }
@@ -861,9 +877,6 @@
 
   /* Larger touch targets for pagination */
   .page-btn { min-width: 44px; height: 44px; font-size: 14px; }
-
-  .detail-panel { grid-template-columns: 1fr; }
-  .detail-section { border-right: none; }
 }
 
 @media (max-width: 480px) {
