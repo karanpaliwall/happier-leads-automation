@@ -601,13 +601,6 @@ export default function FilteredPage() {
             ))}
           </div>
           <div className="filter-divider" />
-          <input
-            className={`form-input${debouncedSearch ? ' has-value' : ''}`}
-            style={{ flex: 1, minWidth: 160, maxWidth: 320 }}
-            placeholder="Search by name, company, email..."
-            value={search}
-            onChange={handleSearchChange}
-          />
           <div className="time-filter-group">
             <button
               className={`time-filter-btn${timeFilter === '24h' ? ' active' : ''}`}
@@ -656,6 +649,13 @@ export default function FilteredPage() {
               )}
             </div>
           </div>
+          <input
+            className={`form-input${debouncedSearch ? ' has-value' : ''}`}
+            style={{ flex: 1, minWidth: 160, maxWidth: 320 }}
+            placeholder="Search by name, company, email..."
+            value={search}
+            onChange={handleSearchChange}
+          />
           {hasFilters && (
             <button className="clear-filters-btn" onClick={clearFilters}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
