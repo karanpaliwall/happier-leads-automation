@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Past 24h chart: relative X-axis labels (−23h → now)
+
+- What changed: `fmtAxisDate` for hourly granularity now returns relative labels (`−23h`, `−19h`, `−15h`, `−12h`, `−8h`, `−4h`, `now`) instead of absolute clock times (`11 PM`, `3 AM`, …). Absolute times confused users when the rolling 24h window crosses midnight — `11 PM` appeared left of `3 AM` even though 11 PM is later in the clock day. Relative labels always increase left→right. Hover tooltip still shows exact clock time.
+- Why: User saw "11 PM · 3 AM · 7 AM" and perceived the X-axis as unordered/random because PM appeared before AM.
+- Files affected: `src/app/page.jsx`
+
+---
+
 ## 2026-04-24 — Past 24h chart: fill all 24 hourly buckets for ordered timeline
 
 - What changed: Added `fillHourGaps()` in `page.jsx`. Previously `LeadsChart` in hourly mode only plotted hours that had actual lead data, so the X-axis jumped between sparse points (e.g. "11 PM → 4 AM → 7 AM") looking unordered. `fillHourGaps` generates exactly 24 UTC hourly buckets from `nowH - 23h` to `nowH`, zero-filling any missing hours. `LeadsChart` `useMemo` now calls `fillHourGaps` for hourly granularity instead of returning raw points.
