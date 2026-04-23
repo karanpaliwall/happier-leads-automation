@@ -57,6 +57,24 @@ function fillGaps(pts) {
   return out;
 }
 
+function fillHourGaps(pts) {
+  const now   = Date.now();
+  const nowH  = now - (now % 3600000);        // floor to current UTC hour
+  const startH = nowH - 23 * 3600000;         // 24 buckets: 23h ago → now
+
+  const map = {};
+  pts.forEach(p => {
+    const t = new Date(p.date).getTime();
+    map[t - (t % 3600000)] = p;               // normalize key to hour start
+  });
+
+  const out = [];
+  for (let t = startH; t <= nowH; t += 3600000) {
+    out.push(map[t] ?? { date: new Date(t).toISOString(), total: 0, exact: 0, suggested: 0 });
+  }
+  return out;
+}
+
 function smoothPath(pts2d) {
   if (!pts2d.length) return '';
   if (pts2d.length === 1) return `M ${pts2d[0][0]} ${pts2d[0][1]}`;
@@ -77,7 +95,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
   const [hoverIdx, setHoverIdx] = useState(null);
 
   const points = useMemo(
-    () => granularity === 'day' ? fillGaps(rawPoints ?? []) : (rawPoints ?? []),
+    () => granularity === 'day' ? fillGaps(rawPoints ?? []) : fillHourGaps(rawPoints ?? []),
     [rawPoints, granularity]
   );
 
