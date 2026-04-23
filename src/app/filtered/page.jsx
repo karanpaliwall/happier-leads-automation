@@ -299,24 +299,16 @@ function LeadDetailPanel({ lead, colSpan = 8 }) {
   );
 }
 
-function LeadRow({ lead, selected, onToggle }) {
+function LeadRow({ lead }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <>
       <tr
-        className={`lead-row${expanded ? ' lead-row-expanded' : ''}${selected ? ' lead-row-selected' : ''}`}
+        className={`lead-row${expanded ? ' lead-row-expanded' : ''}`}
         onClick={() => setExpanded(e => !e)}
         style={{ cursor: 'pointer' }}
       >
-        <td className="checkbox-cell" onClick={e => e.stopPropagation()}>
-          <input
-            type="checkbox"
-            className="row-checkbox"
-            checked={selected}
-            onChange={() => onToggle(lead.id)}
-          />
-        </td>
         <td>
           <div className="person-cell">
             <div className="avatar-initials">{getInitials(lead.full_name)}</div>
@@ -361,7 +353,7 @@ function LeadRow({ lead, selected, onToggle }) {
           </div>
         </td>
       </tr>
-      {expanded && <LeadDetailPanel lead={lead} colSpan={8} />}
+      {expanded && <LeadDetailPanel lead={lead} colSpan={7} />}
     </>
   );
 }
@@ -385,8 +377,6 @@ export default function FilteredPage() {
   const [activeTab, setActiveTab] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState(new Set());
-  const [deleting, setDeleting] = useState(false);
   const debounceRef = useRef(null);
 
   function handleSearchChange(e) {
@@ -407,42 +397,6 @@ export default function FilteredPage() {
     setSearch('');
     setDebouncedSearch('');
     setPage(1);
-  }
-
-  function toggleOne(id) {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    if (selectedIds.size === leads.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(leads.map(l => l.id)));
-    }
-  }
-
-  async function handleDelete() {
-    const ids = Array.from(selectedIds);
-    const confirmed = window.confirm(`Delete ${ids.length} lead${ids.length !== 1 ? 's' : ''}? This cannot be undone.`);
-    if (!confirmed) return;
-    setDeleting(true);
-    try {
-      await fetch('/api/leads', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids }),
-      });
-      setSelectedIds(new Set());
-      await fetchLeads();
-    } catch (err) {
-      console.error('Delete failed:', err);
-    } finally {
-      setDeleting(false);
-    }
   }
 
   const hasFilters = activeTab !== '' || debouncedSearch !== '';
@@ -472,10 +426,6 @@ export default function FilteredPage() {
     return () => clearInterval(interval);
   }, [fetchLeads]);
 
-  useEffect(() => { setSelectedIds(new Set()); }, [leads]);
-
-  const allSelected = leads.length > 0 && selectedIds.size === leads.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < leads.length;
   const totalPages = Math.ceil(total / 25);
 
   return (
@@ -524,15 +474,6 @@ export default function FilteredPage() {
               Clear
             </button>
           )}
-          {selectedIds.size > 0 && (
-            <button className="delete-selected-btn" onClick={handleDelete} disabled={deleting}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-              </svg>
-              {deleting ? 'Deleting…' : `Delete ${selectedIds.size} selected`}
-            </button>
-          )}
         </div>
 
         {loading ? (
@@ -554,15 +495,6 @@ export default function FilteredPage() {
                 <table>
                   <thead>
                     <tr>
-                      <th className="checkbox-cell">
-                        <input
-                          type="checkbox"
-                          className="row-checkbox"
-                          checked={allSelected}
-                          ref={el => { if (el) el.indeterminate = someSelected; }}
-                          onChange={toggleAll}
-                        />
-                      </th>
                       <th>Person</th>
                       <th>Company</th>
                       <th>Type</th>
@@ -584,12 +516,7 @@ export default function FilteredPage() {
                   </thead>
                   <tbody>
                     {leads.map(lead => (
-                      <LeadRow
-                        key={lead.id}
-                        lead={lead}
-                        selected={selectedIds.has(lead.id)}
-                        onToggle={toggleOne}
-                      />
+                      <LeadRow key={lead.id} lead={lead} />
                     ))}
                   </tbody>
                 </table>
