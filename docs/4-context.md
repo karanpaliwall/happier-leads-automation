@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Mobile: detail panel font inflation + white-space nowrap inheritance
+
+- What changed:
+  - Fixed root cause of large fonts in expanded lead rows: `.table-wrap table { white-space: nowrap }` was cascading into the detail panel `<td>`, making every text node a single unbroken line. iOS then treated those wide lines as needing font inflation.
+  - Added `white-space: normal` to `.table-wrap .detail-row-cell` — resets inheritance at the cell boundary so all detail panel text wraps normally.
+  - Added explicit `font-size` overrides for every detail panel class at 768px (`.detail-item-label`, `.detail-item-value`, `.detail-link`, `.detail-section-title`, etc.) so iOS autosizing cannot multiply them.
+  - Added `-webkit-text-size-adjust: 100%` to `body` as well as `html`.
+- Why: iPhone testing showed expanded row detail panel rendering text at ~1.5× the intended size due to inherited `nowrap` causing iOS font boosting.
+- Files affected: `src/styles/custom.css`, `src/app/globals.css`.
+
 ## 2026-04-23 — Mobile: viewport zoom + font inflation + flex overflow fixes
 
 - What changed:
