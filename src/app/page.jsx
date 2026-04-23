@@ -105,8 +105,9 @@ export default function OverviewPage() {
             }
             sub={(stats.newTodayExact > 0 || stats.newTodaySuggested > 0) ? (
               <div className="stat-card-breakdown">
-                <span style={{ color: 'var(--green-400)' }}>{stats.newTodayExact} exact</span>
-                <span style={{ color: 'var(--orange-400)' }}>{stats.newTodaySuggested} suggested</span>
+                <span style={{ color: 'var(--green-400)' }}>{stats.newTodayExact} Exact</span>
+                <span style={{ color: 'var(--text-muted)' }}>/</span>
+                <span style={{ color: 'var(--orange-400)' }}>{stats.newTodaySuggested} Suggested</span>
               </div>
             ) : null}
           />
