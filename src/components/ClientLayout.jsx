@@ -16,17 +16,22 @@ export default function ClientLayout({ children }) {
 
   return (
     <div className={`app-layout${mounted ? ' app-mounted' : ''}`}>
-      <button
-        className="hamburger-btn"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open menu"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
+      {/* Full-width mobile header bar — hidden on desktop */}
+      <header className="mobile-header">
+        <button
+          className="mobile-header-menu"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <img src="/favicon.png" alt="Growleads" width="28" height="28" style={{ borderRadius: '8px' }} />
+        <div style={{ width: 36 }} />
+      </header>
 
       {sidebarOpen && (
         <div className="nav-overlay" onClick={() => setSidebarOpen(false)} />
