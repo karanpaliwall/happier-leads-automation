@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix blank space on right of expanded lead detail panel
+
+- What changed: Changed `.detail-panel` grid from `repeat(auto-fill, minmax(260px, 1fr))` to `repeat(auto-fit, ...)`. `auto-fill` was creating ghost/empty columns on wide viewports when only 4 sections rendered, leaving a blank gap to the right of the last section. `auto-fit` collapses empty tracks so sections always stretch to fill the full card width.
+- Why: User reported blank spacing to the right of the Visit Intelligence section in the expanded row.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Full cross-device compatibility (Android, tablet, notched phones)
 
 - What changed: (1) **`viewport-fit=cover`** added to `layout.jsx` viewport export — allows content to extend into the safe area on notched phones (iPhone X+, Android punch-hole cameras); without this the mobile header is clipped behind the status bar notch. (2) **`touch-action: manipulation`** added globally on `button, a, label, input, select, textarea, [role="button"]` — removes the 300ms tap delay on Android Chrome and older iOS Safari, and prevents double-tap zoom on all touch devices. (3) **Safe-area-inset support** added in `@media (max-width: 640px)`: `.mobile-header` height is `calc(52px + env(safe-area-inset-top))` and padding-top matches so content sits below the notch; `.main-content` padding-top matches the taller header; `.page-body` padding-bottom is `calc(16px + env(safe-area-inset-bottom))` so the last row isn't hidden behind the iOS home indicator or Android gesture bar. All `env()` values fall back to `0` on devices without a notch so non-notched Android/older iOS are unaffected.
