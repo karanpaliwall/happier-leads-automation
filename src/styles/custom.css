@@ -380,7 +380,7 @@ body { overflow-x: hidden; }
 }
 .detail-panel {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0;
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
