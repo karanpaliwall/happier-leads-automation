@@ -358,6 +358,30 @@ function LeadRow({ lead }) {
   );
 }
 
+function exportCSV(leads) {
+  const headers = ['Name', 'Email', 'Company', 'Domain', 'Type', 'Fit Score', 'Engagement Score', 'Received'];
+  const rows = leads.map(l => [
+    l.full_name || '',
+    l.email || '',
+    l.company_name || '',
+    l.company_domain || '',
+    l.lead_type || '',
+    l.fit_score ?? '',
+    l.engagement_score ?? '',
+    l.received_at ? new Date(l.received_at).toLocaleString() : '',
+  ]);
+  const csv = [headers, ...rows]
+    .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 const TABS = [
   { label: 'All Leads', value: '' },
   { label: 'Exact', value: 'exact' },
@@ -436,8 +460,16 @@ export default function FilteredPage() {
             <h1 className="page-title">Leads</h1>
             <p className="page-subtitle">All identified visitors · click any row to expand full details</p>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            {total} result{total !== 1 ? 's' : ''}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{total} result{total !== 1 ? 's' : ''}</span>
+            <button className="export-csv-btn" onClick={() => exportCSV(leads)} disabled={leads.length === 0}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export CSV
+            </button>
           </div>
         </div>
       </div>
