@@ -816,8 +816,16 @@
     flex-wrap: wrap;
     gap: 8px;
   }
+  /* Override inline width styles on filter inputs */
+  .filter-bar .form-input,
+  .filter-bar .form-select { width: 100% !important; }
 
-  .table-wrap { overflow-x: auto; }
+  /* Table scrolls horizontally; min-width keeps columns from collapsing */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 640px; }
+
+  /* Larger touch targets for pagination */
+  .page-btn { min-width: 40px; height: 40px; }
 
   .detail-panel {
     grid-template-columns: 1fr;
@@ -834,6 +842,15 @@
   .stat-card-v2-value { font-size: 24px; }
   .recent-lead-row { flex-wrap: wrap; gap: 6px; }
   .overview-status-card, .overview-recent-card { padding: 16px 14px; }
+
+  /* Stack page-header right-side count below the title on tiny screens */
+  .page-header-top { flex-wrap: wrap; gap: 4px; }
+
+  /* Tabs pill wraps on very small screens */
+  .tabs-pill { flex-wrap: wrap; }
+
+  /* Person name truncates instead of causing overflow */
+  .person-cell > div > div:first-child { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
 /* ── Login page ── */
