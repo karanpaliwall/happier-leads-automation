@@ -806,10 +806,10 @@ body { overflow-x: hidden; }
   margin-left: 60px !important;
 }
 
-/* Table scroll at any zoom level — cells don't wrap, wrapper scrolls horizontally */
-.table-wrap table { min-width: 860px; }
-.table-wrap th,
-.table-wrap td { white-space: nowrap; }
+/* Desktop: header cells never wrap (short labels); body cells wrap freely so long
+   company names don't force horizontal scroll. min-width + full nowrap live only
+   in the mobile media query below where horizontal scroll is intentional. */
+.table-wrap th { white-space: nowrap; }
 .table-wrap .detail-row-cell { white-space: normal; }
 
 /* ── Mobile top header bar (replaces floating hamburger) ── */

@@ -13,6 +13,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix desktop table horizontal scroll caused by nowrap
+
+- What changed: Removed `min-width: 860px` and `white-space: nowrap` from the global `.table-wrap table` and `.table-wrap td` rules. These were applied to ALL viewports, forcing long company names (e.g. "broadcast engineering consultants india") to never wrap and pushing the table past the desktop viewport width. Both rules already exist in the `@media (max-width: 640px)` block where horizontal scroll is intentional. Desktop table cells now wrap naturally; only `<th>` cells keep `white-space: nowrap` so column headers stay on one line.
+- Why: Users on desktop were seeing a horizontal scrollbar and had to scroll left/right to see data that should fit comfortably on screen.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Mobile detail panel: structured 2-column label/value layout
 
 - What changed: Changed `.detail-grid` to `grid-template-columns: auto 1fr` on mobile. Added `display: contents` to `.detail-item` so each item's label and value become direct grid children — this causes all labels to auto-align in column 1 and all values in column 2 across the entire section, like a structured data form. Previously each item stacked label above value, requiring twice the vertical space and looking unstructured. Also tightened section padding from `16px 20px` → `12px 16px` on mobile. Restored `display: flex` for `.detail-item-row` (email + verified badge row) which is now a direct grid child.
