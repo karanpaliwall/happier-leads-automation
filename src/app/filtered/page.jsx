@@ -381,6 +381,80 @@ function exportCSV(leads) {
   URL.revokeObjectURL(url);
 }
 
+const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAL_DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function fmtCalDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}-${m}-${y}`;
+}
+
+function CalendarPicker({ from, to, onSelect, onClear }) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const seed = from ? new Date(from + 'T00:00:00') : new Date();
+  const [vy, setVy] = useState(seed.getFullYear());
+  const [vm, setVm] = useState(seed.getMonth());
+
+  const firstDow = new Date(vy, vm, 1).getDay();
+  const dim = new Date(vy, vm + 1, 0).getDate();
+
+  function iso(d) {
+    return `${vy}-${String(vm + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  function clickDay(d) {
+    const s = iso(d);
+    if (!from || (from && to)) { onSelect(s, ''); }
+    else if (s >= from) { onSelect(from, s); }
+    else { onSelect(s, ''); }
+  }
+
+  function prev() { if (vm === 0) { setVy(y => y - 1); setVm(11); } else setVm(m => m - 1); }
+  function next() { if (vm === 11) { setVy(y => y + 1); setVm(0); } else setVm(m => m + 1); }
+
+  const cells = [...Array(firstDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
+
+  return (
+    <div className="cal-popover">
+      <div className="cal-nav-row">
+        <span className="cal-month-title">{CAL_MONTHS[vm]}, {vy}
+          <svg style={{ marginLeft: 4, verticalAlign: 'middle', opacity: 0.5 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <button className="cal-nav-btn" onClick={prev}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button className="cal-nav-btn" onClick={next}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+      </div>
+      <div className="cal-grid">
+        {CAL_DAYS.map(dl => <div key={dl} className="cal-dow">{dl}</div>)}
+        {cells.map((d, i) => {
+          if (d === null) return <div key={`e${i}`} />;
+          const s = iso(d);
+          const sel = s === from || s === to;
+          const inRange = from && to && s > from && s < to;
+          const isToday = s === todayIso;
+          return (
+            <button
+              key={d}
+              className={`cal-day${sel ? ' cal-sel' : isToday ? ' cal-today' : ''}${inRange ? ' cal-range' : ''}`}
+              onClick={() => clickDay(d)}
+            >{d}</button>
+          );
+        })}
+      </div>
+      <div className="cal-footer-row">
+        <button className="cal-foot-btn" onClick={onClear}>Clear</button>
+        <button className="cal-foot-btn cal-foot-today" onClick={() => onSelect(todayIso, todayIso)}>Today</button>
+      </div>
+    </div>
+  );
+}
+
 const TABS = [
   { label: 'All Leads', value: '' },
   { label: 'Exact', value: 'exact' },
@@ -530,49 +604,32 @@ export default function FilteredPage() {
             >7d</button>
             <div className="cal-wrap" ref={calRef}>
               <button
-                className={`time-filter-btn cal-toggle-btn${(calFrom || calTo) ? ' active' : ''}`}
+                className={`cal-range-trigger${(calFrom || calTo || showCal) ? ' active' : ''}`}
                 onClick={() => setShowCal(v => !v)}
-                title="Filter by date range"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                   <line x1="16" y1="2" x2="16" y2="6"/>
                   <line x1="8" y1="2" x2="8" y2="6"/>
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
-                {(calFrom || calTo) && (
-                  <span className="cal-range-label">
-                    {calFrom || '…'} → {calTo || '…'}
-                  </span>
-                )}
+                <span className={calFrom ? 'cal-val' : 'cal-placeholder'}>{calFrom ? fmtCalDate(calFrom) : 'dd-mm-yyyy'}</span>
+                <span className="cal-sep">—</span>
+                <span className={calTo ? 'cal-val' : 'cal-placeholder'}>{calTo ? fmtCalDate(calTo) : 'dd-mm-yyyy'}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
               </button>
               {showCal && (
-                <div className="cal-popover">
-                  <div className="cal-field">
-                    <label className="cal-label">From</label>
-                    <input
-                      className="cal-date-input"
-                      type="date"
-                      value={calFrom}
-                      max={calTo || undefined}
-                      onChange={e => { setCalFrom(e.target.value); setTimeFilter(''); }}
-                    />
-                  </div>
-                  <div className="cal-field">
-                    <label className="cal-label">To</label>
-                    <input
-                      className="cal-date-input"
-                      type="date"
-                      value={calTo}
-                      min={calFrom || undefined}
-                      onChange={e => { setCalTo(e.target.value); setTimeFilter(''); }}
-                    />
-                  </div>
-                  <div className="cal-footer">
-                    <button className="cal-clear-btn" onClick={() => { setCalFrom(''); setCalTo(''); }}>Clear</button>
-                    <button className="cal-apply-btn" onClick={() => { setPage(1); setShowCal(false); }}>Apply</button>
-                  </div>
-                </div>
+                <CalendarPicker
+                  from={calFrom}
+                  to={calTo}
+                  onSelect={(f, t) => { setCalFrom(f); setCalTo(t); setTimeFilter(''); if (t) { setPage(1); setShowCal(false); } }}
+                  onClear={() => { setCalFrom(''); setCalTo(''); }}
+                />
               )}
             </div>
           </div>
