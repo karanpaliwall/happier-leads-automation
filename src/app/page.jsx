@@ -1,15 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 
 const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0, newTodayExact: 0, newTodaySuggested: 0 };
-let _cache = { leads: [], stats: DEFAULT_STATS, lastReceived: null };
-
-function getInitials(name) {
-  if (!name) return '??';
-  return name.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2);
-}
+let _cache = { stats: DEFAULT_STATS, lastReceived: null };
 
 function fmtAxisDate(iso) {
   const d = new Date(iso + 'T00:00:00Z');
@@ -305,10 +299,9 @@ function StatCard({ label, value, color, accent, icon, sub }) {
 
 // ── Page ────────────────────────────────────────────────────────────────────
 export default function OverviewPage() {
-  const [leads,       setLeads]       = useState(_cache.leads);
-  const [stats,       setStats]       = useState(_cache.stats);
-  const [loading,     setLoading]     = useState(_cache.leads.length === 0);
-  const [lastReceived,setLastReceived]= useState(_cache.lastReceived);
+  const [stats,        setStats]       = useState(_cache.stats);
+  const [loading,      setLoading]     = useState(_cache.stats.total === 0);
+  const [lastReceived, setLastReceived]= useState(_cache.lastReceived);
 
   const [chartRange,   setChartRange]   = useState('30d');
   const [chartFrom,    setChartFrom]    = useState('');
@@ -318,14 +311,12 @@ export default function OverviewPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res  = await fetch('/api/leads?limit=5');
+      const res  = await fetch('/api/leads?limit=1');
       const data = await res.json();
       _cache = {
-        leads:        data.leads ?? [],
         stats:        data.stats ?? DEFAULT_STATS,
         lastReceived: data.leads?.[0]?.received_at ?? null,
       };
-      setLeads(_cache.leads);
       setStats(_cache.stats);
       setLastReceived(_cache.lastReceived);
     } catch (err) { console.error('Failed to fetch:', err); }
@@ -419,22 +410,7 @@ export default function OverviewPage() {
               />
             </div>
 
-            {/* Lead activity chart */}
-            <div className="card overview-chart-card">
-              <div className="card-header">
-                <div>
-                  <h3 className="card-title">Lead Activity</h3>
-                  <p className="chart-subtitle">Daily leads received</p>
-                </div>
-                <ChartFilter
-                  range={chartRange} from={chartFrom} to={chartTo}
-                  onChange={handleRangeChange}
-                />
-              </div>
-              <LeadsChart rawPoints={chartPoints} loading={chartLoading} />
-            </div>
-
-            {/* Pipeline + Recent leads */}
+            {/* Pipeline Status + Lead Activity chart */}
             <div className="overview-grid">
               <div className="card overview-status-card">
                 <div className="card-header">
@@ -467,43 +443,18 @@ export default function OverviewPage() {
                 </div>
               </div>
 
-              <div className="card overview-recent-card">
+              <div className="card overview-chart-card">
                 <div className="card-header">
-                  <h3 className="card-title">Recent Leads</h3>
-                  <Link href="/filtered" className="card-link">View all →</Link>
+                  <div>
+                    <h3 className="card-title">Lead Activity</h3>
+                    <p className="chart-subtitle">Daily leads received</p>
+                  </div>
+                  <ChartFilter
+                    range={chartRange} from={chartFrom} to={chartTo}
+                    onChange={handleRangeChange}
+                  />
                 </div>
-                {loading ? (
-                  <div className="skeleton-list">
-                    {[1, 2, 3].map(i => <div key={i} className="skeleton-row" />)}
-                  </div>
-                ) : leads.length === 0 ? (
-                  <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-                    No leads yet — waiting for first visitor
-                  </div>
-                ) : (
-                  <div className="recent-leads-list">
-                    {leads.map(lead => (
-                      <div key={lead.id} className="recent-lead-row">
-                        <div className="person-cell">
-                          <div className="avatar-initials">{getInitials(lead.full_name)}</div>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                              {lead.full_name || '—'}
-                            </div>
-                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                              {lead.company_name || '—'}
-                            </div>
-                          </div>
-                        </div>
-                        {lead.lead_type && (
-                          <span className={`badge badge-${lead.lead_type}`}>
-                            {lead.lead_type.charAt(0).toUpperCase() + lead.lead_type.slice(1)}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <LeadsChart rawPoints={chartPoints} loading={chartLoading} />
               </div>
             </div>
           </>
