@@ -166,7 +166,7 @@ export default function OverviewPage() {
           <div className="card overview-recent-card">
             <div className="card-header">
               <h3 className="card-title">Recent Leads</h3>
-              <Link href="/leads" className="card-link">View all →</Link>
+              <Link href="/filtered" className="card-link">View all →</Link>
             </div>
 
             {loading ? (

@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Removed duplicate Leads page; Filter renamed to Leads
+
+- What changed: Deleted `src/app/leads/` entirely (frontend page + all its components). Sidebar now has 2 nav items: Overview (`/`) and Leads (`/filtered`). The old Filter entry was renamed to "Leads" and given the people icon. Overview page "View all →" link updated from `/leads` to `/filtered`. The `/api/leads` backend API route is untouched.
+- Why: Two tabs (Leads + Filter) were redundant — both showed the same lead table. Consolidating to one cleaner "Leads" entry pointing at the filtered page.
+- Files affected: `src/app/leads/` (deleted), `src/components/Sidebar.jsx`, `src/app/page.jsx`
+
+---
+
 ## 2026-04-23 — Responsive layout: horizontal scroll at high zoom, tighter padding
 
 - What changed: (1) `body { overflow-x: auto }` on desktop overrides the reference.css `hidden` — page now scrolls horizontally at high zoom (150%+) instead of clipping content, matching the reference app behaviour. (2) `page-header-top` gains `flex-wrap: wrap` so the "75 total" counter (and any other header items) wrap rather than being cut off. (3) Padding on `.page-header` and `.page-body` reduces from 32px to 20px at viewport ≤ 1100px to give the table more room before scrolling. (4) Mobile `@media (max-width: 900px)` block re-applies `body { overflow-x: hidden }` to preserve iOS behaviour.
