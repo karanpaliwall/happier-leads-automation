@@ -343,6 +343,14 @@ body { overflow-x: hidden; }
   background: rgba(239, 68, 68, 0.14);
 }
 
+/* iOS Safari boosts text inside overflow scroll containers proportional to the
+   scroll-content width vs viewport width.  Must opt out directly on the panel,
+   not just on html, because the boost is recalculated per scroll-ancestor. */
+.detail-panel {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
 /* ── Expandable row ── */
 .lead-row { transition: background 0.12s; }
 .lead-row:hover { background: rgba(255,255,255,0.04); }
@@ -919,16 +927,17 @@ body { overflow-x: hidden; }
   .table-wrap .detail-row-cell { white-space: normal; }
   .detail-panel { grid-template-columns: 1fr; }
   .detail-section { border-right: none; }
-  /* Explicit font sizes so iOS can't boost them */
-  .detail-section-title { font-size: 10px; }
-  .detail-item-label { font-size: 10px; }
-  .detail-item-value { font-size: 12px; }
-  .detail-link { font-size: 12px; }
-  .score-breakdown-category { font-size: 11px; }
-  .score-breakdown-reason { font-size: 10px; }
-  .page-visit-path { font-size: 11px; }
-  .page-visit-meta { font-size: 10px; }
-  .verified-badge { font-size: 9px; }
+  /* Explicit font sizes — !important because iOS text-size-adjust inside
+     scroll containers can override even directly-set values */
+  .detail-section-title { font-size: 11px !important; }
+  .detail-item-label { font-size: 11px !important; }
+  .detail-item-value { font-size: 13px !important; }
+  .detail-link { font-size: 13px !important; }
+  .score-breakdown-category { font-size: 12px !important; }
+  .score-breakdown-reason { font-size: 11px !important; }
+  .page-visit-path { font-size: 12px !important; }
+  .page-visit-meta { font-size: 11px !important; }
+  .verified-badge { font-size: 10px !important; }
 
   /* Prevent long names in flex rows from expanding beyond viewport */
   .person-cell { min-width: 0; }

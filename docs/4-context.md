@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix lead detail panel font sizes on iOS (text-size-adjust scroll container bug)
+
+- What changed: Added `-webkit-text-size-adjust: none; text-size-adjust: none` directly on `.detail-panel` (not just `html`). Also added `!important` to all mobile font-size overrides for detail panel elements. Root cause: iOS Safari recalculates text-size adjustment per scroll ancestor. The detail panel lives inside `.table-wrap { overflow-x: auto }` which has a scroll-content width of 860px inside a ~390px viewport — iOS was applying a ~2.2× size boost (860/390). Setting the property on `html` does not prevent this; it must be set on the element inside the scroll container.
+- Why: Detail panel labels and values appeared ~2× too large on iPhone (e.g. "Chief Executive Officer" rendering at ~22px instead of 13px).
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — iOS mobile UX fixes
 
 - What changed: (1) **iOS auto-zoom on inputs** — `font-size: 16px !important` added to `.form-input`, `.form-select`, `.login-input` inside `@media (max-width: 640px)`. iOS Safari auto-zooms the viewport when the focused input has font-size < 16px; this prevents that entirely. (2) **Sidebar single-tap open on mobile** — `Sidebar.jsx` now computes `isCollapsed = collapsed && !open`. When the sidebar is open as a mobile drawer (`open=true`), it always renders fully expanded regardless of the desktop `collapsed` state. Previously the sidebar slid in but showed icon-only mode because `collapsed=true`, requiring a second tap on the hamburger inside the drawer. (3) **Removed logo from mobile header** — Removed the `<img src="/favicon.png">` from the mobile header bar in `ClientLayout.jsx`; it duplicated the logo already shown in the sidebar. Mobile header now only contains the hamburger button. `.mobile-header` changed from `justify-content: space-between` to `flex-start`. (4) **× → ← left arrow on mobile close** — Sidebar close button SVG replaced from × (two crossing lines) to a left-pointing arrow (line + arrowhead). (5) **iOS font size auto-adjustment disabled** — Added `html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }` to prevent iOS Safari from overriding explicit px font sizes in the lead detail panel and elsewhere.
