@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Leads page: removed checkboxes and delete
+
+- What changed: Stripped checkbox column, select-all, toggleOne, toggleAll, handleDelete, and the "Delete selected" button from `src/app/filtered/page.jsx`. `colSpan` on the detail panel corrected from 8 → 7 to match the reduced column count.
+- Why: User doesn't want leads to be deletable from the UI.
+- Files affected: `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Leads page: click-to-expand rows, checkboxes, delete
 
 - What changed: `src/app/filtered/page.jsx` fully upgraded — added `LeadRow` (click-to-expand with chevron indicator), `LeadDetailPanel` (Contact Details, Company Details, Fit Score Breakdown, Visit Intelligence, UTM Attribution sections), checkbox select-all/individual, bulk delete with confirmation, and `ColHeader` tooltips on Fit Score and Engagement columns. Page title changed from "Filtered" to "Leads" and subtitle updated to match.
