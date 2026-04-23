@@ -49,10 +49,12 @@ export async function GET(req) {
     `,
     sql`
       SELECT
-        COUNT(*)                                                  AS total,
-        COUNT(*) FILTER (WHERE received_at >= CURRENT_DATE)       AS new_today,
-        COUNT(*) FILTER (WHERE lead_type = 'exact')               AS exact_count,
-        COUNT(*) FILTER (WHERE lead_type = 'suggested')           AS suggested_count
+        COUNT(*)                                                                              AS total,
+        COUNT(*) FILTER (WHERE received_at >= CURRENT_DATE)                                 AS new_today,
+        COUNT(*) FILTER (WHERE lead_type = 'exact')                                         AS exact_count,
+        COUNT(*) FILTER (WHERE lead_type = 'suggested')                                     AS suggested_count,
+        COUNT(*) FILTER (WHERE received_at >= CURRENT_DATE AND lead_type = 'exact')         AS new_today_exact,
+        COUNT(*) FILTER (WHERE received_at >= CURRENT_DATE AND lead_type = 'suggested')     AS new_today_suggested
       FROM leads
     `,
   ]);
@@ -64,10 +66,12 @@ export async function GET(req) {
     leads: cleanLeads,
     total,
     stats: {
-      total:     parseInt(statsRows[0].total),
-      newToday:  parseInt(statsRows[0].new_today),
-      exact:     parseInt(statsRows[0].exact_count),
-      suggested: parseInt(statsRows[0].suggested_count),
+      total:           parseInt(statsRows[0].total),
+      newToday:        parseInt(statsRows[0].new_today),
+      exact:           parseInt(statsRows[0].exact_count),
+      suggested:       parseInt(statsRows[0].suggested_count),
+      newTodayExact:   parseInt(statsRows[0].new_today_exact),
+      newTodaySuggested: parseInt(statsRows[0].new_today_suggested),
     },
   });
 }

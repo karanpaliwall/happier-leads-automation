@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 
-const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0 };
+const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0, newTodayExact: 0, newTodaySuggested: 0 };
 
 // Module-level cache — survives tab navigation, shows instantly on remount
 let _cache = { leads: [], stats: DEFAULT_STATS, lastReceived: null };
@@ -22,7 +22,7 @@ function getInitials(name) {
   return name.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function StatCard({ label, value, color, accent, icon }) {
+function StatCard({ label, value, color, accent, icon, sub }) {
   return (
     <div className="stat-card-v2" style={{ borderTopColor: accent }}>
       <div className="stat-card-v2-top">
@@ -30,6 +30,7 @@ function StatCard({ label, value, color, accent, icon }) {
         <span className="stat-card-v2-icon" style={{ color: accent }}>{icon}</span>
       </div>
       <div className="stat-card-v2-value" style={{ color }}>{value}</div>
+      {sub}
     </div>
   );
 }
@@ -102,6 +103,12 @@ export default function OverviewPage() {
                 <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
               </svg>
             }
+            sub={(stats.newTodayExact > 0 || stats.newTodaySuggested > 0) ? (
+              <div className="stat-card-breakdown">
+                <span style={{ color: 'var(--green-400)' }}>{stats.newTodayExact} exact</span>
+                <span style={{ color: 'var(--orange-400)' }}>{stats.newTodaySuggested} suggested</span>
+              </div>
+            ) : null}
           />
           <StatCard
             label="Exact Leads"
