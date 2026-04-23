@@ -67,6 +67,9 @@ Returns paginated leads for the dashboard.
 - `limit` — integer, default 25, max 100
 - `type` — `"exact"` | `"suggested"` | omit for all
 - `search` — text, searches company_name and full_name
+- `since` — ISO timestamp; filters `received_at >= since` (used by 24h / 7d quick filters)
+- `dateFrom` — ISO date string `YYYY-MM-DD`; filters `received_at::date >= dateFrom`
+- `dateTo` — ISO date string `YYYY-MM-DD`; filters `received_at::date <= dateTo`
 
 **Response:**
 ```json
@@ -91,6 +94,8 @@ Returns paginated leads for the dashboard.
   "stats": {
     "total": 205,
     "newToday": 12,
+    "newTodayExact": 8,
+    "newTodaySuggested": 4,
     "exact": 87,
     "suggested": 118
   }
