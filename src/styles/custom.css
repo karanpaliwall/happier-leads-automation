@@ -1156,10 +1156,22 @@ body { overflow-x: hidden; }
     gap: 5px;
   }
 
-  /* Font sizes — match desktop so iOS boost (if any) doesn't inflate them */
+  /* Font sizes.
+     display:flex on .detail-item-value is the key iOS fix: TextAutosizer (the
+     column-based font inflation algorithm, separate from text-size-adjust) only
+     inflates block-level elements. Flex containers and their children are exempt,
+     which is why the email row (already flex via .detail-item-row) renders at the
+     correct size while plain block divs were getting ~2x inflated. */
   .detail-section-title { font-size: 11px; }
   .detail-item-label    { font-size: 11px; }
-  .detail-item-value    { font-size: 12px; }
+  .detail-item-value    {
+    font-size: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    min-width: 0;
+    word-break: break-word;
+  }
   .detail-link          { font-size: 12px; }
   .score-breakdown-category { font-size: 12px; }
   .score-breakdown-reason   { font-size: 11px; }
