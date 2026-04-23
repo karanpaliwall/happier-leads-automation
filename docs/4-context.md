@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Move chart into Recent Leads card slot; remove Recent Leads
+
+- What changed: Removed the Recent Leads card from the overview-grid. The Lead Activity chart now occupies that right-column slot (side by side with Pipeline Status). Removed the standalone full-width chart card that was above the grid. `fetchData` now fetches `limit=1` instead of `limit=5` since the leads list no longer renders. Removed `leads` state, `getInitials`, and `Link` import.
+- Why: User clarified they wanted the chart inside the Recent Leads box, not as a separate section.
+- Files affected: `src/app/page.jsx`
+
+---
+
 ## 2026-04-24 — Animated lead activity chart on Overview page
 
 - What changed: Added `GET /api/leads/chart` returning daily lead counts (total/exact/suggested) grouped by date with optional `dateFrom`/`dateTo` filters. Added a pure-SVG `LeadsChart` component to the Overview page: smooth cubic-bezier curves, gradient area fills, draw-in animation on mount (RAF-driven easing, 1.1s), hover crosshair + tooltip showing date + counts per type. Added `ChartFilter` dropdown with 5 quick presets (7/14/30/90 days, all time) + custom date range inputs. Removed relative timestamps ("1h ago") from Recent Leads list — chart provides temporal context; Last Lead Received now shows full date. Fixed excessive bottom spacing on Overview by overriding `min-height: 100vh` on `.main-content` (reference.css sets this but app-layout already has it). New CSS classes: `.overview-chart-card`, `.chart-subtitle`, `.chart-outer`, `.chart-svg`, `.chart-tooltip`, `.chart-tip-date`, `.chart-tip-row`, `.chart-legend`, `.chart-leg`, `.chart-leg-dot`, `.chart-filter-btn`, `.chart-filter-popover`, `.chart-filter-opt`, `.chart-filter-sep`, `.chart-filter-custom`, `.chart-date-input`.
