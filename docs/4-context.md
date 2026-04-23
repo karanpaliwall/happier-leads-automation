@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Time-based filters on Leads page (24h, 7d, calendar range)
+
+- What changed: Added three filter controls to the right of the search bar — "24h", "7d" toggle buttons and a calendar icon button that opens a date-range picker (From / To). Active time filter is highlighted in blue. Selecting a quick filter clears the calendar range and vice versa. "Clear" button now resets time filters too. `GET /api/leads` extended with `since` (ISO timestamp), `dateFrom`, `dateTo` (ISO date strings) query params; WHERE clause filters `received_at` accordingly. New CSS classes: `.time-filter-group`, `.time-filter-btn`, `.cal-wrap`, `.cal-popover`, `.cal-field`, `.cal-date-input`, `.cal-footer`, `.cal-clear-btn`, `.cal-apply-btn`.
+- Why: User requested date-range filtering to narrow leads to recent activity or a specific period.
+- Files affected: `src/app/filtered/page.jsx`, `src/app/api/leads/route.js`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix blank space on right of expanded lead detail panel
 
 - What changed: Changed `.detail-panel` grid from `repeat(auto-fill, minmax(260px, 1fr))` to `repeat(auto-fit, ...)`. `auto-fill` was creating ghost/empty columns on wide viewports when only 4 sections rendered, leaving a blank gap to the right of the last section. `auto-fit` collapses empty tracks so sections always stretch to fill the full card width.
