@@ -5,6 +5,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Login page polish: icon size, brand spacing, input background
+
+- What changed:
+  - Logo icon bumped from `52px` → `64px` (border-radius `12px` → `14px`) to match the reference.
+  - `.login-brand` `margin-bottom` increased `28px` → `36px`; icon `margin-bottom` `14px` → `16px`; brand name font-size `18px` → `20px`; subtitle `13px` → `14px`.
+  - `.login-input` background changed from `var(--bg-secondary)` (`#111426`) to `var(--bg-hover)` (`#1a1e2e`) — the old value was *darker* than the card (`--bg-card` = `#161929`), making the input recede. `--bg-hover` is lighter than the card, matching the reference's visible input contrast.
+- Why: User compared against dashboard.growleads.io reference and noted input field had a different (darker) theme and logo/text felt misaligned.
+- Files affected: `src/app/login/page.jsx`, `src/styles/custom.css`.
+
 ## 2026-04-23 — Login card width matched to dashboard.growleads.io reference
 
 - What changed:
