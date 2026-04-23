@@ -5,6 +5,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — New Today card: Exact / Suggested breakdown
+
+- What changed: `GET /api/leads` stats query now returns two additional fields: `newTodayExact` and `newTodaySuggested` (COUNT with CURRENT_DATE + lead_type filter). `StatCard` component accepts an optional `sub` prop rendered below the value. The New Today card passes a breakdown row — `"X Exact / Y Suggested"` — with exact in green (`--green-400`) and suggested in orange (`--orange-400`), separated by a muted `/`. Only renders when at least one is non-zero. Added `.stat-card-breakdown` CSS class (flex, 11px, 600 weight). `DEFAULT_STATS` extended with `newTodayExact: 0, newTodaySuggested: 0`.
+- Why: User wanted to see today's exact vs suggested split directly on the stat card without navigating to the Leads page.
+- Files affected: `src/app/api/leads/route.js`, `src/app/page.jsx`, `src/styles/custom.css`
+
+---
+
+## 2026-04-24 — Remove redundant "78 results" count from Leads page header
+
+- What changed: Removed the `{total} result{s}` `<span>` from the top-right of the Leads page header. The count is already visible in the tab pills (All Leads 78, Exact 60, Suggested 18).
+- Why: Duplicate information cluttered the header.
+- Files affected: `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Fix mobile detail panel font inflation (iOS text-size-adjust)
 
 - What changed: In `@media (max-width: 640px)`, reduced `.detail-item-value` and `.detail-link` from `13px` to `12px` (matching desktop sizes). Added `-webkit-text-size-adjust: none; text-size-adjust: none` to the `.detail-panel` override in the mobile block so iOS cannot boost fonts even when the horizontally-scrollable table outside triggers boost detection.
