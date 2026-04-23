@@ -5,11 +5,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Mobile UX overhaul (header bar, page zoom fix, table scroll)
+
+- What changed:
+  - Replaced floating `position: fixed` hamburger button with a full-width mobile header bar (`mobile-header`): hamburger on left, Growleads favicon centered, fixed at top 52px. Fixes missing logo on mobile and the "floating navbar" feel.
+  - Removed `min-width: 640px` on table — that was telling iOS the page is 640px wide causing it to zoom out the whole page. Switched to `white-space: nowrap` on table cells instead; table scrolls horizontally inside its wrapper without affecting page zoom.
+  - Added `overflow-x: hidden` to `html` and `body` in `globals.css` as a hard viewport-width bound for iOS/Android.
+  - Table wrapper uses `-webkit-overflow-scrolling: touch` for smooth swipe-scroll on iOS.
+  - Pagination touch targets bumped to `44×44px` (Apple HIG minimum).
+  - `person-cell` and `company-cell` stay `white-space: normal` so names/companies still wrap inside their flex cells.
+- Why: iPhone 16 testing showed logo missing, full-page zoom required to see table, and floating button felt disconnected.
+- Files affected: `src/components/ClientLayout.jsx`, `src/styles/custom.css`, `src/app/globals.css`.
+
 ## 2026-04-23 — Mobile responsive hardening (filter inputs, table scroll, touch targets)
 
 - What changed:
   - Filter bar inputs had `style={{ width: 220px / 140px }}` as inline styles — added `!important` CSS override so they go full-width at 768px.
-  - Table gets `min-width: 640px` + `-webkit-overflow-scrolling: touch` so columns stay readable and swipe-scroll works on iOS.
   - Pagination buttons bumped to `40×40px` for easier tapping.
   - Page header wraps at 480px so the count doesn't collide with the title.
   - Person name truncates with `…` at 480px instead of overflowing.
