@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Export CSV includes full detail panel data from raw_payload
+
+- What changed: `exportCSV()` now adds 21 new columns extracted from `l.raw_payload`: Personal Email, Position, Phone, Location (city/state/country joined), Contact Type, Sector, Industry, Company Country, Employees Range, Est. Revenue, Year Founded, Total Visits, Total Duration (formatted), First Visit (Yes/No), Referrer, IP Address, Pages Visited (semicolon-separated URLs), UTM Source, UTM Medium, UTM Campaign, UTM Term.
+- Why: Previous CSV only had the 9 top-level DB columns. The expand-panel detail data (contact/company/visit intelligence/UTM) was visible in the UI but not exported.
+- Files affected: `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Export CSV fetches all leads respecting active tab/filters
 
 - What changed: Replaced `onClick={() => exportCSV(leads)}` (exports current page only) with async `handleExportCSV()`. Paginates `/api/leads` with `limit=100` and the same active filters (tab type, search, timeFilter, calFrom/calTo) until all leads are fetched, then calls `exportCSV()` with the full array. Button shows "Exporting…" and is disabled while fetching. Added `linkedin_url` column to the CSV. Tab filter is respected: All/Exact/Suggested tabs export only leads of that type.

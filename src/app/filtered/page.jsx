@@ -358,18 +358,57 @@ function LeadRow({ lead, expanded, onToggle }) {
 }
 
 function exportCSV(leads) {
-  const headers = ['Name', 'Email', 'LinkedIn', 'Company', 'Domain', 'Type', 'Fit Score', 'Engagement Score', 'Received'];
-  const rows = leads.map(l => [
-    l.full_name || '',
-    l.email || '',
-    l.linkedin_url || '',
-    l.company_name || '',
-    l.company_domain || '',
-    l.lead_type || '',
-    l.fit_score ?? '',
-    l.engagement_score ?? '',
-    l.received_at ? new Date(l.received_at).toLocaleString() : '',
-  ]);
+  const headers = [
+    'Name', 'Email', 'LinkedIn', 'Company', 'Domain', 'Type', 'Fit Score', 'Engagement Score', 'Received',
+    'Personal Email', 'Position', 'Phone', 'Location', 'Contact Type',
+    'Sector', 'Industry', 'Company Country', 'Employees Range', 'Est. Revenue', 'Year Founded',
+    'Total Visits', 'Total Duration', 'First Visit', 'Referrer', 'IP Address', 'Pages Visited',
+    'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Term',
+  ];
+  const rows = leads.map(l => {
+    const rp = l.raw_payload || {};
+    const contact = rp.contact || {};
+    const company = rp.company || {};
+    const summary = rp.summary || {};
+    const utm = rp.utm || {};
+    const geo = rp.geo || rp.location || {};
+    const location = [geo.city, geo.state, geo.country].filter(Boolean).join(', ');
+    const pages = Array.isArray(rp.pageVisits)
+      ? rp.pageVisits.map(p => p.url || p.page || p).filter(Boolean).join('; ')
+      : '';
+    return [
+      l.full_name || '',
+      l.email || '',
+      l.linkedin_url || '',
+      l.company_name || '',
+      l.company_domain || '',
+      l.lead_type || '',
+      l.fit_score ?? '',
+      l.engagement_score ?? '',
+      l.received_at ? new Date(l.received_at).toLocaleString() : '',
+      contact.personalEmail || '',
+      contact.position || '',
+      contact.phone || '',
+      location,
+      contact.contactType || '',
+      company.sector || '',
+      company.industry || '',
+      company.country || '',
+      company.employeesRange || '',
+      company.estimatedAnnualRevenue || '',
+      company.yearFounded || '',
+      summary.visits ?? '',
+      summary.duration ? formatDuration(summary.duration) : '',
+      rp.isFirstVisit != null ? (rp.isFirstVisit ? 'Yes' : 'No') : '',
+      rp.referrer || '',
+      rp.ip || '',
+      pages,
+      utm.source || '',
+      utm.medium || '',
+      utm.campaign || '',
+      utm.term || '',
+    ];
+  });
   const csv = [headers, ...rows]
     .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
     .join('\n');
