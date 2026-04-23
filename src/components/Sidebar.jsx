@@ -48,18 +48,15 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       <div className="sidebar-brand">
         {collapsed ? (
           <button
-            className="sidebar-brand-icon"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '4px 0', color: 'var(--text-muted)' }}
           >
-            <img
-              src="/favicon.png"
-              alt="Growleads"
-              width="32"
-              height="32"
-              style={{ objectFit: 'contain', display: 'block' }}
-            />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
           </button>
         ) : (
           <>
