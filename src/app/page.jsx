@@ -8,7 +8,11 @@ let _cache = { stats: DEFAULT_STATS, lastReceived: null };
 function fmtAxisDate(iso, granularity) {
   const d = new Date(iso);
   if (granularity === 'hour') {
-    return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'UTC' });
+    // Relative labels so the axis always reads left→right in clear order.
+    // Absolute times (11 PM → 3 AM) confuse users when the window crosses midnight.
+    const hoursAgo = Math.round((Date.now() - d.getTime()) / 3600000);
+    if (hoursAgo <= 0) return 'now';
+    return `−${hoursAgo}h`;
   }
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
