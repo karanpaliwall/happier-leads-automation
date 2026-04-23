@@ -37,7 +37,7 @@ export default function LoginPage() {
       <div className="login-container">
         <div className="login-brand">
           <div className="login-brand-icon">
-            <img src="/favicon.png" alt="Growleads" width="64" height="64" style={{ display: 'block', borderRadius: '14px' }} />
+            <img src="/favicon.png" alt="Growleads" width="44" height="44" style={{ display: 'block', borderRadius: '10px' }} />
           </div>
           <div className="login-brand-name">Growleads</div>
           <div className="login-brand-sub">Website Traffic Signal</div>
