@@ -39,8 +39,6 @@ export default function ClientLayout({ children }) {
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <img src="/favicon.png" alt="Growleads" width="28" height="28" style={{ borderRadius: '8px' }} />
-        <div style={{ width: 36 }} />
       </header>
 
       {sidebarOpen && (

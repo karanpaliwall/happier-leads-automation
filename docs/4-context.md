@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — iOS mobile UX fixes
+
+- What changed: (1) **iOS auto-zoom on inputs** — `font-size: 16px !important` added to `.form-input`, `.form-select`, `.login-input` inside `@media (max-width: 640px)`. iOS Safari auto-zooms the viewport when the focused input has font-size < 16px; this prevents that entirely. (2) **Sidebar single-tap open on mobile** — `Sidebar.jsx` now computes `isCollapsed = collapsed && !open`. When the sidebar is open as a mobile drawer (`open=true`), it always renders fully expanded regardless of the desktop `collapsed` state. Previously the sidebar slid in but showed icon-only mode because `collapsed=true`, requiring a second tap on the hamburger inside the drawer. (3) **Removed logo from mobile header** — Removed the `<img src="/favicon.png">` from the mobile header bar in `ClientLayout.jsx`; it duplicated the logo already shown in the sidebar. Mobile header now only contains the hamburger button. `.mobile-header` changed from `justify-content: space-between` to `flex-start`. (4) **× → ← left arrow on mobile close** — Sidebar close button SVG replaced from × (two crossing lines) to a left-pointing arrow (line + arrowhead). (5) **iOS font size auto-adjustment disabled** — Added `html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }` to prevent iOS Safari from overriding explicit px font sizes in the lead detail panel and elsewhere.
+- Why: iOS Safari was auto-zooming on password field focus; sidebar required two taps to show nav labels; duplicate logo in header; × felt wrong (no back/close affordance); detail panel text appeared very large on iOS due to text-size adjustment.
+- Files affected: `src/components/Sidebar.jsx`, `src/components/ClientLayout.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-23 — Fix table horizontal scroll at high zoom levels
 
 - What changed: Three-part CSS fix in `custom.css`: (1) `body { overflow-x: hidden }` — was `auto`, which caused the body to expand to fit the table's 860px min-width, meaning `.table-wrap`'s own `overflow-x: auto` scrollbar never fired (no overflow detected). (2) `.main-content { min-width: 0 }` — flex items default to `min-width: auto` (content size), which prevented `.main-content` from shrinking below 860px even with body hidden; `min-width: 0` lets it shrink to viewport width. (3) `.card { overflow: clip }` — overrides `reference.css`'s `.card { overflow: hidden }`; `hidden` creates a scroll container that could intercept child scrollers, `clip` visually clips without creating one, allowing `.table-wrap`'s scrollbar to appear correctly.

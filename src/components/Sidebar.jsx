@@ -31,13 +31,16 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const pathname = usePathname();
+  // When open as a mobile drawer, always show the full expanded state regardless of
+  // the desktop collapsed setting — prevents needing two taps to see nav labels
+  const isCollapsed = collapsed && !open;
 
   return (
     <aside
-      className={`sidebar${open ? ' sidebar-open' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}
+      className={`sidebar${open ? ' sidebar-open' : ''}${isCollapsed ? ' sidebar-collapsed' : ''}`}
     >
       <div className="sidebar-brand">
-        {collapsed ? (
+        {isCollapsed ? (
           <button
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
@@ -64,21 +67,22 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
               <div className="sidebar-brand-name">Growleads</div>
               <div className="sidebar-brand-sub">Website Traffic Signal</div>
             </div>
-            <button
-              className="sidebar-collapse-btn"
-              onClick={onToggleCollapse}
-              aria-label="Collapse sidebar"
-              style={{ marginLeft: 'auto' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            {open && (
+            {open ? (
               <button className="sidebar-close-btn" onClick={onClose} aria-label="Close menu">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                className="sidebar-collapse-btn"
+                onClick={onToggleCollapse}
+                aria-label="Collapse sidebar"
+                style={{ marginLeft: 'auto' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
             )}
@@ -87,17 +91,17 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       </div>
 
       <nav className="sidebar-nav">
-        {!collapsed && <p className="sidebar-section-label">Pipeline</p>}
+        {!isCollapsed && <p className="sidebar-section-label">Pipeline</p>}
         {NAV_ITEMS.map(item => (
           <Link
             key={item.href}
             href={item.href}
             className={`sidebar-item${pathname === item.href ? ' active' : ''}`}
-            onClick={!collapsed ? onClose : undefined}
-            title={collapsed ? item.label : undefined}
+            onClick={!isCollapsed ? onClose : undefined}
+            title={isCollapsed ? item.label : undefined}
           >
             {item.icon}
-            {!collapsed && <span>{item.label}</span>}
+            {!isCollapsed && <span>{item.label}</span>}
           </Link>
         ))}
       </nav>
@@ -108,10 +112,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
           alignItems: 'center',
           gap: 8,
           padding: '10px 16px',
-          justifyContent: collapsed ? 'center' : 'flex-start',
+          justifyContent: isCollapsed ? 'center' : 'flex-start',
         }}>
           <span className="dot-green" />
-          {!collapsed && (
+          {!isCollapsed && (
             <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--green-400)' }}>Connected</span>
           )}
         </div>

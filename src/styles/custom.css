@@ -1,5 +1,9 @@
 /* custom.css — Happier Leads additions on top of reference.css */
 
+/* Prevent iOS Safari from auto-adjusting font sizes on rotation or zoom.
+   Without this, explicit px sizes in media queries are ignored on iOS. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 /* Body must stay hidden so it doesn't expand to fit the table's min-width.
    Expansion defeats table-wrap's own overflow-x:auto scroll container.
    Mobile @media block below also sets hidden. */
@@ -805,7 +809,7 @@ body { overflow-x: hidden; }
   border-bottom: 1px solid var(--border-color);
   z-index: 46;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 0 14px;
 }
 .mobile-header-menu {
@@ -882,6 +886,11 @@ body { overflow-x: hidden; }
   }
 
   .stat-grid-v2 { grid-template-columns: 1fr 1fr; }
+
+  /* iOS auto-zooms on any input with font-size < 16px — override to prevent */
+  .form-input,
+  .form-select,
+  .login-input { font-size: 16px !important; }
 
   /* Filter bar: inputs go full-width when wrapped */
   .filter-bar { flex-wrap: wrap; gap: 8px; }
