@@ -18,8 +18,11 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const page   = Math.max(1, parseInt(searchParams.get('page')  || '1'));
   const limit  = Math.min(100, parseInt(searchParams.get('limit') || '25'));
-  const type   = searchParams.get('type')   || null;
-  const search = searchParams.get('search') || null;
+  const type     = searchParams.get('type')     || null;
+  const search   = searchParams.get('search')   || null;
+  const since    = searchParams.get('since')    || null;
+  const dateFrom = searchParams.get('dateFrom') || null;
+  const dateTo   = searchParams.get('dateTo')   || null;
   const offset = (page - 1) * limit;
   const searchPattern = search ? `%${search}%` : '%';
 
@@ -38,6 +41,9 @@ export async function GET(req) {
           company_name ILIKE ${searchPattern}
           OR full_name  ILIKE ${searchPattern}
         )
+        AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
+        AND (${dateFrom}::date IS NULL OR received_at::date >= ${dateFrom}::date)
+        AND (${dateTo}::date IS NULL OR received_at::date <= ${dateTo}::date)
       ORDER BY received_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `,

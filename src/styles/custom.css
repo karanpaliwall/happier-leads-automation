@@ -330,6 +330,121 @@ body { overflow-x: hidden; }
   color: var(--blue-400);
 }
 
+/* ── Time filter buttons + calendar picker ── */
+.time-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.time-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--bg-tertiary, rgba(255,255,255,0.04));
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.time-filter-btn:hover {
+  background: rgba(255,255,255,0.07);
+  color: var(--text-primary);
+}
+.time-filter-btn.active {
+  background: rgba(59,130,246,0.15);
+  color: var(--blue-400);
+  border-color: rgba(59,130,246,0.35);
+}
+.cal-range-label {
+  font-size: 11px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-wrap {
+  position: relative;
+}
+.cal-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.cal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cal-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cal-date-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 6px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.cal-date-input:focus {
+  outline: none;
+  border-color: var(--blue-500);
+}
+.cal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-color);
+}
+.cal-clear-btn {
+  padding: 5px 10px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.cal-clear-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+.cal-apply-btn {
+  padding: 5px 12px;
+  background: var(--blue-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+.cal-apply-btn:hover { background: var(--blue-500); }
+
 /* ── Clear filters button ── */
 .clear-filters-btn {
   display: flex;

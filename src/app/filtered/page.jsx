@@ -396,8 +396,13 @@ export default function FilteredPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [timeFilter, setTimeFilter] = useState('');
+  const [calFrom, setCalFrom] = useState('');
+  const [calTo, setCalTo] = useState('');
+  const [showCal, setShowCal] = useState(false);
   const debounceRef = useRef(null);
   const detailRef = useRef(null);
+  const calRef = useRef(null);
 
   const expandedLead = leads.find(l => l.id === expandedId) ?? null;
 
@@ -406,6 +411,15 @@ export default function FilteredPage() {
       detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [expandedId]);
+
+  useEffect(() => {
+    if (!showCal) return;
+    function onClickOutside(e) {
+      if (calRef.current && !calRef.current.contains(e.target)) setShowCal(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [showCal]);
 
   function handleSearchChange(e) {
     const val = e.target.value;
@@ -424,15 +438,22 @@ export default function FilteredPage() {
     setActiveTab('');
     setSearch('');
     setDebouncedSearch('');
+    setTimeFilter('');
+    setCalFrom('');
+    setCalTo('');
     setPage(1);
   }
 
-  const hasFilters = activeTab !== '' || debouncedSearch !== '';
+  const hasFilters = activeTab !== '' || debouncedSearch !== '' || timeFilter !== '' || calFrom !== '' || calTo !== '';
 
   const fetchLeads = useCallback(async () => {
     const params = new URLSearchParams({ page, limit: 25 });
     if (activeTab) params.set('type', activeTab);
     if (debouncedSearch) params.set('search', debouncedSearch);
+    if (timeFilter === '24h') params.set('since', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    else if (timeFilter === '7d') params.set('since', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+    if (calFrom) params.set('dateFrom', calFrom);
+    if (calTo) params.set('dateTo', calTo);
     try {
       const res = await fetch(`/api/leads?${params}`);
       const data = await res.json();
@@ -445,7 +466,7 @@ export default function FilteredPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, activeTab, debouncedSearch]);
+  }, [page, activeTab, debouncedSearch, timeFilter, calFrom, calTo]);
 
   useEffect(() => {
     setLoading(true);
@@ -502,6 +523,63 @@ export default function FilteredPage() {
             value={search}
             onChange={handleSearchChange}
           />
+          <div className="time-filter-group">
+            <button
+              className={`time-filter-btn${timeFilter === '24h' ? ' active' : ''}`}
+              onClick={() => { setTimeFilter(t => t === '24h' ? '' : '24h'); setCalFrom(''); setCalTo(''); setPage(1); }}
+            >24h</button>
+            <button
+              className={`time-filter-btn${timeFilter === '7d' ? ' active' : ''}`}
+              onClick={() => { setTimeFilter(t => t === '7d' ? '' : '7d'); setCalFrom(''); setCalTo(''); setPage(1); }}
+            >7d</button>
+            <div className="cal-wrap" ref={calRef}>
+              <button
+                className={`time-filter-btn cal-toggle-btn${(calFrom || calTo) ? ' active' : ''}`}
+                onClick={() => setShowCal(v => !v)}
+                title="Filter by date range"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {(calFrom || calTo) && (
+                  <span className="cal-range-label">
+                    {calFrom || '…'} → {calTo || '…'}
+                  </span>
+                )}
+              </button>
+              {showCal && (
+                <div className="cal-popover">
+                  <div className="cal-field">
+                    <label className="cal-label">From</label>
+                    <input
+                      className="cal-date-input"
+                      type="date"
+                      value={calFrom}
+                      max={calTo || undefined}
+                      onChange={e => { setCalFrom(e.target.value); setTimeFilter(''); }}
+                    />
+                  </div>
+                  <div className="cal-field">
+                    <label className="cal-label">To</label>
+                    <input
+                      className="cal-date-input"
+                      type="date"
+                      value={calTo}
+                      min={calFrom || undefined}
+                      onChange={e => { setCalTo(e.target.value); setTimeFilter(''); }}
+                    />
+                  </div>
+                  <div className="cal-footer">
+                    <button className="cal-clear-btn" onClick={() => { setCalFrom(''); setCalTo(''); }}>Clear</button>
+                    <button className="cal-apply-btn" onClick={() => { setPage(1); setShowCal(false); }}>Apply</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           {hasFilters && (
             <button className="clear-filters-btn" onClick={clearFilters}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
