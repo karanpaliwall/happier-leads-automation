@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Mobile: chart height, calendar upward, sidebar slide animation
+
+- What changed: Increased `CVH` from 180 to 240 — chart is now ~33% taller on all screens (mobile: ~119px at 298px width instead of ~89px). Added mobile CSS so the chart filter popover and `CalendarPicker` open *above* the trigger button (not below), preventing the calendar from pushing content off-screen. Fixed sidebar slide-in/out animation on mobile: `.app-mounted .sidebar { transition: width }` (specificity 0,2,0) was overriding the mobile `.sidebar { transition: transform }` (0,1,0) after mount, making the close button instant. Re-declared `transition: transform 0.25s ease` under `.app-mounted .sidebar` inside the `@media (max-width: 640px)` block to restore the smooth slide.
+- Why: Chart too small on mobile; calendar required scrolling; sidebar close button was abrupt while hamburger/overlay tap was smooth.
+- Files affected: `src/app/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix chart blank data; CalendarPicker in filter; rename to Analytics
 
 - What changed: Fixed root cause of "No lead data for this period" — Neon's `@neondatabase/serverless` driver returns PostgreSQL `date`/`timestamptz` columns as JS `Date` objects. `JSON.stringify` turns them into full ISO strings (`"2026-04-24T00:00:00.000Z"`). `fillGaps` was appending `T00:00:00Z` to the already-ISO string → `Invalid Date` → comparison `d <= end` always `false` → loop never ran → empty array. Fix: added `toDay`/`toTs` helpers in chart route that normalize Date objects to `YYYY-MM-DD` / ISO strings before response. Also fixed `useMemo` in `LeadsChart` to skip `fillGaps` for hourly granularity (24h mode). Replaced `<input type="date">` fields in `ChartFilter` with the same `CalendarPicker` + `cal-range-trigger` used on the Leads page — "Custom Range" option now shows the visual calendar popup. Renamed card title from "Lead Activity" to "Analytics".
