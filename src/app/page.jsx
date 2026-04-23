@@ -100,13 +100,21 @@ function LeadsChart({ rawPoints, granularity, loading }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   // localCVH: target ~220px rendered height on narrow containers; CVH on wide ones.
   // ResizeObserver fires after first paint and keeps it live on resize.
-  const [localCVH, setLocalCVH] = useState(CVH);
+  const [localCVH,      setLocalCVH]      = useState(CVH);
+  const [localFontSize, setLocalFontSize] = useState(9);
 
   useEffect(() => {
     if (!outerRef.current) return;
     const ro = new ResizeObserver(([e]) => {
       const w = e.contentRect.width;
-      setLocalCVH(w > 0 && w < 520 ? Math.round(220 * CVW / w) : CVH);
+      if (w > 0 && w < 520) {
+        setLocalCVH(Math.round(220 * CVW / w));
+        // Target ~11px rendered; font in SVG coords = 11 * (CVW / w)
+        setLocalFontSize(Math.round(11 * CVW / w));
+      } else {
+        setLocalCVH(CVH);
+        setLocalFontSize(9);
+      }
     });
     ro.observe(outerRef.current);
     return () => ro.disconnect();
@@ -212,7 +220,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
               stroke="rgba(255,255,255,0.055)" strokeWidth="1"
             />
             <text x={CM.left - 6} y={yP(t) + 4} textAnchor="end"
-              style={{ fontSize: 9, fill: 'rgba(148,163,184,0.65)', fontFamily: 'inherit' }}>
+              style={{ fontSize: localFontSize, fill: 'rgba(148,163,184,0.65)', fontFamily: 'inherit' }}>
               {t}
             </text>
           </g>
@@ -221,7 +229,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
         {/* X labels */}
         {xTicks.map(idx => (
           <text key={idx} x={xP(idx)} y={localCVH - 5} textAnchor="middle"
-            style={{ fontSize: 9, fill: 'rgba(148,163,184,0.65)', fontFamily: 'inherit' }}>
+            style={{ fontSize: localFontSize, fill: 'rgba(148,163,184,0.65)', fontFamily: 'inherit' }}>
             {fmtAxisDate(points[idx].date, granularity)}
           </text>
         ))}
