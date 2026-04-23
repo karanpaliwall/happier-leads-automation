@@ -102,6 +102,24 @@ Returns paginated leads for the dashboard.
 }
 ```
 
+### GET /api/leads/chart
+Returns daily lead counts for the line chart on the Overview page.
+
+**Query params:**
+- `dateFrom` — ISO date `YYYY-MM-DD`; inclusive lower bound
+- `dateTo` — ISO date `YYYY-MM-DD`; inclusive upper bound (omit for today)
+
+**Response:**
+```json
+{
+  "points": [
+    { "date": "2026-04-22", "total": 45, "exact": 30, "suggested": 15 },
+    { "date": "2026-04-23", "total": 21, "exact": 14, "suggested": 7 }
+  ]
+}
+```
+Note: only dates with at least one lead are returned. The frontend fills gaps with zeros.
+
 ---
 
 ## Environment Variables

@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Animated lead activity chart on Overview page
+
+- What changed: Added `GET /api/leads/chart` returning daily lead counts (total/exact/suggested) grouped by date with optional `dateFrom`/`dateTo` filters. Added a pure-SVG `LeadsChart` component to the Overview page: smooth cubic-bezier curves, gradient area fills, draw-in animation on mount (RAF-driven easing, 1.1s), hover crosshair + tooltip showing date + counts per type. Added `ChartFilter` dropdown with 5 quick presets (7/14/30/90 days, all time) + custom date range inputs. Removed relative timestamps ("1h ago") from Recent Leads list — chart provides temporal context; Last Lead Received now shows full date. Fixed excessive bottom spacing on Overview by overriding `min-height: 100vh` on `.main-content` (reference.css sets this but app-layout already has it). New CSS classes: `.overview-chart-card`, `.chart-subtitle`, `.chart-outer`, `.chart-svg`, `.chart-tooltip`, `.chart-tip-date`, `.chart-tip-row`, `.chart-legend`, `.chart-leg`, `.chart-leg-dot`, `.chart-filter-btn`, `.chart-filter-popover`, `.chart-filter-opt`, `.chart-filter-sep`, `.chart-filter-custom`, `.chart-date-input`.
+- Why: User requested a line graph replacing the date column in recent leads, with date filter and animate-on-load behavior. Also fix empty space below overview cards.
+- Files affected: `src/app/page.jsx`, `src/app/api/leads/chart/route.js`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — New Today card: Exact / Suggested breakdown
 
 - What changed: `GET /api/leads` stats query now returns two additional fields: `newTodayExact` and `newTodaySuggested` (COUNT with CURRENT_DATE + lead_type filter). `StatCard` component accepts an optional `sub` prop rendered below the value. The New Today card passes a breakdown row — `"X Exact / Y Suggested"` — with exact in green (`--green-400`) and suggested in orange (`--orange-400`), separated by a muted `/`. Only renders when at least one is non-zero. Added `.stat-card-breakdown` CSS class (flex, 11px, 600 weight). `DEFAULT_STATS` extended with `newTodayExact: 0, newTodaySuggested: 0`.
