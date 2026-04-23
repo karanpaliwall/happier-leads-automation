@@ -5,10 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Split calendar trigger into separate From / To field buttons
+
+- What changed: The single calendar toggle button was replaced with two independent clickable field buttons inside `.cal-range-trigger` (a flex container, not a button). Left button = "from" field (calendar icon + date), right button = "to" field (date + calendar icon). `showCal: boolean` state replaced by `editField: 'from' | 'to' | null`. Clicking a field button sets `editField` and opens the `CalendarPicker` targeted to that field. Active field gets a blue highlight (`.cal-field-active`). `CalendarPicker` now receives `editField` prop and uses it in `clickDay`: clicking while editing "from" sets start date and auto-advances to "to" mode; clicking while editing "to" sets end date and closes. A `"Select start date"` / `"Select end date"` hint shows at the top of the popover (`.cal-editing-hint`). `onSelect` callback now takes `(from, to, nextEditField)` — `null` nextField means close.
+- Why: The original single-button trigger gave no indication of which date was being set; users couldn't tell if a click would change the start or end date.
+- Files affected: `src/app/filtered/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Custom calendar grid picker replaces native date inputs
 
-- What changed: Replaced the two `<input type="date">` fields in the calendar popover with a fully custom `CalendarPicker` React component. Trigger button now shows two faux date fields (`dd-mm-yyyy — dd-mm-yyyy`) with calendar icons on each end, matching the reference design. Calendar shows: month/year header with up/down nav arrows, 7-column day grid (Su–Sa), today highlighted as blue circle, selected dates blue, days in range with a subtle blue tint, Clear + Today footer buttons. Clicking a date with no selection starts the range; second click (if ≥ first) completes it and auto-closes the popover. `fmtCalDate` converts ISO to dd-mm-yyyy for display. CSS classes: `.cal-range-trigger`, `.cal-placeholder`, `.cal-val`, `.cal-sep`, `.cal-nav-row`, `.cal-month-title`, `.cal-nav-btn`, `.cal-grid`, `.cal-dow`, `.cal-day`, `.cal-today`, `.cal-sel`, `.cal-range`, `.cal-footer-row`, `.cal-foot-btn`, `.cal-foot-today`.
-- Why: User wanted calendar filter to look like the reference design — a proper month-grid picker, not a plain browser date input.
+- What changed: Replaced the two `<input type="date">` fields in the calendar popover with a fully custom `CalendarPicker` React component. Trigger shows two faux date fields (`dd-mm-yyyy — dd-mm-yyyy`) with calendar icons. Calendar shows: month/year header with ↑↓ nav arrows, 7-column day grid (Su–Sa), today = filled blue circle, selected dates = blue circle, days in range = subtle blue tint, Clear + Today footer buttons. `fmtCalDate` converts ISO to dd-mm-yyyy for display. New CSS classes: `.cal-range-trigger`, `.cal-field-btn`, `.cal-placeholder`, `.cal-val`, `.cal-sep`, `.cal-editing-hint`, `.cal-nav-row`, `.cal-month-title`, `.cal-nav-btn`, `.cal-grid`, `.cal-dow`, `.cal-day`, `.cal-today`, `.cal-sel`, `.cal-range`, `.cal-footer-row`, `.cal-foot-btn`, `.cal-foot-today`.
+- Why: User wanted a proper month-grid calendar matching the reference design, not a plain browser date input.
 - Files affected: `src/app/filtered/page.jsx`, `src/styles/custom.css`
 
 ---
@@ -526,8 +534,9 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 - [x] Two-route UI — Overview (`/`) + Leads (`/filtered`)
 - [x] Password gate — `/login` + middleware protecting all app routes
 - [x] Growleads favicon in sidebar + browser tab
-- [x] Expandable lead rows — detail panel outside `<table>` (no horizontal scroll), all HL data visible
+- [x] Expandable lead rows — detail panel inline in `<tbody>` (sticky on mobile), all HL data visible
 - [x] Export CSV button — top-right of Leads page header
+- [x] Time filters — 24h / 7d quick toggles + custom date-range calendar picker (separate From/To fields, each opens targeted calendar)
 - [x] Mobile responsive — hamburger drawer (≤640px), safe-area insets, touch-action fixes
 - [x] Cross-device — Android tap delay, notch support, tablet fluid grid
 - [x] Collapsible sidebar — defaults collapsed, auto-collapses <1100px, hamburger on mobile
