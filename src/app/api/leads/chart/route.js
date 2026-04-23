@@ -1,9 +1,15 @@
 import sql from '@/lib/db';
 
+// Neon returns date/timestamptz columns as JS Date objects.
+// JSON.stringify(Date) → full ISO string, which breaks YYYY-MM-DD comparisons.
+// Force to plain strings here so the frontend can use them as keys safely.
+const toDay = d => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10));
+const toTs  = d => (d instanceof Date ? d.toISOString() : String(d));
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  const since    = searchParams.get('since')    || null; // ISO timestamp — used by 24h mode
-  const dateFrom = searchParams.get('dateFrom') || null; // ISO date — used by 7d / custom
+  const since    = searchParams.get('since')    || null;
+  const dateFrom = searchParams.get('dateFrom') || null;
   const dateTo   = searchParams.get('dateTo')   || null;
 
   // 24h mode: group by hour
@@ -22,7 +28,7 @@ export async function GET(req) {
     return Response.json({
       granularity: 'hour',
       points: rows.map(r => ({
-        date:      r.period,
+        date:      toTs(r.period),
         total:     parseInt(r.total),
         exact:     parseInt(r.exact),
         suggested: parseInt(r.suggested),
@@ -67,7 +73,7 @@ export async function GET(req) {
   return Response.json({
     granularity: 'day',
     points: rows.map(r => ({
-      date:      r.day,
+      date:      toDay(r.day),
       total:     parseInt(r.total),
       exact:     parseInt(r.exact),
       suggested: parseInt(r.suggested),
