@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Past 24h chart: fill all 24 hourly buckets for ordered timeline
+
+- What changed: Added `fillHourGaps()` in `page.jsx`. Previously `LeadsChart` in hourly mode only plotted hours that had actual lead data, so the X-axis jumped between sparse points (e.g. "11 PM → 4 AM → 7 AM") looking unordered. `fillHourGaps` generates exactly 24 UTC hourly buckets from `nowH - 23h` to `nowH`, zero-filling any missing hours. `LeadsChart` `useMemo` now calls `fillHourGaps` for hourly granularity instead of returning raw points.
+- Why: User wanted the 24h chart X-axis to show a clean, evenly-spaced live timeline across the full 24 hours, not just hours where data happened to exist.
+- Files affected: `src/app/page.jsx`
+
+---
+
 ## 2026-04-24 — Mobile: chart height, calendar upward, sidebar slide animation
 
 - What changed: Increased `CVH` from 180 to 240 — chart is now ~33% taller on all screens (mobile: ~119px at 298px width instead of ~89px). Added mobile CSS so the chart filter popover and `CalendarPicker` open *above* the trigger button (not below), preventing the calendar from pushing content off-screen. Fixed sidebar slide-in/out animation on mobile: `.app-mounted .sidebar { transition: width }` (specificity 0,2,0) was overriding the mobile `.sidebar { transition: transform }` (0,1,0) after mount, making the close button instant. Re-declared `transition: transform 0.25s ease` under `.app-mounted .sidebar` inside the `@media (max-width: 640px)` block to restore the smooth slide.
