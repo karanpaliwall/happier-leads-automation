@@ -17,6 +17,7 @@ Website visitor → Happier Leads identifies them
 
 ## Features
 
+- **Password protected** — Login gate on all app routes; 30-day session cookie; webhook stays public
 - **Real-time dashboard** — Overview with stat cards, pipeline status, and recent leads feed; polls every 10s
 - **Full lead details** — Click any row to expand contact info, company details, fit score breakdown, visit intelligence, and UTM attribution — instant, no extra fetch
 - **Fit Score & Engagement** — Fit score summed from Happier Leads' ICP criteria; engagement derived from visit count and time on site (0–20 scale)
@@ -26,7 +27,7 @@ Website visitor → Happier Leads identifies them
 - **Collapsible sidebar** — collapses to icon-only rail; brand area shows Growleads logo + current section label
 - **Instant tab switching** — module-level cache keeps data visible while navigating between pages
 - **First-time onboarding** — step-by-step setup guide shown when no leads exist yet
-- **Mobile responsive** — hamburger menu + sidebar overlay on small screens
+- **Mobile responsive** — hamburger drawer on phones/tablets; tightened padding and wrapping at 480px
 
 ## Stack
 
@@ -54,6 +55,8 @@ DATABASE_URL=your_neon_connection_string
 ```
 
 Get your connection string from [console.neon.tech](https://console.neon.tech).
+
+> **Password:** The dashboard password is `Growleads@admin`. To change it, update the constant in `src/app/api/auth/login/route.js`.
 
 ### 3. Create the database schema
 
@@ -102,15 +105,17 @@ Leads will appear in the dashboard within seconds of a visitor being identified.
 
 ## Routes
 
-| Route | Description |
-|---|---|
-| `/` | Overview — stat cards, pipeline status, recent 5 leads |
-| `/leads` | Full leads table with expandable rows, filters, bulk delete |
-| `/filtered` | Filtered view with type tabs and debounced search |
-| `POST /api/webhook/happierleads` | Inbound webhook from Happier Leads |
-| `GET /api/leads` | Paginated leads list (supports `page`, `limit`, `type`, `search`) |
-| `DELETE /api/leads` | Bulk delete — body: `{ ids: [...uuid] }` |
-| `POST /api/admin/backfill-scores` | One-time backfill to recalculate scores from stored raw_payload |
+| Route | Auth | Description |
+|---|---|---|
+| `/login` | public | Password login page |
+| `/` | required | Overview — stat cards, pipeline status, recent 5 leads |
+| `/leads` | required | Full leads table with expandable rows, filters, bulk delete |
+| `/filtered` | required | Filtered view with type tabs and debounced search |
+| `POST /api/auth/login` | public | Validate password, set session cookie |
+| `POST /api/webhook/happierleads` | public | Inbound webhook from Happier Leads |
+| `GET /api/leads` | required | Paginated leads list (supports `page`, `limit`, `type`, `search`) |
+| `DELETE /api/leads` | required | Bulk delete — body: `{ ids: [...uuid] }` |
+| `POST /api/admin/backfill-scores` | required | One-time backfill to recalculate scores from stored raw_payload |
 
 ## Deploying to Vercel
 
