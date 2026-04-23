@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Custom calendar grid picker replaces native date inputs
+
+- What changed: Replaced the two `<input type="date">` fields in the calendar popover with a fully custom `CalendarPicker` React component. Trigger button now shows two faux date fields (`dd-mm-yyyy — dd-mm-yyyy`) with calendar icons on each end, matching the reference design. Calendar shows: month/year header with up/down nav arrows, 7-column day grid (Su–Sa), today highlighted as blue circle, selected dates blue, days in range with a subtle blue tint, Clear + Today footer buttons. Clicking a date with no selection starts the range; second click (if ≥ first) completes it and auto-closes the popover. `fmtCalDate` converts ISO to dd-mm-yyyy for display. CSS classes: `.cal-range-trigger`, `.cal-placeholder`, `.cal-val`, `.cal-sep`, `.cal-nav-row`, `.cal-month-title`, `.cal-nav-btn`, `.cal-grid`, `.cal-dow`, `.cal-day`, `.cal-today`, `.cal-sel`, `.cal-range`, `.cal-footer-row`, `.cal-foot-btn`, `.cal-foot-today`.
+- Why: User wanted calendar filter to look like the reference design — a proper month-grid picker, not a plain browser date input.
+- Files affected: `src/app/filtered/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix auto-scroll to bottom when clicking a lead row
 
 - What changed: Reverted the lead detail panel from an external `<div>` (rendered after all 25 rows outside the table) back to an inline `<tr><td colSpan={7}>` inside `<tbody>`. The external approach caused a `scrollIntoView` call to drag the page to the very bottom every time a row was clicked. Also removed: `expandedLead` derived state, `detailRef`, and the `scrollIntoView` `useEffect` from `FilteredPage`. On mobile, `.table-wrap .detail-row-cell` now gets `position: sticky; left: 0; width: 100vw; max-width: 100vw; overflow: hidden` — this (a) keeps the panel anchored at viewport-left even when the table is scrolled right, and (b) makes iOS text-size-adjust calculate boost as 390/390 = 1.0 (no font inflation). Removed `.lead-detail-outer` CSS class.
