@@ -5,6 +5,17 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Mobile: viewport zoom + font inflation + flex overflow fixes
+
+- What changed:
+  - Added explicit `viewport` export to `layout.jsx` (`width: device-width, initialScale: 1`) — ensures viewport meta is definitively set on all iOS/Android browsers.
+  - Added `-webkit-text-size-adjust: 100%; text-size-adjust: 100%` to `html` in `globals.css` — stops iOS Safari from auto-inflating table font sizes.
+  - Added `overflow-x: hidden` + `width: 100%` to `.main-content` at 768px — the definitive iOS zoom fix. `overflow-x: hidden` on `html`/`body` alone doesn't stop iOS from scaling the viewport; the layout container must also be bounded.
+  - Reduced table to `font-size: 12px`, `thead th` to 10px, cell padding to `8px 12px` — more compact and readable on phones.
+  - Fixed `.person-cell` flex overflow: added `min-width: 0` + `text-overflow: ellipsis` — long lead names in the overview recent-leads list were expanding the flex row past viewport width, causing overview page zoom.
+- Why: iPhone 16 testing showed pages still zooming out and table data appearing in large font after previous pass.
+- Files affected: `src/app/layout.jsx`, `src/app/globals.css`, `src/styles/custom.css`.
+
 ## 2026-04-23 — Mobile UX overhaul (header bar, page zoom fix, table scroll)
 
 - What changed:
