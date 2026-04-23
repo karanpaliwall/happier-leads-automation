@@ -38,38 +38,34 @@ const NAV_ITEMS = [
   },
 ];
 
-function getPageLabel(pathname) {
-  const match = NAV_ITEMS.find(item => item.href === pathname);
-  return match ? match.label : 'Pipeline';
-}
-
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const pathname = usePathname();
-  const pageLabel = getPageLabel(pathname);
 
   return (
     <aside className={`sidebar${open ? ' sidebar-open' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">
-          <img
-            src="/favicon.png"
-            alt="Growleads"
-            width="40"
-            height="40"
-            style={{ objectFit: 'contain', display: 'block' }}
-          />
-        </div>
+        {!collapsed && (
+          <div className="sidebar-brand-icon">
+            <img
+              src="/favicon.png"
+              alt="Growleads"
+              width="40"
+              height="40"
+              style={{ objectFit: 'contain', display: 'block' }}
+            />
+          </div>
+        )}
         {!collapsed && (
           <div className="sidebar-brand-stack">
             <div className="sidebar-brand-name">Growleads</div>
-            <div className="sidebar-brand-sub">{pageLabel}</div>
+            <div className="sidebar-brand-sub">Website Traffic Signal</div>
           </div>
         )}
         <button
           className="sidebar-collapse-btn"
           onClick={onToggleCollapse}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{ marginLeft: 'auto' }}
+          style={{ marginLeft: collapsed ? 'auto' : 'auto' }}
         >
           {collapsed ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

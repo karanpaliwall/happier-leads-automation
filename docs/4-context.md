@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Sidebar: static app name + hide logo when collapsed
+
+- What changed: (1) Subtitle below brand name now always shows "Website Traffic Signal" instead of dynamically reflecting the current page. (2) Logo image and brand text are hidden when sidebar is collapsed — only the expand arrow button remains in the brand area.
+- Why: User requested fixed app name (not page-reactive) and a clean collapsed state with no logo.
+- Files affected: `src/components/Sidebar.jsx`
+
+---
+
 ## 2026-04-23 — Login icon restored to 52px
 
 - What changed: Logo icon 44px → 52px (border-radius 10px → 12px). Previous pass over-reduced it; cross-measuring both screenshots confirms reference logo ≈ 52px CSS.
