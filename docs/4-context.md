@@ -13,6 +13,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Mobile detail panel: structured 2-column label/value layout
+
+- What changed: Changed `.detail-grid` to `grid-template-columns: auto 1fr` on mobile. Added `display: contents` to `.detail-item` so each item's label and value become direct grid children — this causes all labels to auto-align in column 1 and all values in column 2 across the entire section, like a structured data form. Previously each item stacked label above value, requiring twice the vertical space and looking unstructured. Also tightened section padding from `16px 20px` → `12px 16px` on mobile. Restored `display: flex` for `.detail-item-row` (email + verified badge row) which is now a direct grid child.
+- Why: On mobile the detail panel required excessive vertical scrolling and looked unstructured. The 2-column grid matches the form-like layout the user expects, consistent with desktop/tablet appearance.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix lead detail panel font sizes on iOS (architectural fix)
 
 - What changed: Root cause identified: iOS applies text-size-adjust AFTER the CSS cascade, so `!important` font-size overrides have no effect. The boost factor = scroll-content-width / viewport-width = 860px / 390px ≈ 2.2×. Fix: constrain `.detail-panel` to `width: 100vw; max-width: 100vw` in the mobile media query so iOS sees a 1:1 ratio and applies zero boost. Added `position: sticky; left: 0` so the panel also anchors to the left edge of the visible area when the user scrolls the table sideways. Changed `.detail-panel { text-size-adjust: none }` → `100%` globally (none is ignored in some iOS versions and blocks accessibility zoom). Removed `!important` from font-size overrides now that the architectural fix is in place.
