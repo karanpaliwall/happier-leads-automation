@@ -571,7 +571,6 @@ export default function FilteredPage() {
             <p className="page-subtitle">All identified visitors · click any row to expand full details</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{total} result{total !== 1 ? 's' : ''}</span>
             <button className="export-csv-btn" onClick={() => exportCSV(leads)} disabled={leads.length === 0}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
