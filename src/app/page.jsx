@@ -489,7 +489,7 @@ export default function OverviewPage() {
         <div className="page-header-top">
           <div>
             <h1 className="page-title">Overview</h1>
-            <p className="page-subtitle">Pipeline health and recent lead activity · auto-refreshes every 10s</p>
+            <p className="page-subtitle">Live lead stats, pipeline health &amp; activity analytics · auto-refreshes every 10s</p>
           </div>
         </div>
       </div>
