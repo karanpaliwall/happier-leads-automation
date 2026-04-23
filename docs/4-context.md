@@ -5,6 +5,12 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Login icon restored to 52px
+
+- What changed: Logo icon 44px → 52px (border-radius 10px → 12px). Previous pass over-reduced it; cross-measuring both screenshots confirms reference logo ≈ 52px CSS.
+- Why: User screenshot comparison showed reference logo visibly larger than our 44px icon.
+- Files affected: `src/app/login/page.jsx`.
+
 ## 2026-04-23 — Login page final visual match to reference
 
 - What changed:
