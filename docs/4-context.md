@@ -5,6 +5,17 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Login card width matched to dashboard.growleads.io reference
+
+- What changed:
+  - `.login-container` `max-width` iterated from `480px` → `360px` → `320px` → **`380px`** (final).
+  - `.login-card` `padding` tightened from `28px` to `24px`.
+  - Final value of `380px` was derived by pixel-measuring the reference card in a full 1366×768 desktop screenshot of `dashboard.growleads.io/login`, which showed the card at ≈383px CSS. Earlier attempts (360px, 320px) overcorrected downward.
+- Why: User reported our login card was visually wider than the reference Growleads dashboard login page. WebFetch could not extract CSS from the JS-bundled reference site, so measurement was taken directly from the reference screenshot.
+- Files affected: `src/styles/custom.css`.
+
+---
+
 ## 2026-04-23 — Mobile: detail panel font inflation + white-space nowrap inheritance
 
 - What changed:
