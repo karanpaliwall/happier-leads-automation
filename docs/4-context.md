@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Scale chart axis labels for mobile readability
+
+- What changed: Added `localFontSize` state to `LeadsChart`, computed in the same `ResizeObserver` as `localCVH`. Formula: `round(11 * CVW / containerW)` so labels always render at ~11px on screen. On mobile 303px: SVG `fontSize≈22` → 22*(303/600)=11.1px. On desktop 540px+: falls back to `fontSize:9` (renders ~8px, same as before). Both Y-axis tick labels and X-axis date/hour labels use `localFontSize`.
+- Why: `fontSize:9` in SVG coords scaled to 4.5px on mobile (0.5× scale factor) — unreadable.
+- Files affected: `src/app/page.jsx`
+
+---
+
 ## 2026-04-24 — Responsive chart height via ResizeObserver
 
 - What changed: `LeadsChart` now uses a `ResizeObserver` on `.chart-outer` to measure the container width after mount and on resize. Computes `localCVH = round(220 * CVW / containerW)` when `containerW < 520px`, targeting ~220px rendered height on mobile. On wide containers uses global `CVH=240`. All Y-axis geometry (`yP`, crosshair, clipPath) uses `localCPH = localCVH - margins`. SVG `viewBox` uses `localCVH`. Previously, SVG viewBox aspect ratio (600:240) capped the rendered height at ~120px on ~300px-wide mobile cards regardless of CVH.
