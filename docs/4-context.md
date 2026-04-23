@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-23 — Login page final visual match to reference
+
+- What changed:
+  - Logo icon: 64px → **44px**, border-radius 14px → 10px (reference measures ~42px at 1366px desktop).
+  - Brand section spacing tightened: `margin-bottom` 36→24px, icon `margin-bottom` 16→12px.
+  - Brand name font-size 20→17px; subtitle 14→12px.
+  - Input background reverted to `var(--bg-secondary)` (#111426) — darker than the card (#161929), matching the reference close-up.
+  - Removed `box-shadow` from `.login-input:focus` — eliminated blue glow ring that appeared on page load due to `autoFocus`.
+  - Sign in button background changed from `var(--blue-600)` (#2563eb, bright) to `#1e3a8a` (dark navy blue matching reference); hover state `#254aa8`; text color changed from `white` to `var(--text-primary)` (muted, matching reference).
+- Why: Previous pass over-enlarged the logo/text. User provided close-up comparison shots showing: (1) input should be dark not light, (2) button should be dark navy not bright blue.
+- Files affected: `src/app/login/page.jsx`, `src/styles/custom.css`.
+
 ## 2026-04-23 — Login page polish: icon size, brand spacing, input background
 
 - What changed:
