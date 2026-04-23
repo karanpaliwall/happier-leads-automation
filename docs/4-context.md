@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix mobile detail panel font inflation (iOS text-size-adjust)
+
+- What changed: In `@media (max-width: 640px)`, reduced `.detail-item-value` and `.detail-link` from `13px` to `12px` (matching desktop sizes). Added `-webkit-text-size-adjust: none; text-size-adjust: none` to the `.detail-panel` override in the mobile block so iOS cannot boost fonts even when the horizontally-scrollable table outside triggers boost detection.
+- Why: iOS Safari was inflating these fonts to ~26px because the scrollable table made the browser see content wider than the viewport, triggering font boosting. Setting `text-size-adjust: none` on the panel itself fully suppresses this.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Reorder filter bar: time filters before search
 
 - What changed: Swapped the position of the search input and the time-filter-group (24h / 7d / calendar) in the filter bar. New order: Tabs | divider | 24h + 7d + calendar picker | search input | Clear.
