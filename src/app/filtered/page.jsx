@@ -136,7 +136,9 @@ function LeadDetailPanel({ lead }) {
   const hasUtm = utm.source || utm.medium || utm.campaign;
 
   return (
-    <div className="detail-panel">
+    <tr className="detail-row">
+      <td colSpan={7} className="detail-row-cell">
+        <div className="detail-panel">
 
           {hasContactDetail && (
             <div className="detail-section">
@@ -291,7 +293,9 @@ function LeadDetailPanel({ lead }) {
             </div>
           )}
 
-    </div>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -348,6 +352,7 @@ function LeadRow({ lead, expanded, onToggle }) {
           </div>
         </td>
       </tr>
+      {expanded && <LeadDetailPanel lead={lead} />}
     </>
   );
 }
@@ -401,16 +406,7 @@ export default function FilteredPage() {
   const [calTo, setCalTo] = useState('');
   const [showCal, setShowCal] = useState(false);
   const debounceRef = useRef(null);
-  const detailRef = useRef(null);
   const calRef = useRef(null);
-
-  const expandedLead = leads.find(l => l.id === expandedId) ?? null;
-
-  useEffect(() => {
-    if (expandedId && detailRef.current) {
-      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [expandedId]);
 
   useEffect(() => {
     if (!showCal) return;
@@ -640,13 +636,6 @@ export default function FilteredPage() {
                   </tbody>
                 </table>
               </div>
-              {/* Detail panel lives OUTSIDE the scroll table so it never scrolls
-                  left/right with the table columns — always full card width */}
-              {expandedLead && (
-                <div ref={detailRef} className="lead-detail-outer">
-                  <LeadDetailPanel lead={expandedLead} />
-                </div>
-              )}
             </div>
 
             {totalPages > 1 && (
