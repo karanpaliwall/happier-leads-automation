@@ -40,7 +40,7 @@ export default function LoginPage() {
             <img src="/favicon.png" alt="Growleads" width="52" height="52" style={{ display: 'block', borderRadius: '12px' }} />
           </div>
           <div className="login-brand-name">Growleads</div>
-          <div className="login-brand-sub">Dashboard</div>
+          <div className="login-brand-sub">Website Traffic Signal</div>
         </div>
 
         <div className="login-card">
