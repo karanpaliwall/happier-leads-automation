@@ -105,8 +105,8 @@ export default function FilteredPage() {
       <div className="page-header">
         <div className="page-header-top">
           <div>
-            <h1 className="page-title">Filtered</h1>
-            <p className="page-subtitle">Search and filter leads by type, company, or person</p>
+            <h1 className="page-title">Leads</h1>
+            <p className="page-subtitle">All identified visitors · click any row to expand full details</p>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             {total} result{total !== 1 ? 's' : ''}
