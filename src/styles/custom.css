@@ -741,6 +741,12 @@
   margin-left: 60px !important;
 }
 
+/* Table scroll at any zoom level — cells don't wrap, wrapper scrolls horizontally */
+.table-wrap table { min-width: 860px; }
+.table-wrap th,
+.table-wrap td { white-space: nowrap; }
+.table-wrap .detail-row-cell { white-space: normal; }
+
 /* ── Mobile top header bar (replaces floating hamburger) ── */
 .mobile-header {
   display: none;
