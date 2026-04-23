@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix chart blank data; CalendarPicker in filter; rename to Analytics
+
+- What changed: Fixed root cause of "No lead data for this period" — Neon's `@neondatabase/serverless` driver returns PostgreSQL `date`/`timestamptz` columns as JS `Date` objects. `JSON.stringify` turns them into full ISO strings (`"2026-04-24T00:00:00.000Z"`). `fillGaps` was appending `T00:00:00Z` to the already-ISO string → `Invalid Date` → comparison `d <= end` always `false` → loop never ran → empty array. Fix: added `toDay`/`toTs` helpers in chart route that normalize Date objects to `YYYY-MM-DD` / ISO strings before response. Also fixed `useMemo` in `LeadsChart` to skip `fillGaps` for hourly granularity (24h mode). Replaced `<input type="date">` fields in `ChartFilter` with the same `CalendarPicker` + `cal-range-trigger` used on the Leads page — "Custom Range" option now shows the visual calendar popup. Renamed card title from "Lead Activity" to "Analytics".
+- Why: Chart was blank for all filter modes; user requested the same calendar UI as the Leads page; title rename requested.
+- Files affected: `src/app/api/leads/chart/route.js`, `src/app/page.jsx`
+
+---
+
 ## 2026-04-24 — Fix chart: data not loading, dropdown clipped, wrong presets
 
 - What changed: Rewrote chart API SQL from nullable-cast WHERE pattern to explicit conditional branches (one query per filter state) to eliminate potential driver ambiguity. Added `since` param + hourly `date_trunc` grouping for 24h mode; daily `received_at::date` for 7d/all/custom. Presets reduced to "Past 24 hours", "Past 7 days", "All time" + custom range. Default changed from `'30d'` to `'all'`. Fixed `.overview-chart-card { overflow: visible }` so date-filter popover escapes `.card { overflow: clip }`. Fixed "Invalid Date" on Last Lead Received by using `fmtDate()` (parses full ISO timestamp) instead of `fmtTooltipDate()` (appended `T00:00:00Z` to existing timestamp). Fixed bottom spacing: `.app-layout { align-items: flex-start }` prevents `main-content` (the sole in-flow flex child) from stretching to 100vh when content is shorter.
