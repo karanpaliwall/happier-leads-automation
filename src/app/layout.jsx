@@ -12,6 +12,7 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',  // lets content extend into notch area on iPhone X+ / Android
 };
 
 export default function RootLayout({ children }) {

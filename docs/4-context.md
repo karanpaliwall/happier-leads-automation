@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Full cross-device compatibility (Android, tablet, notched phones)
+
+- What changed: (1) **`viewport-fit=cover`** added to `layout.jsx` viewport export — allows content to extend into the safe area on notched phones (iPhone X+, Android punch-hole cameras); without this the mobile header is clipped behind the status bar notch. (2) **`touch-action: manipulation`** added globally on `button, a, label, input, select, textarea, [role="button"]` — removes the 300ms tap delay on Android Chrome and older iOS Safari, and prevents double-tap zoom on all touch devices. (3) **Safe-area-inset support** added in `@media (max-width: 640px)`: `.mobile-header` height is `calc(52px + env(safe-area-inset-top))` and padding-top matches so content sits below the notch; `.main-content` padding-top matches the taller header; `.page-body` padding-bottom is `calc(16px + env(safe-area-inset-bottom))` so the last row isn't hidden behind the iOS home indicator or Android gesture bar. All `env()` values fall back to `0` on devices without a notch so non-notched Android/older iOS are unaffected.
+- Why: App needed to work correctly across iOS, Android, tablet, and desktop — not just iPhone. Android tap delay, notched-phone clipping, and gesture-bar overlap were the remaining gaps.
+- Files affected: `src/app/layout.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix lead detail panel font sizes on iOS (text-size-adjust scroll container bug)
 
 - What changed: Added `-webkit-text-size-adjust: none; text-size-adjust: none` directly on `.detail-panel` (not just `html`). Also added `!important` to all mobile font-size overrides for detail panel elements. Root cause: iOS Safari recalculates text-size adjustment per scroll ancestor. The detail panel lives inside `.table-wrap { overflow-x: auto }` which has a scroll-content width of 860px inside a ~390px viewport — iOS was applying a ~2.2× size boost (860/390). Setting the property on `html` does not prevent this; it must be set on the element inside the scroll container.

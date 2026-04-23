@@ -4,6 +4,12 @@
    Without this, explicit px sizes in media queries are ignored on iOS. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
+/* Remove 300ms tap delay and prevent double-tap zoom on all touch devices
+   (Android Chrome, iOS Safari, tablet browsers).  manipulation = tap + pan only. */
+button, a, label, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}
+
 /* Body must stay hidden so it doesn't expand to fit the table's min-width.
    Expansion defeats table-wrap's own overflow-x:auto scroll container.
    Mobile @media block below also sets hidden. */
@@ -881,9 +887,18 @@ body { overflow-x: hidden; }
   body { overflow-x: hidden; }
   .main-content {
     margin-left: 0 !important;
-    padding-top: 52px;
+    /* env() falls back to 0 on devices without a notch — safe on all browsers */
+    padding-top: calc(52px + env(safe-area-inset-top));
     overflow-x: hidden;
     width: 100%;
+  }
+
+  /* Mobile header: taller on notched phones so content sits below the status bar */
+  .mobile-header {
+    height: calc(52px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    /* Horizontal safe area for landscape notch on some Android phones */
+    padding-left: calc(14px + env(safe-area-inset-left));
   }
 
   .page-header, .page-body {
@@ -892,6 +907,9 @@ body { overflow-x: hidden; }
     width: 100%;
     box-sizing: border-box;
   }
+
+  /* Bottom safe area — keeps last row above the home indicator / gesture bar */
+  .page-body { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 
   .stat-grid-v2 { grid-template-columns: 1fr 1fr; }
 
