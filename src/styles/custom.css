@@ -1,5 +1,18 @@
 /* custom.css — Happier Leads additions on top of reference.css */
 
+/* Allow horizontal page scroll at high zoom levels (reference.css sets hidden).
+   Mobile keeps overflow-x: hidden via the @media block below. */
+body { overflow-x: auto; }
+
+/* Page header right side (e.g. "75 total") wraps instead of being clipped */
+.page-header-top { flex-wrap: wrap; gap: 8px; }
+
+/* Tighten page padding at narrow effective widths to delay overflow */
+@media (max-width: 1100px) {
+  .page-header { padding-left: 20px; padding-right: 20px; }
+  .page-body   { padding-left: 20px; padding-right: 20px; }
+}
+
 /* ── Lead type badges ── */
 .badge-exact {
   background: rgba(34, 197, 94, 0.15);
@@ -817,8 +830,9 @@
   .sidebar.sidebar-open { transform: translateX(0); }
 
   /* Main content sits below the 52px header bar.
-     overflow-x: hidden here is the critical fix — it bounds the layout width
-     so iOS/Android can't zoom the page to fit wider table content. */
+     overflow-x: hidden bounds layout width on iOS so pinch-zoom doesn't
+     cause the page to expand beyond the viewport. */
+  body { overflow-x: hidden; }
   .main-content {
     margin-left: 0 !important;
     padding-top: 52px;
