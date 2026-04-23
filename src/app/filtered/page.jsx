@@ -358,10 +358,11 @@ function LeadRow({ lead, expanded, onToggle }) {
 }
 
 function exportCSV(leads) {
-  const headers = ['Name', 'Email', 'Company', 'Domain', 'Type', 'Fit Score', 'Engagement Score', 'Received'];
+  const headers = ['Name', 'Email', 'LinkedIn', 'Company', 'Domain', 'Type', 'Fit Score', 'Engagement Score', 'Received'];
   const rows = leads.map(l => [
     l.full_name || '',
     l.email || '',
+    l.linkedin_url || '',
     l.company_name || '',
     l.company_domain || '',
     l.lead_type || '',
@@ -493,6 +494,7 @@ export default function FilteredPage() {
   const [calFrom, setCalFrom] = useState('');
   const [calTo, setCalTo] = useState('');
   const [editField, setEditField] = useState(null); // 'from' | 'to' | null
+  const [exporting, setExporting] = useState(false);
   const debounceRef = useRef(null);
   const calRef = useRef(null);
 
@@ -562,6 +564,31 @@ export default function FilteredPage() {
 
   const totalPages = Math.ceil(total / 25);
 
+  async function handleExportCSV() {
+    setExporting(true);
+    try {
+      let allLeads = [];
+      let pg = 1;
+      while (true) {
+        const params = new URLSearchParams({ page: pg, limit: 100 });
+        if (activeTab) params.set('type', activeTab);
+        if (debouncedSearch) params.set('search', debouncedSearch);
+        if (timeFilter === '24h') params.set('since', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+        else if (timeFilter === '7d') params.set('since', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+        if (calFrom) params.set('dateFrom', calFrom);
+        if (calTo) params.set('dateTo', calTo);
+        const res  = await fetch(`/api/leads?${params}`);
+        const data = await res.json();
+        allLeads = allLeads.concat(data.leads ?? []);
+        if (allLeads.length >= (data.total ?? 0) || !(data.leads?.length)) break;
+        pg++;
+      }
+      exportCSV(allLeads);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <>
       <div className="page-header">
@@ -571,13 +598,13 @@ export default function FilteredPage() {
             <p className="page-subtitle">All identified visitors · click any row to expand full details</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button className="export-csv-btn" onClick={() => exportCSV(leads)} disabled={leads.length === 0}>
+            <button className="export-csv-btn" onClick={handleExportCSV} disabled={exporting || stats.total === 0}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Export CSV
+              {exporting ? 'Exporting…' : 'Export CSV'}
             </button>
           </div>
         </div>
