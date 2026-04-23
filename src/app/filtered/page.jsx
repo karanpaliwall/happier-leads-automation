@@ -390,9 +390,11 @@ function fmtCalDate(iso) {
   return `${d}-${m}-${y}`;
 }
 
-function CalendarPicker({ from, to, onSelect, onClear }) {
+function CalendarPicker({ from, to, editField, onSelect, onClear }) {
   const todayIso = new Date().toISOString().slice(0, 10);
-  const seed = from ? new Date(from + 'T00:00:00') : new Date();
+  const seed = (editField === 'to' && to) ? new Date(to + 'T00:00:00')
+             : (editField === 'from' && from) ? new Date(from + 'T00:00:00')
+             : new Date();
   const [vy, setVy] = useState(seed.getFullYear());
   const [vm, setVm] = useState(seed.getMonth());
 
@@ -405,9 +407,18 @@ function CalendarPicker({ from, to, onSelect, onClear }) {
 
   function clickDay(d) {
     const s = iso(d);
-    if (!from || (from && to)) { onSelect(s, ''); }
-    else if (s >= from) { onSelect(from, s); }
-    else { onSelect(s, ''); }
+    if (editField === 'from') {
+      const keepTo = to && s <= to ? to : '';
+      onSelect(s, keepTo, 'to');
+    } else {
+      if (!from || s >= from) { onSelect(from || s, s, null); }
+      else { onSelect(s, '', 'to'); }
+    }
+  }
+
+  function clickToday() {
+    if (editField === 'from') { onSelect(todayIso, to && to >= todayIso ? to : '', 'to'); }
+    else { onSelect(from || todayIso, todayIso, null); }
   }
 
   function prev() { if (vm === 0) { setVy(y => y - 1); setVm(11); } else setVm(m => m - 1); }
@@ -417,6 +428,9 @@ function CalendarPicker({ from, to, onSelect, onClear }) {
 
   return (
     <div className="cal-popover">
+      <div className="cal-editing-hint">
+        {editField === 'from' ? 'Select start date' : 'Select end date'}
+      </div>
       <div className="cal-nav-row">
         <span className="cal-month-title">{CAL_MONTHS[vm]}, {vy}
           <svg style={{ marginLeft: 4, verticalAlign: 'middle', opacity: 0.5 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -449,7 +463,7 @@ function CalendarPicker({ from, to, onSelect, onClear }) {
       </div>
       <div className="cal-footer-row">
         <button className="cal-foot-btn" onClick={onClear}>Clear</button>
-        <button className="cal-foot-btn cal-foot-today" onClick={() => onSelect(todayIso, todayIso)}>Today</button>
+        <button className="cal-foot-btn cal-foot-today" onClick={clickToday}>Today</button>
       </div>
     </div>
   );
@@ -478,18 +492,18 @@ export default function FilteredPage() {
   const [timeFilter, setTimeFilter] = useState('');
   const [calFrom, setCalFrom] = useState('');
   const [calTo, setCalTo] = useState('');
-  const [showCal, setShowCal] = useState(false);
+  const [editField, setEditField] = useState(null); // 'from' | 'to' | null
   const debounceRef = useRef(null);
   const calRef = useRef(null);
 
   useEffect(() => {
-    if (!showCal) return;
+    if (!editField) return;
     function onClickOutside(e) {
-      if (calRef.current && !calRef.current.contains(e.target)) setShowCal(false);
+      if (calRef.current && !calRef.current.contains(e.target)) setEditField(null);
     }
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [showCal]);
+  }, [editField]);
 
   function handleSearchChange(e) {
     const val = e.target.value;
@@ -511,6 +525,7 @@ export default function FilteredPage() {
     setTimeFilter('');
     setCalFrom('');
     setCalTo('');
+    setEditField(null);
     setPage(1);
   }
 
@@ -596,39 +611,47 @@ export default function FilteredPage() {
           <div className="time-filter-group">
             <button
               className={`time-filter-btn${timeFilter === '24h' ? ' active' : ''}`}
-              onClick={() => { setTimeFilter(t => t === '24h' ? '' : '24h'); setCalFrom(''); setCalTo(''); setPage(1); }}
+              onClick={() => { setTimeFilter(t => t === '24h' ? '' : '24h'); setCalFrom(''); setCalTo(''); setEditField(null); setPage(1); }}
             >24h</button>
             <button
               className={`time-filter-btn${timeFilter === '7d' ? ' active' : ''}`}
-              onClick={() => { setTimeFilter(t => t === '7d' ? '' : '7d'); setCalFrom(''); setCalTo(''); setPage(1); }}
+              onClick={() => { setTimeFilter(t => t === '7d' ? '' : '7d'); setCalFrom(''); setCalTo(''); setEditField(null); setPage(1); }}
             >7d</button>
             <div className="cal-wrap" ref={calRef}>
-              <button
-                className={`cal-range-trigger${(calFrom || calTo || showCal) ? ' active' : ''}`}
-                onClick={() => setShowCal(v => !v)}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span className={calFrom ? 'cal-val' : 'cal-placeholder'}>{calFrom ? fmtCalDate(calFrom) : 'dd-mm-yyyy'}</span>
+              <div className="cal-range-trigger">
+                <button
+                  className={`cal-field-btn${editField === 'from' ? ' cal-field-active' : ''}`}
+                  onClick={() => setEditField(f => f === 'from' ? null : 'from')}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span className={calFrom ? 'cal-val' : 'cal-placeholder'}>{calFrom ? fmtCalDate(calFrom) : 'dd-mm-yyyy'}</span>
+                </button>
                 <span className="cal-sep">—</span>
-                <span className={calTo ? 'cal-val' : 'cal-placeholder'}>{calTo ? fmtCalDate(calTo) : 'dd-mm-yyyy'}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </button>
-              {showCal && (
+                <button
+                  className={`cal-field-btn${editField === 'to' ? ' cal-field-active' : ''}`}
+                  onClick={() => setEditField(f => f === 'to' ? null : 'to')}
+                >
+                  <span className={calTo ? 'cal-val' : 'cal-placeholder'}>{calTo ? fmtCalDate(calTo) : 'dd-mm-yyyy'}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </button>
+              </div>
+              {editField && (
                 <CalendarPicker
                   from={calFrom}
                   to={calTo}
-                  onSelect={(f, t) => { setCalFrom(f); setCalTo(t); setTimeFilter(''); if (t) { setPage(1); setShowCal(false); } }}
-                  onClear={() => { setCalFrom(''); setCalTo(''); }}
+                  editField={editField}
+                  onSelect={(f, t, next) => { setCalFrom(f); setCalTo(t); setEditField(next); setTimeFilter(''); if (!next) setPage(1); }}
+                  onClear={() => { setCalFrom(''); setCalTo(''); setEditField(null); }}
                 />
               )}
             </div>

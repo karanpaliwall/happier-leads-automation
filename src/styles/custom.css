@@ -360,27 +360,37 @@ body { overflow-x: hidden; }
   border-color: rgba(59,130,246,0.35);
 }
 
-/* Calendar range trigger — two faux-date-fields in one button */
+/* Calendar range trigger — two separate clickable field buttons */
 .cal-wrap { position: relative; }
 .cal-range-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  background: rgba(255,255,255,0.03);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+}
+.cal-field-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: none;
+  border: none;
   color: var(--text-muted);
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, color 0.12s;
 }
-.cal-range-trigger:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); }
-.cal-range-trigger.active { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.35); }
+.cal-field-btn:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+.cal-field-btn.cal-field-active {
+  background: rgba(59,130,246,0.14);
+  color: var(--blue-400);
+}
 .cal-placeholder { font-size: 12px; color: var(--text-muted); letter-spacing: 0.02em; }
 .cal-val { font-size: 12px; color: var(--text-primary); }
-.cal-sep { font-size: 12px; color: var(--text-muted); margin: 0 2px; }
+.cal-sep { font-size: 12px; color: var(--text-muted); flex-shrink: 0; user-select: none; }
 
 /* Calendar popover */
 .cal-popover {
@@ -395,6 +405,14 @@ body { overflow-x: hidden; }
   width: 252px;
   box-shadow: 0 10px 32px rgba(0,0,0,0.55);
   box-sizing: border-box;
+}
+.cal-editing-hint {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--blue-400);
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
 }
 .cal-nav-row {
   display: flex;
