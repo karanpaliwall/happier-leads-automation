@@ -21,6 +21,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix iOS TextAutosizer inflating detail panel values (round 2)
+
+- What changed: Added `display: flex; flex-wrap: wrap; align-items: flex-start; min-width: 0; word-break: break-word` to `.detail-item-value` inside `@media (max-width: 640px)`. iOS's TextAutosizer (column-based font inflation, separate from `text-size-adjust`) only targets `display: block` elements. Flex containers and their children are exempt from inflation. The business email row was already `display: flex` (via `.detail-item-row`) and rendered at the correct size; all other plain `.detail-item-value` block divs were being ~2x inflated. Making all value cells flex matches the email row's immune behavior.
+- Why: Previous round-1 fix (text-size-adjust: none + reducing 13px → 12px) did not resolve the inflation because TextAutosizer is a separate algorithm not governed by that property. Root cause was `display: block` on value divs inside a scrollable-wider-than-viewport table.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix mobile detail panel font inflation (iOS text-size-adjust)
 
 - What changed: In `@media (max-width: 640px)`, reduced `.detail-item-value` and `.detail-link` from `13px` to `12px` (matching desktop sizes). Added `-webkit-text-size-adjust: none; text-size-adjust: none` to the `.detail-panel` override in the mobile block so iOS cannot boost fonts even when the horizontally-scrollable table outside triggers boost detection.
