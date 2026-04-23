@@ -841,7 +841,7 @@ body { overflow-x: auto; }
   .overview-grid { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   /* Show mobile header bar, hide desktop collapse button */
   .mobile-header { display: flex; }
   .nav-overlay { display: block; }
