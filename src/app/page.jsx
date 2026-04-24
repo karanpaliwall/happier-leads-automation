@@ -109,40 +109,56 @@ function fillHourGaps(pts) {
 }
 
 function InfoTooltip({ text }) {
-  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState(null);
   return (
     <span
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
+      style={{ display: 'inline-flex', alignItems: 'center' }}
+      onMouseEnter={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setPos({ x: r.left + r.width / 2, y: r.top });
+      }}
+      onMouseLeave={() => setPos(null)}
     >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: 'help', flexShrink: 0, opacity: 0.55 }}>
+      <svg
+        width="13" height="13" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ cursor: 'default', flexShrink: 0, opacity: pos ? 0.85 : 0.5, transition: 'opacity 0.15s' }}
+      >
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="16" x2="12" y2="12"/>
         <line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
-      {show && (
+      {pos && (
         <div style={{
-          position: 'absolute',
-          bottom: 'calc(100% + 8px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: '#1e293b',
-          border: '1px solid rgba(148,163,184,0.15)',
-          borderRadius: 6,
-          padding: '7px 11px',
-          fontSize: 11,
-          lineHeight: 1.5,
-          color: 'rgba(148,163,184,0.9)',
-          whiteSpace: 'normal',
-          maxWidth: 230,
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y - 10,
+          transform: 'translate(-50%, -100%)',
+          background: 'rgba(13, 20, 36, 0.97)',
+          border: '1px solid rgba(148,163,184,0.18)',
+          borderRadius: 7,
+          padding: '8px 12px',
+          fontSize: 11.5,
+          lineHeight: 1.55,
+          color: 'rgba(203,213,225,0.92)',
+          maxWidth: 240,
           width: 'max-content',
-          zIndex: 200,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+          zIndex: 9999,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
           pointerEvents: 'none',
           textAlign: 'center',
         }}>
           {text}
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0, height: 0,
+            borderLeft: '5px solid transparent',
+            borderRight: '5px solid transparent',
+            borderTop: '5px solid rgba(13,20,36,0.97)',
+          }} />
         </div>
       )}
     </span>
