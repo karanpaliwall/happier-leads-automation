@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-25 — Admin Client Tags: add search icon, remove SOURCE toggle
+
+- What changed: Both the Notes tab and Client Tags tab campaign search inputs now have a magnifying glass icon on the left (`.campaign-search-input-wrap` + `.campaign-search-icon` CSS). A SOURCE toggle (HeyReach / SmartLead) was briefly added to the Client Tags tab then immediately removed — only SmartLead is used, so both forms simply show "SmartLead Campaign" as the label with no source selector.
+- Why: Reference screenshots showed a search icon inside the input. SOURCE toggle was removed per user feedback ("we only work with SmartLead").
+- Files affected: `src/app/admin/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-25 — Clear mock campaign names from admin search dropdowns
 
 - What changed: `CAMPAIGN_NAMES` constant in `admin/page.jsx` emptied — removed 10 hardcoded placeholder entries (ImpactCraftAI, Moora_Faire, Growleads_April_*, etc.) that appeared in both the Notes-tab and Client Tags-tab campaign search dropdowns.
