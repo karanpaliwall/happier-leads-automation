@@ -111,7 +111,7 @@ function smoothPath(pts2d) {
 }
 
 // ── LeadsChart ──────────────────────────────────────────────────────────────
-function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mainTo, compareFrom, compareTo }) {
+function LeadsChart({ rawPoints, granularity, loading, mainFrom, mainTo }) {
   const svgRef   = useRef(null);
   const outerRef = useRef(null);
   const [clipW,    setClipW]    = useState(0);
@@ -145,11 +145,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
     [rawPoints, granularity, mainFrom, mainTo]
   );
 
-  const cmpPoints = useMemo(() => {
-    if (!compareFrom || !compareTo || granularity !== 'day') return [];
-    return fillGaps(compareRaw ?? [], compareFrom, compareTo);
-  }, [compareRaw, compareFrom, compareTo, granularity]);
-
   useEffect(() => {
     if (!points.length) return;
     setClipW(0);
@@ -181,7 +176,7 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
     );
   }
 
-  const maxVal = Math.max(...points.map(p => Math.max(p.exact, p.suggested)), ...(cmpPoints.length ? cmpPoints.map(p => Math.max(p.exact, p.suggested)) : []), 1);
+  const maxVal = Math.max(...points.map(p => Math.max(p.exact, p.suggested)), 1);
   const yMax   = Math.max(Math.ceil(maxVal / 5) * 5, 5);
 
   const xP = (i) => CM.left + (points.length > 1 ? (i / (points.length - 1)) * CPW : CPW / 2);
@@ -211,9 +206,8 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
     setHoverIdx(Math.max(0, Math.min(points.length - 1, Math.round(frac * (points.length - 1)))));
   };
 
-  const hp    = hoverIdx !== null ? points[hoverIdx] : null;
-  const hx    = hoverIdx !== null ? xP(hoverIdx) : null;
-  const cmpHp = (hoverIdx !== null && cmpPoints.length > 0 && hoverIdx < cmpPoints.length) ? cmpPoints[hoverIdx] : null;
+  const hp = hoverIdx !== null ? points[hoverIdx] : null;
+  const hx = hoverIdx !== null ? xP(hoverIdx) : null;
 
   return (
     <div ref={outerRef} className="chart-outer" onMouseLeave={() => setHoverIdx(null)}>
@@ -258,12 +252,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
         <g clipPath="url(#chart-clip)">
           <path d={areaPath('exact')}     fill="url(#cg-exact)" />
           <path d={areaPath('suggested')} fill="url(#cg-sug)" />
-          {cmpPoints.length > 0 && (
-            <>
-              <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.exact)]))}     fill="none" stroke="#4ade80" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
-              <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.suggested)]))} fill="none" stroke="#fb923c" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
-            </>
-          )}
           <path d={smoothPath(coords('exact'))}     fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinejoin="round" />
           <path d={smoothPath(coords('suggested'))} fill="none" stroke="#fb923c" strokeWidth="1.8" strokeLinejoin="round" />
         </g>
@@ -273,12 +261,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
           <>
             <line x1={hx} y1={CM.top} x2={hx} y2={CM.top + localCPH}
               stroke="rgba(148,163,184,0.35)" strokeWidth="1" strokeDasharray="3 3" />
-            {cmpHp && (
-              <>
-                <circle cx={hx} cy={yP(cmpHp.exact)}     r="2.8" fill="#4ade80" opacity="0.42" />
-                <circle cx={hx} cy={yP(cmpHp.suggested)} r="2.8" fill="#fb923c" opacity="0.42" />
-              </>
-            )}
             <circle cx={hx} cy={yP(hp.exact)}     r="3.5" fill="#4ade80" />
             <circle cx={hx} cy={yP(hp.suggested)} r="3.5" fill="#fb923c" />
           </>
@@ -297,13 +279,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
           <div className="chart-tip-date">{fmtTooltipDate(hp.date, granularity)}</div>
           <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {hp.exact}</div>
           <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {hp.suggested}</div>
-          {cmpHp && (
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 5, paddingTop: 5, opacity: 0.6 }}>
-              <div className="chart-tip-date">{fmtTooltipDate(cmpHp.date, granularity)}</div>
-              <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {cmpHp.exact}</div>
-              <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {cmpHp.suggested}</div>
-            </div>
-          )}
         </div>
       )}
 
@@ -311,14 +286,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
       <div className="chart-legend">
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#4ade80' }} />Exact</span>
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#fb923c' }} />Suggested</span>
-        {cmpPoints.length > 0 && (
-          <span className="chart-leg" style={{ opacity: 0.5 }}>
-            <svg width="14" height="8" style={{ verticalAlign: 'middle', marginRight: 4 }}>
-              <line x1="0" y1="4" x2="14" y2="4" stroke="rgba(148,163,184,0.9)" strokeWidth="1.5" strokeDasharray="3 2" />
-            </svg>
-            Previous
-          </span>
-        )}
       </div>
     </div>
   );
@@ -420,7 +387,7 @@ const PRESETS = [
   { key: 'all', label: 'All time' },
 ];
 
-function ChartFilter({ range, from, to, onChange }) {
+function ChartFilter({ range, from, to, onChange, cmpLabel }) {
   const [open, setOpen]               = useState(false);
   const [calEditField, setCalEditField] = useState(null);
   const wrapRef = useRef(null);
@@ -453,6 +420,7 @@ function ChartFilter({ range, from, to, onChange }) {
 
       {open && !calEditField && (
         <div className="chart-filter-popover">
+          <div className="chart-filter-sep" style={{ marginTop: 0 }}>After (current period)</div>
           {PRESETS.map(({ key, label: pl }) => (
             <button
               key={key}
@@ -460,7 +428,7 @@ function ChartFilter({ range, from, to, onChange }) {
               onClick={() => { onChange(key, '', ''); setOpen(false); }}
             >{pl}</button>
           ))}
-          <div className="chart-filter-sep">Custom Range</div>
+          <div className="chart-filter-sep">Custom</div>
           <div className="chart-filter-custom">
             <div className="cal-range-trigger">
               <button
@@ -484,6 +452,15 @@ function ChartFilter({ range, from, to, onChange }) {
               </button>
             </div>
           </div>
+          {cmpLabel && (
+            <>
+              <div className="chart-filter-sep">Before (previous period)</div>
+              <div style={{ padding: '5px 10px 8px', fontSize: 12, color: 'var(--text-muted)' }}>
+                {cmpLabel.replace('vs ', '')}
+                <span style={{ opacity: 0.45, marginLeft: 5 }}>· auto</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -591,6 +568,18 @@ export default function OverviewPage() {
     if (!cmpBounds?.dateFrom || !cmpBounds?.dateTo) return null;
     return `vs ${fmtCalDate(cmpBounds.dateFrom)} – ${fmtCalDate(cmpBounds.dateTo)}`;
   }, [cmpBounds]);
+
+  const chartSummary = useMemo(() => {
+    if (!cmpBounds || chartLoading) return null;
+    const afterExact  = chartPoints.reduce((s, p) => s + p.exact, 0);
+    const afterSug    = chartPoints.reduce((s, p) => s + p.suggested, 0);
+    const beforeExact = compareRaw.reduce((s, p) => s + p.exact, 0);
+    const beforeSug   = compareRaw.reduce((s, p) => s + p.suggested, 0);
+    const afterTotal  = afterExact + afterSug;
+    const beforeTotal = beforeExact + beforeSug;
+    const pct = beforeTotal === 0 ? null : Math.round(((afterTotal - beforeTotal) / beforeTotal) * 100);
+    return { afterExact, afterSug, beforeExact, beforeSug, afterTotal, beforeTotal, pct };
+  }, [chartPoints, compareRaw, cmpBounds, chartLoading]);
 
   useEffect(() => { fetchData(); const iv = setInterval(fetchData, 10000); return () => clearInterval(iv); }, [fetchData]);
   useEffect(() => { fetchChart(); }, [fetchChart]);
@@ -704,26 +693,37 @@ export default function OverviewPage() {
                     <h3 className="card-title">Analytics</h3>
                     <p className="chart-subtitle">Daily leads received</p>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                    <ChartFilter
-                      range={chartRange} from={chartFrom} to={chartTo}
-                      onChange={handleRangeChange}
-                    />
-                    {compareLabel && (
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', opacity: 0.7 }}>{compareLabel}</span>
-                    )}
-                  </div>
+                  <ChartFilter
+                    range={chartRange} from={chartFrom} to={chartTo}
+                    onChange={handleRangeChange}
+                    cmpLabel={compareLabel}
+                  />
                 </div>
                 <LeadsChart
                   rawPoints={chartPoints}
                   granularity={chartGranularity}
                   loading={chartLoading}
-                  compareRaw={compareRaw}
                   mainFrom={mainBounds?.from ?? null}
                   mainTo={mainBounds?.to ?? null}
-                  compareFrom={cmpBounds?.dateFrom ?? null}
-                  compareTo={cmpBounds?.dateTo ?? null}
                 />
+                {chartSummary && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px 10px', fontSize: 12, flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>Before ({fmtCalDate(cmpBounds.dateFrom)}–{fmtCalDate(cmpBounds.dateTo)}):</span>
+                    <span style={{ color: '#4ade80' }}>{chartSummary.beforeExact} Exact</span>
+                    <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+                    <span style={{ color: '#fb923c' }}>{chartSummary.beforeSug} Suggested</span>
+                    <span style={{ color: 'var(--text-muted)', opacity: 0.4, margin: '0 2px' }}>→</span>
+                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>After:</span>
+                    <span style={{ color: '#4ade80' }}>{chartSummary.afterExact} Exact</span>
+                    <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+                    <span style={{ color: '#fb923c' }}>{chartSummary.afterSug} Suggested</span>
+                    {chartSummary.pct !== null && (
+                      <span style={{ fontWeight: 600, color: chartSummary.pct >= 0 ? 'var(--green-400)' : '#f87171' }}>
+                        {chartSummary.pct >= 0 ? '↑' : '↓'}{Math.abs(chartSummary.pct)}%
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </>
