@@ -1499,6 +1499,10 @@ body { overflow-x: hidden; }
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   transition: background 0.15s;
 }
 .login-submit-btn:hover:not(:disabled) { background: #254aa8; }
