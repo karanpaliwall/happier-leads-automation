@@ -1640,7 +1640,26 @@ body { overflow-x: hidden; }
 .status-dropdown-opt:hover  { background: var(--bg-hover); color: var(--text-primary); }
 .status-dropdown-opt.active { background: rgba(59,130,246,0.1); color: var(--blue-400); }
 
-/* ── Campaigns stats bar ── */
+/* ── Campaigns pills row ── */
+.campaigns-pills-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.metric-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Campaigns stats bar (legacy, kept for reference) ── */
 .campaigns-stats-bar {
   display: flex;
   align-items: center;

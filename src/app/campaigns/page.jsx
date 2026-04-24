@@ -88,12 +88,53 @@ function CalendarPicker({ from, to, editField, onSelect, onClear }) {
   );
 }
 
-const TABS = [
+const STATUS_PILLS = [
   { label: 'All',       value: 'all',       color: 'var(--blue-400)',  bg: 'rgba(59,130,246,0.13)'  },
   { label: 'Active',    value: 'active',    color: '#4ade80',          bg: 'rgba(74,222,128,0.12)'  },
   { label: 'Paused',    value: 'paused',    color: '#facc15',          bg: 'rgba(234,179,8,0.13)'   },
-  { label: 'Archived',  value: 'archived',  color: '#9ca3af',          bg: 'rgba(107,114,128,0.13)' },
+  { label: 'Completed', value: 'completed', color: '#9ca3af',          bg: 'rgba(107,114,128,0.13)' },
+  { label: 'Draft',     value: 'draft',     color: '#9ca3af',          bg: 'rgba(107,114,128,0.13)' },
 ];
+
+const STATUS_OPTS = [
+  { label: 'All Status', value: 'all'       },
+  { label: 'Active',     value: 'active'    },
+  { label: 'Paused',     value: 'paused'    },
+  { label: 'Completed',  value: 'completed' },
+  { label: 'Draft',      value: 'draft'     },
+  { label: 'Archived',   value: 'archived'  },
+];
+
+function StatusDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [open]);
+  const selected = STATUS_OPTS.find(o => o.value === value) ?? STATUS_OPTS[0];
+  return (
+    <div className="status-dropdown-wrap" ref={ref}>
+      <button className={`status-dropdown-btn${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
+        {selected.label}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft:'auto', opacity:0.6 }}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="status-dropdown-popover">
+          {STATUS_OPTS.map(o => (
+            <button key={o.value} className={`status-dropdown-opt${o.value === value ? ' active' : ''}`} onClick={() => { onChange(o.value); setOpen(false); }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CampaignBadge({ status }) {
   const cls = {
@@ -127,9 +168,8 @@ function exportCSV(campaigns) {
 }
 
 export default function CampaignsPage() {
-  const [tab, setTab]           = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch]     = useState('');
-  const [timeFilter, setTime]   = useState('');
   const [calFrom, setCalFrom]   = useState('');
   const [calTo, setCalTo]       = useState('');
   const [editField, setEF]      = useState(null);
@@ -154,30 +194,26 @@ export default function CampaignsPage() {
   }
 
   function clearFilters() {
-    setTab('all'); setSearch(''); setDSearch(''); setTime(''); setCalFrom(''); setCalTo(''); setEF(null);
+    setStatusFilter('all'); setSearch(''); setDSearch(''); setCalFrom(''); setCalTo(''); setEF(null);
   }
 
-  const hasFilters = tab !== 'all' || dSearch !== '' || timeFilter !== '' || calFrom !== '' || calTo !== '';
+  const hasFilters = statusFilter !== 'all' || dSearch !== '' || calFrom !== '' || calTo !== '';
 
   const filtered = CAMPAIGNS.filter(c => {
-    if (tab !== 'all' && c.status.toLowerCase() !== tab) return false;
+    if (statusFilter !== 'all' && c.status.toLowerCase() !== statusFilter) return false;
     if (dSearch && !c.name.toLowerCase().includes(dSearch.toLowerCase())) return false;
     return true;
   });
 
   const counts = {
-    all:      CAMPAIGNS.length,
-    active:   CAMPAIGNS.filter(c => c.status === 'ACTIVE').length,
-    paused:   CAMPAIGNS.filter(c => c.status === 'PAUSED').length,
-    archived: CAMPAIGNS.filter(c => c.status === 'ARCHIVED').length,
+    all:       CAMPAIGNS.length,
+    active:    CAMPAIGNS.filter(c => c.status === 'ACTIVE').length,
+    paused:    CAMPAIGNS.filter(c => c.status === 'PAUSED').length,
+    completed: CAMPAIGNS.filter(c => c.status === 'COMPLETED').length,
+    draft:     CAMPAIGNS.filter(c => c.status === 'DRAFT').length,
   };
 
-  const stats = {
-    total:          CAMPAIGNS.length,
-    active:         counts.active,
-    paused:         counts.paused,
-    completed:      CAMPAIGNS.filter(c => c.status === 'COMPLETED').length,
-    draft:          CAMPAIGNS.filter(c => c.status === 'DRAFT').length,
+  const metrics = {
     leadsCompleted: CAMPAIGNS.reduce((s,c) => s + (c.completed  || 0), 0),
     inProgress:     CAMPAIGNS.reduce((s,c) => s + (c.inProgress || 0), 0),
     yetToStart:     CAMPAIGNS.reduce((s,c) => s + (c.yetToStart || 0), 0),
@@ -194,7 +230,74 @@ export default function CampaignsPage() {
       <div className="page-header">
         <div className="page-header-top">
           <h1 className="page-title">Campaigns</h1>
-          <div style={{ display:'flex', alignItems:'center', gap:8, marginLeft:'auto' }}>
+        </div>
+      </div>
+
+      <div className="page-body" style={{ display:'flex', flexDirection:'column', gap:14 }}>
+
+        {/* Top filter bar: search + status dropdown + date range + actions */}
+        <div className="campaigns-filter-bar">
+          <div style={{ position:'relative', flex:'1 1 180px', minWidth:150 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)', pointerEvents:'none' }}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              className="form-input"
+              style={{ paddingLeft:32, width:'100%', boxSizing:'border-box' }}
+              placeholder="Search campaigns…"
+              value={search}
+              onChange={handleSearch}
+            />
+          </div>
+
+          <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
+
+          <div className="cal-wrap" ref={calRef}>
+            <div className="cal-range-trigger">
+              <button
+                type="button"
+                className={`cal-field-btn${editField === 'from' ? ' cal-field-active' : ''}`}
+                onClick={() => setEF(editField === 'from' ? null : 'from')}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {calFrom ? <span className="cal-val">{fmtCalDate(calFrom)}</span> : <span className="cal-placeholder">dd-mm-yyyy</span>}
+              </button>
+              <span className="cal-sep">—</span>
+              <button
+                type="button"
+                className={`cal-field-btn${editField === 'to' ? ' cal-field-active' : ''}`}
+                onClick={() => setEF(editField === 'to' ? null : 'to')}
+              >
+                {calTo ? <span className="cal-val">{fmtCalDate(calTo)}</span> : <span className="cal-placeholder">dd-mm-yyyy</span>}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </button>
+            </div>
+            {editField && (
+              <CalendarPicker
+                from={calFrom} to={calTo} editField={editField}
+                onSelect={(f,t,next) => { setCalFrom(f); setCalTo(t); setEF(next); }}
+                onClear={() => { setCalFrom(''); setCalTo(''); setEF(null); }}
+              />
+            )}
+          </div>
+
+          {hasFilters && (
+            <button className="clear-filters-btn" onClick={clearFilters}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+              Clear
+            </button>
+          )}
+
+          <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
             <button className="export-csv-btn" onClick={() => exportCSV(filtered)} disabled={filtered.length === 0}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -225,125 +328,50 @@ export default function CampaignsPage() {
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="page-body" style={{ display:'flex', flexDirection:'column', gap:14 }}>
-
-        {/* Filter bar — same structure as Leads page */}
-        <div className="filter-bar">
+        {/* Pills row: clickable status filters + display-only metrics */}
+        <div className="campaigns-pills-row">
           <div className="tabs-pill">
-            {TABS.map(t => (
+            {STATUS_PILLS.map(p => (
               <button
-                key={t.value}
-                className={`tab-pill-btn${tab === t.value ? ' active' : ''}`}
-                onClick={() => setTab(t.value)}
+                key={p.value}
+                className={`tab-pill-btn${statusFilter === p.value ? ' active' : ''}`}
+                onClick={() => setStatusFilter(p.value)}
               >
-                {t.label}
+                {p.label}
                 <span
                   className="tab-pill-count"
-                  style={{ color: t.color, background: tab === t.value ? t.bg : undefined }}
+                  style={{ color: p.color, background: statusFilter === p.value ? p.bg : undefined }}
                 >
-                  {counts[t.value] ?? 0}
+                  {counts[p.value] ?? 0}
                 </span>
               </button>
             ))}
           </div>
 
-          <div className="time-filter-group">
-            {['24h','7d'].map(tf => (
-              <button
-                key={tf}
-                className={`time-filter-btn${timeFilter === tf ? ' active' : ''}`}
-                onClick={() => { setTime(timeFilter === tf ? '' : tf); setCalFrom(''); setCalTo(''); setEF(null); }}
-              >{tf}</button>
-            ))}
-            <div className="cal-wrap" ref={calRef}>
-              <div className="cal-range-trigger">
-                <button
-                  type="button"
-                  className={`cal-field-btn${editField === 'from' ? ' cal-field-active' : ''}`}
-                  onClick={() => { setTime(''); setEF(editField === 'from' ? null : 'from'); }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  {calFrom ? <span className="cal-val">{fmtCalDate(calFrom)}</span> : <span className="cal-placeholder">dd-mm-yyyy</span>}
-                </button>
-                <span className="cal-sep">—</span>
-                <button
-                  type="button"
-                  className={`cal-field-btn${editField === 'to' ? ' cal-field-active' : ''}`}
-                  onClick={() => { setTime(''); setEF(editField === 'to' ? null : 'to'); }}
-                >
-                  {calTo ? <span className="cal-val">{fmtCalDate(calTo)}</span> : <span className="cal-placeholder">dd-mm-yyyy</span>}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </button>
-              </div>
-              {editField && (
-                <CalendarPicker
-                  from={calFrom} to={calTo} editField={editField}
-                  onSelect={(f,t,next) => { setCalFrom(f); setCalTo(t); setEF(next); }}
-                  onClear={() => { setCalFrom(''); setCalTo(''); setEF(null); }}
-                />
-              )}
-            </div>
-          </div>
-
-          <div style={{ position:'relative', flex:'1 1 180px', maxWidth:320 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)', pointerEvents:'none' }}>
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input
-              className="form-input"
-              style={{ paddingLeft:32, width:'100%', boxSizing:'border-box' }}
-              placeholder="Search campaigns…"
-              value={search}
-              onChange={handleSearch}
-            />
-          </div>
-
-          {hasFilters && (
-            <button className="clear-filters-btn" onClick={clearFilters}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-              Clear
-            </button>
-          )}
-        </div>
-
-        {/* Stats bar */}
-        <div className="campaigns-stats-bar">
-          {[
-            { label:'Total',           val: stats.total,          cls:'stat-val-default' },
-            { label:'Active',          val: stats.active,         cls:'stat-val-green'   },
-            { label:'Paused',          val: stats.paused,         cls:'stat-val-yellow'  },
-            { label:'Completed',       val: stats.completed,      cls:'stat-val-default' },
-            { label:'Draft',           val: stats.draft,          cls:'stat-val-default' },
-            { label:'Leads Completed', val: stats.leadsCompleted, cls:'stat-val-blue'    },
-            { label:'In Progress',     val: stats.inProgress,     cls:'stat-val-green'   },
-            { label:'Yet to Start',    val: stats.yetToStart,     cls:'stat-val-yellow'  },
-            { label:'Blocked',         val: stats.blocked,        cls:'stat-val-red'     },
-            { label:'Last Synced',     val: null,                 cls:'stat-val-muted'   },
-          ].map(({ label, val, cls }) => (
-            <div key={label} className="campaigns-stat-item">
-              <span className="campaigns-stat-label">{label}</span>
-              {label === 'Last Synced' ? (
-                <span className="campaigns-stat-value stat-val-muted">
-                  {lastSynced
-                    ? lastSynced.toLocaleString('en-US',{ month:'numeric', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })
-                    : '—'}
+          <div className="tabs-pill">
+            {[
+              { label:'Leads Completed', val: metrics.leadsCompleted, color:'#60a5fa', bg:'rgba(59,130,246,0.13)'  },
+              { label:'In Progress',     val: metrics.inProgress,     color:'#4ade80', bg:'rgba(74,222,128,0.12)'  },
+              { label:'Yet to Start',    val: metrics.yetToStart,     color:'#facc15', bg:'rgba(234,179,8,0.13)'   },
+              { label:'Blocked',         val: metrics.blocked,        color:'#f87171', bg:'rgba(248,113,113,0.13)' },
+            ].map(m => (
+              <div key={m.label} className="metric-pill">
+                {m.label}
+                <span className="tab-pill-count" style={{ color: m.color, background: m.bg, opacity:1 }}>
+                  {m.val}
                 </span>
-              ) : (
-                <span className={`campaigns-stat-value ${cls}`}>{(val ?? 0).toLocaleString()}</span>
-              )}
+              </div>
+            ))}
+            <div className="metric-pill">
+              Last Synced
+              <span className="tab-pill-count" style={{ opacity:1, color:'var(--text-muted)' }}>
+                {lastSynced
+                  ? lastSynced.toLocaleString('en-US',{ month:'numeric', day:'numeric', hour:'numeric', minute:'2-digit' })
+                  : '—'}
+              </span>
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Table / empty state */}
