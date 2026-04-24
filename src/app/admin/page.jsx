@@ -42,7 +42,6 @@ export default function AdminPage() {
   const dropdownRef                     = useRef(null);
 
   // Client Tags tab state
-  const [tagSource, setTagSource]                   = useState('heyreach');
   const [tagCampaignSearch, setTagCampaignSearch]   = useState('');
   const [tagCampaignSelected, setTagCampaignSel]    = useState('');
   const [showTagDropdown, setShowTagDropdown]        = useState(false);
@@ -367,28 +366,9 @@ export default function AdminPage() {
               Add / Edit Tags
             </div>
 
-            {/* Source toggle */}
-            <div>
-              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>Source</label>
-              <div className="source-toggle">
-                <button
-                  type="button"
-                  className={`source-toggle-btn${tagSource === 'heyreach' ? ' active' : ''}`}
-                  onClick={() => { setTagSource('heyreach'); setTagCampaignSel(''); setTagCampaignSearch(''); }}
-                >HeyReach</button>
-                <button
-                  type="button"
-                  className={`source-toggle-btn${tagSource === 'smartlead' ? ' active' : ''}`}
-                  onClick={() => { setTagSource('smartlead'); setTagCampaignSel(''); setTagCampaignSearch(''); }}
-                >SmartLead</button>
-              </div>
-            </div>
-
             {/* Campaign search */}
             <div>
-              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>
-                {tagSource === 'heyreach' ? 'HeyReach Campaign' : 'SmartLead Campaign'}
-              </label>
+              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>SmartLead Campaign</label>
               <div className="campaign-search-wrap" ref={tagDropdownRef}>
                 <div className="campaign-search-input-wrap">
                   <span className="campaign-search-icon">
