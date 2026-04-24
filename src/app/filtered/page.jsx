@@ -510,9 +510,9 @@ function CalendarPicker({ from, to, editField, onSelect, onClear }) {
 }
 
 const TABS = [
-  { label: 'All Leads', value: '' },
-  { label: 'Exact', value: 'exact' },
-  { label: 'Suggested', value: 'suggested' },
+  { label: 'All Leads', value: '',          color: 'var(--blue-400)',  bg: 'rgba(59,130,246,0.13)' },
+  { label: 'Exact',     value: 'exact',     color: '#4ade80',          bg: 'rgba(74,222,128,0.12)' },
+  { label: 'Suggested', value: 'suggested', color: '#fb923c',          bg: 'rgba(251,146,60,0.12)'  },
 ];
 
 const DEFAULT_STATS = { total: 0, newToday: 0, exact: 0, suggested: 0 };
@@ -659,7 +659,7 @@ export default function FilteredPage() {
                 onClick={() => handleTabChange(tab.value)}
               >
                 {tab.label}
-                <span className="tab-pill-count">
+                <span className="tab-pill-count" style={{ color: tab.color, background: tab.bg }}>
                   {tab.value === '' ? stats.total : tab.value === 'exact' ? stats.exact : stats.suggested}
                 </span>
               </button>
