@@ -2,18 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-const CAMPAIGN_NAMES = [
-  'ImpactCraftAI_April_US_Campaign',
-  'ImpactCraftAI_April_India_Campaign',
-  'Moora_Faire_April_2026',
-  'Growleads_April_Happier_Leads_Europe',
-  'Growleads_April_Happier_Leads_India',
-  'Growleads_April_Cal_Campaign',
-  'Growleads_April_Happier_Leads_Suggested',
-  'ImpactCraftAI_April_Testing_B',
-  'impact testing 16 april',
-  'impactcraft testing april - company emails',
-];
+const CAMPAIGN_NAMES = [];
 
 const MOCK_CLIENTS = [];
 
