@@ -181,7 +181,7 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
     );
   }
 
-  const maxVal = Math.max(...points.map(p => p.total), ...(cmpPoints.length ? cmpPoints.map(p => p.total) : []), 1);
+  const maxVal = Math.max(...points.map(p => Math.max(p.exact, p.suggested)), ...(cmpPoints.length ? cmpPoints.map(p => Math.max(p.exact, p.suggested)) : []), 1);
   const yMax   = Math.max(Math.ceil(maxVal / 5) * 5, 5);
 
   const xP = (i) => CM.left + (points.length > 1 ? (i / (points.length - 1)) * CPW : CPW / 2);
@@ -222,10 +222,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
           <clipPath id="chart-clip">
             <rect x={CM.left} y={0} width={clipW} height={localCVH} />
           </clipPath>
-          <linearGradient id="cg-total" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.02" />
-          </linearGradient>
           <linearGradient id="cg-exact" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#4ade80" stopOpacity="0.28" />
             <stop offset="100%" stopColor="#4ade80" stopOpacity="0.02" />
@@ -260,17 +256,14 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
 
         {/* Animated areas + lines */}
         <g clipPath="url(#chart-clip)">
-          <path d={areaPath('total')}     fill="url(#cg-total)" />
           <path d={areaPath('exact')}     fill="url(#cg-exact)" />
           <path d={areaPath('suggested')} fill="url(#cg-sug)" />
           {cmpPoints.length > 0 && (
             <>
-              <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.total)]))}     fill="none" stroke="#60a5fa" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
               <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.exact)]))}     fill="none" stroke="#4ade80" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
               <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.suggested)]))} fill="none" stroke="#fb923c" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
             </>
           )}
-          <path d={smoothPath(coords('total'))}     fill="none" stroke="#60a5fa" strokeWidth="1.8" strokeLinejoin="round" />
           <path d={smoothPath(coords('exact'))}     fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinejoin="round" />
           <path d={smoothPath(coords('suggested'))} fill="none" stroke="#fb923c" strokeWidth="1.8" strokeLinejoin="round" />
         </g>
@@ -282,12 +275,10 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
               stroke="rgba(148,163,184,0.35)" strokeWidth="1" strokeDasharray="3 3" />
             {cmpHp && (
               <>
-                <circle cx={hx} cy={yP(cmpHp.total)}     r="2.8" fill="#60a5fa" opacity="0.42" />
                 <circle cx={hx} cy={yP(cmpHp.exact)}     r="2.8" fill="#4ade80" opacity="0.42" />
                 <circle cx={hx} cy={yP(cmpHp.suggested)} r="2.8" fill="#fb923c" opacity="0.42" />
               </>
             )}
-            <circle cx={hx} cy={yP(hp.total)}     r="3.5" fill="#60a5fa" />
             <circle cx={hx} cy={yP(hp.exact)}     r="3.5" fill="#4ade80" />
             <circle cx={hx} cy={yP(hp.suggested)} r="3.5" fill="#fb923c" />
           </>
@@ -304,13 +295,11 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
           }}
         >
           <div className="chart-tip-date">{fmtTooltipDate(hp.date, granularity)}</div>
-          <div className="chart-tip-row" style={{ color: '#60a5fa' }}>Total · {hp.total}</div>
           <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {hp.exact}</div>
           <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {hp.suggested}</div>
           {cmpHp && (
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 5, paddingTop: 5, opacity: 0.6 }}>
               <div className="chart-tip-date">{fmtTooltipDate(cmpHp.date, granularity)}</div>
-              <div className="chart-tip-row" style={{ color: '#60a5fa' }}>Total · {cmpHp.total}</div>
               <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {cmpHp.exact}</div>
               <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {cmpHp.suggested}</div>
             </div>
@@ -320,7 +309,6 @@ function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mai
 
       {/* Legend */}
       <div className="chart-legend">
-        <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#60a5fa' }} />Total</span>
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#4ade80' }} />Exact</span>
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#fb923c' }} />Suggested</span>
         {cmpPoints.length > 0 && (
