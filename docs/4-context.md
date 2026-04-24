@@ -17,6 +17,18 @@ Read this first when resuming work to get back up to speed.
 - Why: User requested the page structure for the upcoming SmartLead API integration. Data is mock/static for now; API sync will be added later.
 - Files affected: `src/app/campaigns/page.jsx` (new), `src/components/Sidebar.jsx`, `src/styles/custom.css`
 
+## 2026-04-24 — Color-coded count badges on Leads filter tabs
+
+- What changed: Each tab in the Leads page filter bar now shows its count badge in a matching accent color: All Leads → blue (`var(--blue-400)` with blue-tint bg), Exact → green (`#4ade80` with green-tint bg), Suggested → orange (`#fb923c` with orange-tint bg). Inactive tab badges dim to 55% opacity; active/hover tabs show full brightness. CSS active override removed — per-tab colors handled via inline `style` on the `tab-pill-count` span using new `color`/`bg` fields on the `TABS` constant.
+- Why: User requested colored filter count numbers to match the reference Growleads Campaigns UI style.
+- Files affected: `src/app/filtered/page.jsx`, `src/styles/custom.css`
+
+## 2026-04-24 — Compact date format in comparison period row, no wrapping
+
+- What changed: `compareLabel` now uses `fmtShortRange()` (e.g. "Apr 11–17") instead of the verbose `dd-mm-yyyy – dd-mm-yyyy` format. The date span in the filter popover also has `white-space: nowrap` so it never wraps onto a second line next to the "Set custom" / "Edit" button. The `.replace('vs ', '')` call in `ChartFilter` was removed since `compareLabel` no longer includes the "vs" prefix.
+- Why: "11-04-2026 – 17-04-2026" was too long for the popover width and wrapped onto two lines.
+- Files affected: `src/app/page.jsx`
+
 ## 2026-04-24 — Custom comparison period in chart filter
 
 - What changed: The "Before (comparison period)" section in the chart filter popover now has a "Set custom" button that opens a calendar picker, letting users choose any date range for the comparison period. Shows "· auto" when auto-calculated, "· custom" when manually set, with a "Reset to auto" button to revert. Changing the main range clears any custom compare. `fetchChart` and `cmpBounds` both respect custom compare dates.
