@@ -234,7 +234,7 @@ export default function AdminPage() {
               <line x1="7" y1="7" x2="7.01" y2="7"/>
             </svg>
             Client Tags
-            <span className="admin-tab-count">{CLIENT_TAGS.length}</span>
+            <span className="admin-tab-count">{MOCK_CLIENTS.length}</span>
           </button>
         </div>
         <span className="admin-badge">ADMIN</span>
