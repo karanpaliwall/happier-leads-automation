@@ -132,8 +132,8 @@ function InfoTooltip({ text }) {
         <div style={{
           position: 'fixed',
           left: pos.x,
-          top: pos.y - 10,
-          transform: 'translate(-50%, -100%)',
+          top: pos.y + 20,
+          transform: 'translateX(-50%)',
           background: 'rgba(13, 20, 36, 0.97)',
           border: '1px solid rgba(148,163,184,0.18)',
           borderRadius: 7,
@@ -148,17 +148,17 @@ function InfoTooltip({ text }) {
           pointerEvents: 'none',
           textAlign: 'center',
         }}>
-          {text}
           <div style={{
             position: 'absolute',
-            top: '100%',
+            bottom: '100%',
             left: '50%',
             transform: 'translateX(-50%)',
             width: 0, height: 0,
             borderLeft: '5px solid transparent',
             borderRight: '5px solid transparent',
-            borderTop: '5px solid rgba(13,20,36,0.97)',
+            borderBottom: '5px solid rgba(13,20,36,0.97)',
           }} />
+          {text}
         </div>
       )}
     </span>
