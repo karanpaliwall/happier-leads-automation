@@ -20,6 +20,11 @@ export default function ClientLayout({ children }) {
     return () => window.removeEventListener('resize', syncCollapse);
   }, []);
 
+  // Scroll to top on every page navigation (App Router doesn't do this reliably on mobile)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   if (pathname === '/login') {
     return <>{children}</>;
   }
