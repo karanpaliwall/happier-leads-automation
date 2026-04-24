@@ -76,6 +76,12 @@ Read this first when resuming work to get back up to speed.
 - Why: User requested the page structure for the upcoming SmartLead API integration. Data is mock/static for now; API sync will be added later.
 - Files affected: `src/app/campaigns/page.jsx` (new), `src/components/Sidebar.jsx`, `src/styles/custom.css`
 
+## 2026-04-24 — Compact sidebar brand + admin form density
+
+- What changed: Reduced sidebar brand logo from 40px to 32px, collapsed logo 28px→24px, brand padding 16px→12px, brand-name font 14px→13px, brand-sub font 11px→10px. Admin notes panel: left/right padding 24px→20px, gap 16px→12px, section icon 28px→24px, textarea min-height 140px→120px, submit buttons 42px→36px, empty state icon 52px→40px.
+- Why: At 100% zoom our system looked larger than the reference Growleads app. The oversized logo icon was the primary driver; the admin form padding and button height added to the visual weight.
+- Files affected: `src/styles/custom.css`, `src/components/Sidebar.jsx`
+
 ## 2026-04-24 — Color-coded count badges on Leads filter tabs
 
 - What changed: Each tab in the Leads page filter bar now shows its count badge in a matching accent color: All Leads → blue (`var(--blue-400)` with blue-tint bg), Exact → green (`#4ade80` with green-tint bg), Suggested → orange (`#fb923c` with orange-tint bg). Inactive tab badges dim to 55% opacity; active/hover tabs show full brightness. CSS active override removed — per-tab colors handled via inline `style` on the `tab-pill-count` span using new `color`/`bg` fields on the `TABS` constant.
