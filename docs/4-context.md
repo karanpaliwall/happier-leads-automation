@@ -5,6 +5,19 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-25 — Unify login design; add spinner to main login; fix CLIENT_TAGS crash; campaigns polish
+
+- What changed:
+  1. **Admin auth gate** — removed the amber `login-card-header` ("ADMIN AUTHENTICATION" with lock icon) and swapped `admin-submit-btn` → `login-submit-btn`. The admin secondary auth gate now uses the same blue card design as the main login page. Spinner animation on the button is retained.
+  2. **Main login page spinner** — "Sign in" button now shows a spinning SVG + "Signing in…" while the `POST /api/auth/login` fetch is in flight (was text-only before). `.login-submit-btn` CSS updated with `display:flex; align-items:center; gap:8px` to support the inline icon.
+  3. **Admin `CLIENT_TAGS` crash** — `CLIENT_TAGS` was referenced but never defined, causing a `ReferenceError` that crashed the entire admin panel immediately after authentication (the root cause of "admin not opening on mobile"). Replaced with `MOCK_CLIENTS.length`.
+  4. **Campaigns search bar width** — search input changed from `flex:1 1 180px` (stretches to fill row) to `flex:0 1 240px` (compact, matching reference design).
+  5. **Campaigns page subtitle** — added `page-subtitle` below the "Campaigns" title ("SmartLead campaign pipeline · sync status, lead progress & outreach metrics").
+- Why: User wanted visual consistency between main login and admin auth gates, spinner feedback on the main login button, and the campaigns search bar sized to match the reference screenshot.
+- Files affected: `src/app/login/page.jsx`, `src/app/admin/page.jsx`, `src/app/campaigns/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Campaigns page: redesigned filter layout
 
 - What changed:
