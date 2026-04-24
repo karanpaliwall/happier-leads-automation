@@ -32,6 +32,12 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-25 — Admin Panel: clear mock clients, breadcrumb "Overview"
+
+- What changed: `MOCK_CLIENTS` array cleared to `[]` — Clients panel in the Tags tab now shows an empty state ("No clients yet") instead of pre-populated fake data. Breadcrumb link changed from "Dashboard" to "Overview" to match the actual nav label.
+- Why: User didn't want pre-populated fake client records; breadcrumb label should match the sidebar nav item name.
+- Files affected: `src/app/admin/page.jsx`
+
 ## 2026-04-24 — Campaigns page: Leads-style filter bar + clear mock data
 
 - What changed:

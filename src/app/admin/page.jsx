@@ -15,11 +15,7 @@ const CAMPAIGN_NAMES = [
   'impactcraft testing april - company emails',
 ];
 
-const MOCK_CLIENTS = [
-  { name: 'ImpactCraft', campaigns: ['ImpactCraftAI_April_US_Campaign', 'ImpactCraftAI_April_India_Campaign', 'ImpactCraftAI_April_Testing_B'] },
-  { name: 'Moora',       campaigns: ['Moora_Faire_April_2026'] },
-  { name: 'Growleads',   campaigns: ['Growleads_April_Happier_Leads_Europe', 'Growleads_April_Happier_Leads_India', 'Growleads_April_Cal_Campaign', 'Growleads_April_Happier_Leads_Suggested'] },
-];
+const MOCK_CLIENTS = [];
 
 function clientInitials(name) {
   return name.split(/[\s_]/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -203,7 +199,7 @@ export default function AdminPage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
-            Dashboard
+            Overview
           </Link>
           <span className="admin-breadcrumb-sep">/</span>
           <span className="admin-panel-title">Admin Panel</span>
@@ -472,34 +468,44 @@ export default function AdminPage() {
 
           {/* Right: Clients list */}
           <div className="admin-notes-right">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div className="admin-section-title" style={{ marginBottom: 0 }}>Clients</div>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{MOCK_CLIENTS.length}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {MOCK_CLIENTS.map((client, i) => (
-                <div key={client.name} className="admin-client-row">
-                  <div className="admin-client-avatar" style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}>
-                    {clientInitials(client.name)}
-                  </div>
-                  <div className="admin-client-info">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <span className="admin-client-name">{client.name}</span>
-                      <span className="admin-client-count">{client.campaigns.length} campaign{client.campaigns.length !== 1 ? 's' : ''}</span>
-                      <span className="admin-l-badge">L</span>
-                    </div>
-                    <div className="admin-campaign-pills">
-                      {client.campaigns.map(c => (
-                        <span key={c} className="admin-campaign-pill-sm">
-                          <span className="admin-tag-dot" style={{ background: 'var(--text-muted)', width: 5, height: 5 }} />
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+            <div className="admin-section-title" style={{ marginBottom: 16 }}>Clients</div>
+            {MOCK_CLIENTS.length === 0 ? (
+              <div className="admin-empty-state">
+                <div className="admin-empty-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
                 </div>
-              ))}
-            </div>
+                <p className="admin-empty-title">No clients yet</p>
+                <p className="admin-empty-sub">Add a client tag and save it to a campaign.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {MOCK_CLIENTS.map((client, i) => (
+                  <div key={client.name} className="admin-client-row">
+                    <div className="admin-client-avatar" style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}>
+                      {clientInitials(client.name)}
+                    </div>
+                    <div className="admin-client-info">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span className="admin-client-name">{client.name}</span>
+                        <span className="admin-client-count">{client.campaigns.length} campaign{client.campaigns.length !== 1 ? 's' : ''}</span>
+                        <span className="admin-l-badge">L</span>
+                      </div>
+                      <div className="admin-campaign-pills">
+                        {client.campaigns.map(c => (
+                          <span key={c} className="admin-campaign-pill-sm">
+                            <span className="admin-tag-dot" style={{ background: 'var(--text-muted)', width: 5, height: 5 }} />
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
