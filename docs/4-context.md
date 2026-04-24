@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix three webhook/API bugs; suppress background-tab polling
+
+- What changed:
+  1. **Email search** (`/api/leads`) — Added `OR email ILIKE ${searchPattern}` to the WHERE clause. Previously the search box said "name, company, email" but email was never actually searched.
+  2. **Invalid date guard** (webhook route) — `activityAt` is now validated with `!isNaN(new Date(rawActivityAt))` before use. A malformed date string from Happier Leads would previously throw a `RangeError` inside the INSERT and silently drop the lead.
+  3. **Race-condition duplicate** (webhook route) — The INSERT is now wrapped in try/catch. If two simultaneous webhooks both pass the dedup SELECT before either INSERT commits, the second one gets a `23505` unique-violation error. Previously this returned 500 and caused Happier Leads to retry indefinitely; now it returns `{ ok: true, duplicate: true }` — same as an intentional duplicate.
+  4. **Background-tab polling** (Leads page) — The 10-second `setInterval` now checks `document.hidden` before firing. Polls are skipped while the tab is in the background, saving API calls and DB connections.
+- Why: Edge case audit identified these as real bugs affecting data integrity and system stability. The webhook is permanent (Vercel production URL does not expire).
+- Files affected: `src/app/api/leads/route.js`, `src/app/api/webhook/happierleads/route.js`, `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-24 — Campaigns page: Leads-style filter bar + clear mock data
 
 - What changed:

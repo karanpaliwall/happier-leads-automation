@@ -43,7 +43,8 @@ export async function POST(req) {
     ? Math.min(10, visits * 2) + Math.min(10, Math.floor(durationMs / 60000))
     : null;
 
-  const activityAt = body?.summary?.lastSession?.date ?? null;
+  const rawActivityAt = body?.summary?.lastSession?.date ?? null;
+  const activityAt = rawActivityAt && !isNaN(new Date(rawActivityAt)) ? rawActivityAt : null;
 
   // Duplicate check — layered: HL ID → email → LinkedIn → name+company
   const existing = await sql`
@@ -63,24 +64,33 @@ export async function POST(req) {
     return Response.json({ ok: true, duplicate: true });
   }
 
-  await sql`
-    INSERT INTO leads (
-      happier_leads_id,
-      first_name, last_name, full_name, email, linkedin_url,
-      company_name, company_domain, company_logo_url,
-      lead_type, fit_score, engagement_score, activity_at,
-      raw_payload
-    ) VALUES (
-      ${hlId},
-      ${firstName}, ${lastName}, ${fullName}, ${email}, ${linkedinUrl},
-      ${companyName}, ${companyDomain}, ${companyLogoUrl},
-      ${leadType},
-      ${fitScore},
-      ${engagementScore},
-      ${activityAt ? new Date(activityAt).toISOString() : null},
-      ${JSON.stringify(body)}
-    )
-  `;
+  try {
+    await sql`
+      INSERT INTO leads (
+        happier_leads_id,
+        first_name, last_name, full_name, email, linkedin_url,
+        company_name, company_domain, company_logo_url,
+        lead_type, fit_score, engagement_score, activity_at,
+        raw_payload
+      ) VALUES (
+        ${hlId},
+        ${firstName}, ${lastName}, ${fullName}, ${email}, ${linkedinUrl},
+        ${companyName}, ${companyDomain}, ${companyLogoUrl},
+        ${leadType},
+        ${fitScore},
+        ${engagementScore},
+        ${activityAt ? new Date(activityAt).toISOString() : null},
+        ${JSON.stringify(body)}
+      )
+    `;
+  } catch (err) {
+    // 23505 = unique_violation — two webhooks raced past the dedup SELECT simultaneously.
+    // Treat as duplicate: return 200 so Happier Leads doesn't retry.
+    if (err.code === '23505') {
+      return Response.json({ ok: true, duplicate: true });
+    }
+    throw err;
+  }
 
   return Response.json({ ok: true });
 }

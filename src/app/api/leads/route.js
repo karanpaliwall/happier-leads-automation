@@ -40,6 +40,7 @@ export async function GET(req) {
         AND (
           company_name ILIKE ${searchPattern}
           OR full_name  ILIKE ${searchPattern}
+          OR email      ILIKE ${searchPattern}
         )
         AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
         AND (${dateFrom}::date IS NULL OR received_at::date >= ${dateFrom}::date)
