@@ -34,6 +34,7 @@ const NAV_SECTIONS = [
   },
   {
     label: 'Smart Lead',
+    hideLabel: true,
     items: [
       {
         href: '/campaigns',
@@ -112,7 +113,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       <nav className="sidebar-nav">
         {NAV_SECTIONS.map(section => (
           <div key={section.label}>
-            {!isCollapsed && <p className="sidebar-section-label">{section.label}</p>}
+            {!isCollapsed && !section.hideLabel && <p className="sidebar-section-label">{section.label}</p>}
             {section.items.map(item => (
               <Link
                 key={item.href}
