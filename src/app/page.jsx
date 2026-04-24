@@ -30,6 +30,17 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function fmtShortRange(fromIso, toIso) {
+  const from = new Date(fromIso + 'T00:00:00Z');
+  const to   = new Date(toIso   + 'T00:00:00Z');
+  const sameMonth = from.getUTCMonth() === to.getUTCMonth();
+  const fmtFrom = from.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const fmtTo   = sameMonth
+    ? to.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })
+    : to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return `${fmtFrom}–${fmtTo}`;
+}
+
 function getRangeParams(range, from, to) {
   if (range === 'custom') return { since: null, dateFrom: from, dateTo: to };
   if (range === '24h') {
@@ -707,13 +718,25 @@ export default function OverviewPage() {
                   mainTo={mainBounds?.to ?? null}
                 />
                 {chartSummary && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px 10px', fontSize: 12, flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>Before ({fmtCalDate(cmpBounds.dateFrom)}–{fmtCalDate(cmpBounds.dateTo)}):</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px 10px', fontSize: 12, flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', opacity: 0.7 }}>
+                      Prev. period ({fmtShortRange(cmpBounds.dateFrom, cmpBounds.dateTo)})
+                      <svg
+                        width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ cursor: 'help', flexShrink: 0 }}
+                      >
+                        <title>The same-length period immediately before the current range, used to compare how leads have changed</title>
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      :
+                    </span>
                     <span style={{ color: '#4ade80' }}>{chartSummary.beforeExact} Exact</span>
                     <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
                     <span style={{ color: '#fb923c' }}>{chartSummary.beforeSug} Suggested</span>
                     <span style={{ color: 'var(--text-muted)', opacity: 0.4, margin: '0 2px' }}>→</span>
-                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>After:</span>
+                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+                      Current ({fmtShortRange(mainBounds.from, mainBounds.to)}):
+                    </span>
                     <span style={{ color: '#4ade80' }}>{chartSummary.afterExact} Exact</span>
                     <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
                     <span style={{ color: '#fb923c' }}>{chartSummary.afterSug} Suggested</span>
