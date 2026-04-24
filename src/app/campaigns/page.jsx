@@ -1,32 +1,99 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const MOCK_CAMPAIGNS = [
-  { id: 'c1',  name: 'ImpactCraftAI_April_US_Campaign',               status: 'ACTIVE',   totalLeads: 502,  completed: 2,  inProgress: 98,  yetToStart: 27, blocked: 0, sent: 150, pending: 352 },
-  { id: 'c2',  name: 'ImpactCraftAI_April_India_Campaign',            status: 'ACTIVE',   totalLeads: 622,  completed: 1,  inProgress: 95,  yetToStart: 60, blocked: 0, sent: 150, pending: 472 },
-  { id: 'c3',  name: 'impact testing 16 april',                       status: 'ARCHIVED', totalLeads: 3,    completed: 3,  inProgress: 0,   yetToStart: 0,  blocked: 0, sent: 3,   pending: 0   },
-  { id: 'c4',  name: 'impactcraft testing april - company emails - copy', status: 'ARCHIVED', totalLeads: 4, completed: 4, inProgress: 0,   yetToStart: 0,  blocked: 0, sent: 4,   pending: 0   },
-  { id: 'c5',  name: 'impactcraft testing april - company emails',    status: 'ARCHIVED', totalLeads: 12,   completed: 11, inProgress: 0,  yetToStart: 0,  blocked: 1, sent: 12,  pending: 0   },
-  { id: 'c6',  name: 'impactcraft testing april',                     status: 'ARCHIVED', totalLeads: 6,    completed: 6,  inProgress: 0,   yetToStart: 0,  blocked: 0, sent: 6,   pending: 0   },
-  { id: 'c7',  name: 'Moora_Faire_April_2026',                        status: 'ACTIVE',   totalLeads: 374,  completed: 68, inProgress: 33,  yetToStart: 0,  blocked: 2, sent: 341, pending: 33  },
-  { id: 'c8',  name: 'Growleads_April_Happier_Leads_Europe',          status: 'ACTIVE',   totalLeads: 634,  completed: 2,  inProgress: 158, yetToStart: 0,  blocked: 0, sent: 210, pending: 424 },
-  { id: 'c9',  name: 'Growleads_April_Happier_Leads_India',           status: 'ACTIVE',   totalLeads: 737,  completed: 2,  inProgress: 165, yetToStart: 18, blocked: 3, sent: 170, pending: 567 },
-  { id: 'c10', name: 'Growleads_April_Cal_Campaign',                  status: 'PAUSED',   totalLeads: 329,  completed: 2,  inProgress: 64,  yetToStart: 0,  blocked: 6, sent: 174, pending: 155 },
-  { id: 'c11', name: 'Growleads_April_Happier_Leads_Suggested',       status: 'ACTIVE',   totalLeads: 1005, completed: 10, inProgress: 219, yetToStart: 29, blocked: 2, sent: 358, pending: 647 },
-  { id: 'c12', name: 'ImpactCraftAI_April_Testing_B',                 status: 'PAUSED',   totalLeads: 343,  completed: 19, inProgress: 96,  yetToStart: 0,  blocked: 0, sent: 214, pending: 129 },
-];
+const CAMPAIGNS = [];
 
-const STATUS_OPTIONS = ['All Status', 'Active', 'Started', 'Paused', 'Completed', 'Draft'];
+const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAL_DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
-function statusToFilter(status) {
-  return {
-    ACTIVE:    'Active',
-    PAUSED:    'Paused',
-    COMPLETED: 'Completed',
-    DRAFT:     'Draft',
-    ARCHIVED:  null,
-  }[status] ?? null;
+function fmtCalDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}-${m}-${y}`;
 }
+
+function CalendarPicker({ from, to, editField, onSelect, onClear }) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const seed = (editField === 'to' && to)   ? new Date(to   + 'T00:00:00')
+             : (editField === 'from' && from) ? new Date(from + 'T00:00:00')
+             : new Date();
+  const [vy, setVy] = useState(seed.getFullYear());
+  const [vm, setVm] = useState(seed.getMonth());
+
+  const firstDow = new Date(vy, vm, 1).getDay();
+  const dim      = new Date(vy, vm + 1, 0).getDate();
+
+  function iso(d) {
+    return `${vy}-${String(vm + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+
+  function clickDay(d) {
+    const s = iso(d);
+    if (editField === 'from') {
+      const keepTo = to && s <= to ? to : '';
+      onSelect(s, keepTo, 'to');
+    } else {
+      if (!from || s >= from) onSelect(from || s, s, null);
+      else onSelect(s, '', 'to');
+    }
+  }
+
+  function prev() { if (vm === 0) { setVy(y => y-1); setVm(11); } else setVm(m => m-1); }
+  function next() { if (vm === 11) { setVy(y => y+1); setVm(0);  } else setVm(m => m+1); }
+
+  const cells = [...Array(firstDow).fill(null), ...Array.from({ length: dim }, (_,i) => i+1)];
+
+  return (
+    <div className="cal-popover">
+      <div className="cal-editing-hint">
+        {editField === 'from' ? 'Select start date' : 'Select end date'}
+      </div>
+      <div className="cal-nav-row">
+        <span className="cal-month-title">{CAL_MONTHS[vm]}, {vy}</span>
+        <div style={{ display:'flex', gap:2 }}>
+          <button className="cal-nav-btn" type="button" onClick={prev}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button className="cal-nav-btn" type="button" onClick={next}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+      </div>
+      <div className="cal-grid">
+        {CAL_DAYS.map(dl => <div key={dl} className="cal-dow">{dl}</div>)}
+        {cells.map((d, i) => {
+          if (d === null) return <div key={`e${i}`} />;
+          const s   = iso(d);
+          const sel = s === from || s === to;
+          const inR = from && to && s > from && s < to;
+          return (
+            <button
+              key={d}
+              type="button"
+              className={`cal-day${sel ? ' cal-sel' : s === todayIso ? ' cal-today' : ''}${inR ? ' cal-range' : ''}`}
+              onClick={() => clickDay(d)}
+            >{d}</button>
+          );
+        })}
+      </div>
+      <div className="cal-footer-row">
+        <button className="cal-foot-btn" type="button" onClick={onClear}>Clear</button>
+        <button className="cal-foot-btn cal-foot-today" type="button" onClick={() => {
+          const t = new Date().toISOString().slice(0,10);
+          if (editField === 'from') onSelect(t, to && to >= t ? to : '', 'to');
+          else onSelect(from || t, t, null);
+        }}>Today</button>
+      </div>
+    </div>
+  );
+}
+
+const TABS = [
+  { label: 'All',       value: 'all',       color: 'var(--blue-400)',  bg: 'rgba(59,130,246,0.13)'  },
+  { label: 'Active',    value: 'active',    color: '#4ade80',          bg: 'rgba(74,222,128,0.12)'  },
+  { label: 'Paused',    value: 'paused',    color: '#facc15',          bg: 'rgba(234,179,8,0.13)'   },
+  { label: 'Archived',  value: 'archived',  color: '#9ca3af',          bg: 'rgba(107,114,128,0.13)' },
+];
 
 function CampaignBadge({ status }) {
   const cls = {
@@ -44,130 +111,113 @@ function Num({ value, cls }) {
   return <span className={cls}>{value.toLocaleString()}</span>;
 }
 
-function StatusDropdown({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
-
-  return (
-    <div className="status-dropdown-wrap" ref={ref}>
-      <button
-        className={`status-dropdown-btn${open ? ' open' : ''}`}
-        onClick={() => setOpen(v => !v)}
-      >
-        <span style={{ flex: 1, textAlign: 'left' }}>{value}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
-        <div className="status-dropdown-popover">
-          {STATUS_OPTIONS.map(opt => (
-            <button
-              key={opt}
-              className={`status-dropdown-opt${value === opt ? ' active' : ''}`}
-              onClick={() => { onChange(opt); setOpen(false); }}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function exportCSV(campaigns) {
-  const headers = ['Campaign Name', 'Status', 'Total Leads', 'Completed', 'In Progress', 'Yet to Start', 'Blocked', 'Sent', 'Pending'];
+  const headers = ['Campaign Name','Status','Total Leads','Completed','In Progress','Yet to Start','Blocked','Sent','Pending'];
   const rows = campaigns.map(c => [
     `"${c.name}"`, c.status, c.totalLeads, c.completed, c.inProgress, c.yetToStart, c.blocked, c.sent, c.pending,
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   a.href = url;
-  a.download = `campaigns-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `campaigns-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 export default function CampaignsPage() {
-  const [search, setSearch]         = useState('');
-  const [statusFilter, setStatus]   = useState('All Status');
-  const [syncing, setSyncing]       = useState(false);
+  const [tab, setTab]           = useState('all');
+  const [search, setSearch]     = useState('');
+  const [timeFilter, setTime]   = useState('');
+  const [calFrom, setCalFrom]   = useState('');
+  const [calTo, setCalTo]       = useState('');
+  const [editField, setEF]      = useState(null);
+  const [syncing, setSyncing]   = useState(false);
   const [lastSynced, setLastSynced] = useState(null);
+  const calRef = useRef(null);
+  const debounceRef = useRef(null);
+  const [dSearch, setDSearch]   = useState('');
 
-  const filtered = MOCK_CAMPAIGNS.filter(c => {
-    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'All Status' || statusToFilter(c.status) === statusFilter;
-    return matchSearch && matchStatus;
+  useEffect(() => {
+    if (!editField) return;
+    function h(e) { if (calRef.current && !calRef.current.contains(e.target)) setEF(null); }
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [editField]);
+
+  function handleSearch(e) {
+    const v = e.target.value;
+    setSearch(v);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDSearch(v), 300);
+  }
+
+  function clearFilters() {
+    setTab('all'); setSearch(''); setDSearch(''); setTime(''); setCalFrom(''); setCalTo(''); setEF(null);
+  }
+
+  const hasFilters = tab !== 'all' || dSearch !== '' || timeFilter !== '' || calFrom !== '' || calTo !== '';
+
+  const filtered = CAMPAIGNS.filter(c => {
+    if (tab !== 'all' && c.status.toLowerCase() !== tab) return false;
+    if (dSearch && !c.name.toLowerCase().includes(dSearch.toLowerCase())) return false;
+    return true;
   });
 
+  const counts = {
+    all:      CAMPAIGNS.length,
+    active:   CAMPAIGNS.filter(c => c.status === 'ACTIVE').length,
+    paused:   CAMPAIGNS.filter(c => c.status === 'PAUSED').length,
+    archived: CAMPAIGNS.filter(c => c.status === 'ARCHIVED').length,
+  };
+
   const stats = {
-    total:          MOCK_CAMPAIGNS.length,
-    active:         MOCK_CAMPAIGNS.filter(c => c.status === 'ACTIVE').length,
-    paused:         MOCK_CAMPAIGNS.filter(c => c.status === 'PAUSED').length,
-    completed:      MOCK_CAMPAIGNS.filter(c => c.status === 'COMPLETED').length,
-    draft:          MOCK_CAMPAIGNS.filter(c => c.status === 'DRAFT').length,
-    leadsCompleted: MOCK_CAMPAIGNS.reduce((s, c) => s + c.completed, 0),
-    inProgress:     MOCK_CAMPAIGNS.reduce((s, c) => s + c.inProgress, 0),
-    yetToStart:     MOCK_CAMPAIGNS.reduce((s, c) => s + c.yetToStart, 0),
-    blocked:        MOCK_CAMPAIGNS.reduce((s, c) => s + c.blocked, 0),
+    total:          CAMPAIGNS.length,
+    active:         counts.active,
+    paused:         counts.paused,
+    completed:      CAMPAIGNS.filter(c => c.status === 'COMPLETED').length,
+    draft:          CAMPAIGNS.filter(c => c.status === 'DRAFT').length,
+    leadsCompleted: CAMPAIGNS.reduce((s,c) => s + (c.completed  || 0), 0),
+    inProgress:     CAMPAIGNS.reduce((s,c) => s + (c.inProgress || 0), 0),
+    yetToStart:     CAMPAIGNS.reduce((s,c) => s + (c.yetToStart || 0), 0),
+    blocked:        CAMPAIGNS.reduce((s,c) => s + (c.blocked    || 0), 0),
   };
 
   function handleSyncLive() {
     setSyncing(true);
-    setTimeout(() => {
-      setSyncing(false);
-      setLastSynced(new Date());
-    }, 1500);
+    setTimeout(() => { setSyncing(false); setLastSynced(new Date()); }, 1500);
   }
 
   return (
     <>
       <div className="page-header">
         <div className="page-header-top">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1 className="page-title">Campaigns</h1>
-            <span className="campaigns-count-badge">{stats.total} campaigns</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-            <button className="export-csv-btn" onClick={() => exportCSV(filtered)}>
+          <h1 className="page-title">Campaigns</h1>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginLeft:'auto' }}>
+            <button className="export-csv-btn" onClick={() => exportCSV(filtered)} disabled={filtered.length === 0}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
               Export CSV
             </button>
-            <button
-              className="btn-primary"
-              onClick={handleSyncLive}
-              disabled={syncing}
-            >
+            <button className="btn-primary" onClick={handleSyncLive} disabled={syncing}>
               {syncing ? (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.7s linear infinite' }}>
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation:'spin 0.7s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                   </svg>
                   Syncing…
                 </>
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21.5 2v6h-6" />
-                    <path d="M2.5 12a10 10 0 0 1 10-10 10 10 0 0 1 7.07 2.93L21.5 8" />
-                    <path d="M2.5 22v-6h6" />
-                    <path d="M21.5 12a10 10 0 0 1-10 10 10 10 0 0 1-7.07-2.93L2.5 16" />
+                    <path d="M21.5 2v6h-6"/>
+                    <path d="M2.5 12a10 10 0 0 1 10-10 10 10 0 0 1 7.07 2.93L21.5 8"/>
+                    <path d="M2.5 22v-6h6"/>
+                    <path d="M21.5 12a10 10 0 0 1-10 10 10 10 0 0 1-7.07-2.93L2.5 16"/>
                   </svg>
                   Sync Live
                 </>
@@ -177,119 +227,205 @@ export default function CampaignsPage() {
         </div>
       </div>
 
-      <div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="page-body" style={{ display:'flex', flexDirection:'column', gap:14 }}>
 
-        {/* Filter bar */}
-        <div className="campaigns-filter-bar">
-          <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 320 }}>
-            <svg
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}
-            >
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        {/* Filter bar — same structure as Leads page */}
+        <div className="filter-bar">
+          <div className="tabs-pill">
+            {TABS.map(t => (
+              <button
+                key={t.value}
+                className={`tab-pill-btn${tab === t.value ? ' active' : ''}`}
+                onClick={() => setTab(t.value)}
+              >
+                {t.label}
+                <span
+                  className="tab-pill-count"
+                  style={{ color: t.color, background: tab === t.value ? t.bg : undefined }}
+                >
+                  {counts[t.value] ?? 0}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="time-filter-group">
+            {['24h','7d'].map(tf => (
+              <button
+                key={tf}
+                className={`time-filter-btn${timeFilter === tf ? ' active' : ''}`}
+                onClick={() => { setTime(timeFilter === tf ? '' : tf); setCalFrom(''); setCalTo(''); setEF(null); }}
+              >{tf}</button>
+            ))}
+            <div className="cal-wrap" ref={calRef}>
+              <div className="cal-range-trigger">
+                <button
+                  type="button"
+                  className={`cal-field-btn${editField === 'from' ? ' cal-field-active' : ''}`}
+                  onClick={() => { setTime(''); setEF(editField === 'from' ? null : 'from'); }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  {calFrom ? <span className="cal-val">{fmtCalDate(calFrom)}</span> : <span className="cal-placeholder">dd-mm-yyyy</span>}
+                </button>
+                <span className="cal-sep">—</span>
+                <button
+                  type="button"
+                  className={`cal-field-btn${editField === 'to' ? ' cal-field-active' : ''}`}
+                  onClick={() => { setTime(''); setEF(editField === 'to' ? null : 'to'); }}
+                >
+                  {calTo ? <span className="cal-val">{fmtCalDate(calTo)}</span> : <span className="cal-placeholder">dd-mm-yyyy</span>}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </button>
+              </div>
+              {editField && (
+                <CalendarPicker
+                  from={calFrom} to={calTo} editField={editField}
+                  onSelect={(f,t,next) => { setCalFrom(f); setCalTo(t); setEF(next); }}
+                  onClear={() => { setCalFrom(''); setCalTo(''); setEF(null); }}
+                />
+              )}
+            </div>
+          </div>
+
+          <div style={{ position:'relative', flex:'1 1 180px', maxWidth:320 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)', pointerEvents:'none' }}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
               className="form-input"
-              style={{ paddingLeft: 32, width: '100%', boxSizing: 'border-box' }}
+              style={{ paddingLeft:32, width:'100%', boxSizing:'border-box' }}
               placeholder="Search campaigns…"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={handleSearch}
             />
           </div>
-          <StatusDropdown value={statusFilter} onChange={setStatus} />
+
+          {hasFilters && (
+            <button className="clear-filters-btn" onClick={clearFilters}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Stats bar */}
         <div className="campaigns-stats-bar">
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Total</span>
-            <span className="campaigns-stat-value stat-val-default">{stats.total}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Active</span>
-            <span className="campaigns-stat-value stat-val-green">{stats.active}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Paused</span>
-            <span className="campaigns-stat-value stat-val-yellow">{stats.paused}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Completed</span>
-            <span className="campaigns-stat-value stat-val-default">{stats.completed}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Draft</span>
-            <span className="campaigns-stat-value stat-val-default">{stats.draft}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Leads Completed</span>
-            <span className="campaigns-stat-value stat-val-blue">{stats.leadsCompleted.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">In Progress</span>
-            <span className="campaigns-stat-value stat-val-green">{stats.inProgress.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Yet to Start</span>
-            <span className="campaigns-stat-value stat-val-yellow">{stats.yetToStart.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Blocked</span>
-            <span className="campaigns-stat-value stat-val-red">{stats.blocked.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Last Synced</span>
-            <span className="campaigns-stat-value stat-val-muted">
-              {lastSynced
-                ? lastSynced.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })
-                : '—'}
-            </span>
-          </div>
+          {[
+            { label:'Total',           val: stats.total,          cls:'stat-val-default' },
+            { label:'Active',          val: stats.active,         cls:'stat-val-green'   },
+            { label:'Paused',          val: stats.paused,         cls:'stat-val-yellow'  },
+            { label:'Completed',       val: stats.completed,      cls:'stat-val-default' },
+            { label:'Draft',           val: stats.draft,          cls:'stat-val-default' },
+            { label:'Leads Completed', val: stats.leadsCompleted, cls:'stat-val-blue'    },
+            { label:'In Progress',     val: stats.inProgress,     cls:'stat-val-green'   },
+            { label:'Yet to Start',    val: stats.yetToStart,     cls:'stat-val-yellow'  },
+            { label:'Blocked',         val: stats.blocked,        cls:'stat-val-red'     },
+            { label:'Last Synced',     val: null,                 cls:'stat-val-muted'   },
+          ].map(({ label, val, cls }) => (
+            <div key={label} className="campaigns-stat-item">
+              <span className="campaigns-stat-label">{label}</span>
+              {label === 'Last Synced' ? (
+                <span className="campaigns-stat-value stat-val-muted">
+                  {lastSynced
+                    ? lastSynced.toLocaleString('en-US',{ month:'numeric', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit' })
+                    : '—'}
+                </span>
+              ) : (
+                <span className={`campaigns-stat-value ${cls}`}>{(val ?? 0).toLocaleString()}</span>
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Table */}
-        <div className="card" style={{ padding: 0 }}>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ minWidth: 240 }}>Campaign Name</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Total Leads</th>
-                  <th style={{ textAlign: 'right' }}>Completed</th>
-                  <th style={{ textAlign: 'right' }}>In Progress</th>
-                  <th style={{ textAlign: 'right' }}>Yet to Start</th>
-                  <th style={{ textAlign: 'right' }}>Blocked</th>
-                  <th style={{ textAlign: 'right' }}>Sent</th>
-                  <th style={{ textAlign: 'right' }}>Pending</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                      No campaigns match your filters.
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map(c => (
-                    <tr key={c.id} className="lead-row">
-                      <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.name}</td>
-                      <td><CampaignBadge status={c.status} /></td>
-                      <td style={{ textAlign: 'right' }}>{c.totalLeads.toLocaleString()}</td>
-                      <td style={{ textAlign: 'right' }}><Num value={c.completed}   cls="num-blue"   /></td>
-                      <td style={{ textAlign: 'right' }}><Num value={c.inProgress}  cls="num-green"  /></td>
-                      <td style={{ textAlign: 'right' }}><Num value={c.yetToStart}  cls="num-yellow" /></td>
-                      <td style={{ textAlign: 'right' }}><Num value={c.blocked}     cls="num-red"    /></td>
-                      <td style={{ textAlign: 'right' }}>{c.sent.toLocaleString()}</td>
-                      <td style={{ textAlign: 'right' }}><Num value={c.pending}     cls="num-orange" /></td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {/* Table / empty state */}
+        {CAMPAIGNS.length === 0 ? (
+          <div className="empty-onboarding">
+            <div className="empty-onboarding-hero">
+              <div className="empty-onboarding-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+              </div>
+              <h2 className="empty-onboarding-title">No campaigns yet</h2>
+              <p className="empty-onboarding-sub">Click <strong>Sync Live</strong> to pull your SmartLead campaigns, or wait for the first sync to complete.</p>
+            </div>
+            <div className="empty-steps">
+              <div className="empty-step">
+                <div className="empty-step-num">1</div>
+                <div className="empty-step-body">
+                  <div className="empty-step-title">Connect SmartLead</div>
+                  <div className="empty-step-desc">Add your SmartLead API key in settings so this dashboard can read your campaign data.</div>
+                </div>
+              </div>
+              <div className="empty-step">
+                <div className="empty-step-num">2</div>
+                <div className="empty-step-body">
+                  <div className="empty-step-title">Sync campaigns</div>
+                  <div className="empty-step-desc">Hit <strong>Sync Live</strong> in the top-right to pull the latest campaign list and stats from SmartLead.</div>
+                </div>
+              </div>
+              <div className="empty-step">
+                <div className="empty-step-num">3</div>
+                <div className="empty-step-body">
+                  <div className="empty-step-title">Push leads to campaigns</div>
+                  <div className="empty-step-desc">Use the <strong>Push to Smart Lead</strong> action on any lead to add them to an active campaign.</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="card" style={{ padding:0 }}>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ minWidth:240 }}>Campaign Name</th>
+                    <th>Status</th>
+                    <th style={{ textAlign:'right' }}>Total Leads</th>
+                    <th style={{ textAlign:'right' }}>Completed</th>
+                    <th style={{ textAlign:'right' }}>In Progress</th>
+                    <th style={{ textAlign:'right' }}>Yet to Start</th>
+                    <th style={{ textAlign:'right' }}>Blocked</th>
+                    <th style={{ textAlign:'right' }}>Sent</th>
+                    <th style={{ textAlign:'right' }}>Pending</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign:'center', padding:'40px 20px', color:'var(--text-muted)' }}>
+                        No campaigns match your filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map(c => (
+                      <tr key={c.id} className="lead-row">
+                        <td style={{ fontWeight:500, color:'var(--text-primary)' }}>{c.name}</td>
+                        <td><CampaignBadge status={c.status} /></td>
+                        <td style={{ textAlign:'right' }}>{c.totalLeads.toLocaleString()}</td>
+                        <td style={{ textAlign:'right' }}><Num value={c.completed}  cls="num-blue"   /></td>
+                        <td style={{ textAlign:'right' }}><Num value={c.inProgress} cls="num-green"  /></td>
+                        <td style={{ textAlign:'right' }}><Num value={c.yetToStart} cls="num-yellow" /></td>
+                        <td style={{ textAlign:'right' }}><Num value={c.blocked}    cls="num-red"    /></td>
+                        <td style={{ textAlign:'right' }}>{c.sent.toLocaleString()}</td>
+                        <td style={{ textAlign:'right' }}><Num value={c.pending}    cls="num-orange" /></td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

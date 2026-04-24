@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Campaigns page: Leads-style filter bar + clear mock data
+
+- What changed:
+  1. **Filter bar** — Replaced the search + status-dropdown layout with the same filter structure as the Leads page: tab pills (All / Active / Paused / Archived with live counts), time filter buttons (24h / 7d), calendar date-range picker (same `CalendarPicker` component pattern), search input, and a "Clear" button that appears when any filter is active.
+  2. **Mock data removed** — `MOCK_CAMPAIGNS` array replaced with `const CAMPAIGNS = []`. No fake pre-populated records; the table area now shows a proper three-step empty onboarding state ("No campaigns yet — Sync Live to pull from SmartLead") instead of random data.
+  3. **Stats bar** — Preserved but all values compute from the real (empty) array so they show 0 until real data is synced.
+  4. **Export CSV** button disabled when no data; Sync Live button and spinner retained.
+- Why: User wanted the Campaigns filter bar to visually match the Leads page exactly, and did not want pre-populated fake campaign records.
+- Files affected: `src/app/campaigns/page.jsx`
+
+---
+
 ## 2026-04-24 — Fix main login style revert + admin auth sign-in spinner
 
 - What changed:
