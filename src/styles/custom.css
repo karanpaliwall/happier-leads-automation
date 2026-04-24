@@ -2042,6 +2042,40 @@ body { overflow-x: hidden; }
   white-space: nowrap;
 }
 
+/* ── Source toggle (HeyReach / SmartLead) ── */
+.source-toggle { display: flex; gap: 6px; }
+.source-toggle-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.source-toggle-btn.active {
+  background: rgba(59,130,246,0.15);
+  color: var(--blue-400);
+  border-color: rgba(59,130,246,0.3);
+}
+
+/* ── Campaign search input with icon ── */
+.campaign-search-input-wrap { position: relative; }
+.campaign-search-input-wrap .campaign-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+.campaign-search-input-wrap .form-input { padding-left: 32px; }
+
 /* ── Campaign search dropdown ── */
 .campaign-search-wrap { position: relative; }
 .campaign-search-dropdown {

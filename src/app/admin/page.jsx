@@ -42,6 +42,7 @@ export default function AdminPage() {
   const dropdownRef                     = useRef(null);
 
   // Client Tags tab state
+  const [tagSource, setTagSource]                   = useState('heyreach');
   const [tagCampaignSearch, setTagCampaignSearch]   = useState('');
   const [tagCampaignSelected, setTagCampaignSel]    = useState('');
   const [showTagDropdown, setShowTagDropdown]        = useState(false);
@@ -233,18 +234,25 @@ export default function AdminPage() {
             <div>
               <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>SmartLead Campaign</label>
               <div className="campaign-search-wrap" ref={dropdownRef}>
-                <input
-                  className="form-input"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                  placeholder="Search by name or ID…"
-                  value={selectedCampaign || campaignSearch}
-                  onChange={e => {
-                    setCampaignSearch(e.target.value);
-                    setSelected('');
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                />
+                <div className="campaign-search-input-wrap">
+                  <span className="campaign-search-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                  </span>
+                  <input
+                    className="form-input"
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                    placeholder="Search by name or ID…"
+                    value={selectedCampaign || campaignSearch}
+                    onChange={e => {
+                      setCampaignSearch(e.target.value);
+                      setSelected('');
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                  />
+                </div>
                 {showDropdown && filteredCampaigns.length > 0 && !selectedCampaign && (
                   <div className="campaign-search-dropdown">
                     {filteredCampaigns.map(name => (
@@ -359,18 +367,44 @@ export default function AdminPage() {
               Add / Edit Tags
             </div>
 
+            {/* Source toggle */}
+            <div>
+              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>Source</label>
+              <div className="source-toggle">
+                <button
+                  type="button"
+                  className={`source-toggle-btn${tagSource === 'heyreach' ? ' active' : ''}`}
+                  onClick={() => { setTagSource('heyreach'); setTagCampaignSel(''); setTagCampaignSearch(''); }}
+                >HeyReach</button>
+                <button
+                  type="button"
+                  className={`source-toggle-btn${tagSource === 'smartlead' ? ' active' : ''}`}
+                  onClick={() => { setTagSource('smartlead'); setTagCampaignSel(''); setTagCampaignSearch(''); }}
+                >SmartLead</button>
+              </div>
+            </div>
+
             {/* Campaign search */}
             <div>
-              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>SmartLead Campaign</label>
+              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>
+                {tagSource === 'heyreach' ? 'HeyReach Campaign' : 'SmartLead Campaign'}
+              </label>
               <div className="campaign-search-wrap" ref={tagDropdownRef}>
-                <input
-                  className="form-input"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                  placeholder="Search by name or ID…"
-                  value={tagCampaignSelected || tagCampaignSearch}
-                  onChange={e => { setTagCampaignSearch(e.target.value); setTagCampaignSel(''); setShowTagDropdown(true); }}
-                  onFocus={() => setShowTagDropdown(true)}
-                />
+                <div className="campaign-search-input-wrap">
+                  <span className="campaign-search-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                  </span>
+                  <input
+                    className="form-input"
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                    placeholder="Search by name or ID…"
+                    value={tagCampaignSelected || tagCampaignSearch}
+                    onChange={e => { setTagCampaignSearch(e.target.value); setTagCampaignSel(''); setShowTagDropdown(true); }}
+                    onFocus={() => setShowTagDropdown(true)}
+                  />
+                </div>
                 {showTagDropdown && !tagCampaignSelected && (
                   <div className="campaign-search-dropdown">
                     {CAMPAIGN_NAMES.filter(n => n.toLowerCase().includes(tagCampaignSearch.toLowerCase())).map(name => (
