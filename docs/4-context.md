@@ -5,6 +5,20 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Admin Panel page, login redesign, sidebar "Live" + Admin button
+
+- What changed:
+  1. **Sidebar footer** — "Connected" label renamed to "Live". Added an "Admin" link button (pencil icon) to the right of the Live indicator; turns amber with a highlight on hover. Hidden in collapsed mode. Links to `/admin`.
+  2. **Login page** (`/login`) — Redesigned card to match reference Growleads admin UI: lock icon + "ADMIN AUTHENTICATION" header in amber at the top of the card, label changed to "ADMIN PASSWORD", placeholder to "Enter admin password", submit button changed from solid blue to dark-background with amber text "Sign in as Admin".
+  3. **Admin Panel page** (`/admin`) — New client-side page protected by the main session cookie (middleware) plus a secondary in-page auth gate (sessionStorage key, same password `Growleads@admin`). Shows a centered auth modal until authenticated, then reveals the Admin Panel. Two tabs:
+     - **Notes**: SmartLead campaign search (dropdown from campaign list), note textarea with char counter, Save Note button — notes stored in `localStorage` and deletable.
+     - **Client Tags**: Grid of 20 color-coded tag chips (mock data).
+  4. **CSS** — Added `.login-card-header` (amber, lock icon row), updated `.login-submit-btn` (dark bg + amber text + amber border), added `.admin-btn` (sidebar button), and a full set of admin panel layout classes (`.admin-panel-header`, `.admin-notes-layout`, `.admin-note-card`, `.admin-tags-grid`, etc.).
+- Why: User requested the admin UX pattern from the reference Growleads dashboard — secondary admin auth gate, campaign notes, client tags, and the amber-themed admin styling.
+- Files affected: `src/components/Sidebar.jsx`, `src/app/login/page.jsx`, `src/app/admin/page.jsx` (new), `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Campaigns sidebar polish (icon + section label)
 
 - What changed: Campaigns nav item icon changed to a three-bar chart SVG (matching the SmartLead reference UI). Removed the "Smart Lead" section label from the sidebar — Campaigns now appears as a plain nav item below Leads with no header. Section label is controlled via a `hideLabel` flag on the section object so the data structure stays intact.
