@@ -455,9 +455,10 @@ const PRESETS = [
   { key: 'all', label: 'All time' },
 ];
 
-function ChartFilter({ range, from, to, onChange, cmpLabel }) {
-  const [open, setOpen]               = useState(false);
+function ChartFilter({ range, from, to, onChange, cmpLabel, cmpFrom, cmpTo, onCmpChange }) {
+  const [open, setOpen]                 = useState(false);
   const [calEditField, setCalEditField] = useState(null);
+  const [cmpCalField,  setCmpCalField]  = useState(null);
   const wrapRef = useRef(null);
 
   useEffect(() => {
@@ -465,17 +466,19 @@ function ChartFilter({ range, from, to, onChange, cmpLabel }) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) {
         setOpen(false);
         setCalEditField(null);
+        setCmpCalField(null);
       }
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  const label = PRESETS.find(p => p.key === range)?.label ?? 'Custom range';
+  const label       = PRESETS.find(p => p.key === range)?.label ?? 'Custom range';
+  const isCustomCmp = !!(cmpFrom && cmpTo);
 
   return (
     <div ref={wrapRef} style={{ position: 'relative', flexShrink: 0 }}>
-      <button className="chart-filter-btn" onClick={() => { setOpen(o => !o); setCalEditField(null); }}>
+      <button className="chart-filter-btn" onClick={() => { setOpen(o => !o); setCalEditField(null); setCmpCalField(null); }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
           <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
@@ -486,7 +489,7 @@ function ChartFilter({ range, from, to, onChange, cmpLabel }) {
         </svg>
       </button>
 
-      {open && !calEditField && (
+      {open && !calEditField && !cmpCalField && (
         <div className="chart-filter-popover">
           <div className="chart-filter-sep" style={{ marginTop: 0 }}>After (current period)</div>
           {PRESETS.map(({ key, label: pl }) => (
@@ -522,11 +525,29 @@ function ChartFilter({ range, from, to, onChange, cmpLabel }) {
           </div>
           {cmpLabel && (
             <>
-              <div className="chart-filter-sep">Before (previous period)</div>
-              <div style={{ padding: '5px 10px 8px', fontSize: 12, color: 'var(--text-muted)' }}>
-                {cmpLabel.replace('vs ', '')}
-                <span style={{ opacity: 0.45, marginLeft: 5 }}>· auto</span>
+              <div className="chart-filter-sep">Before (comparison period)</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 10px 6px', gap: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {cmpLabel.replace('vs ', '')}
+                  <span style={{ opacity: 0.45, marginLeft: 5 }}>· {isCustomCmp ? 'custom' : 'auto'}</span>
+                </span>
+                <button
+                  className="cal-foot-btn"
+                  onClick={() => setCmpCalField('from')}
+                  style={{ fontSize: 11, padding: '2px 8px', flexShrink: 0 }}
+                >
+                  {isCustomCmp ? 'Edit' : 'Set custom'}
+                </button>
               </div>
+              {isCustomCmp && (
+                <div style={{ padding: '0 10px 8px' }}>
+                  <button
+                    className="cal-foot-btn"
+                    onClick={() => { onCmpChange('', ''); }}
+                    style={{ fontSize: 11, padding: '2px 8px' }}
+                  >Reset to auto</button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -543,6 +564,20 @@ function ChartFilter({ range, from, to, onChange, cmpLabel }) {
             if (!next) setOpen(false);
           }}
           onClear={() => { onChange('custom', '', ''); setCalEditField(null); setOpen(false); }}
+        />
+      )}
+
+      {cmpCalField && (
+        <CalendarPicker
+          from={cmpFrom}
+          to={cmpTo}
+          editField={cmpCalField}
+          onSelect={(f, t, next) => {
+            onCmpChange(f, t || '');
+            setCmpCalField(next);
+            if (!next) setOpen(false);
+          }}
+          onClear={() => { onCmpChange('', ''); setCmpCalField(null); }}
         />
       )}
     </div>
@@ -576,6 +611,8 @@ export default function OverviewPage() {
   const [chartGranularity, setChartGranularity] = useState('day');
   const [chartLoading,     setChartLoading]     = useState(true);
   const [compareRaw,       setCompareRaw]       = useState([]);
+  const [cmpFrom,          setCmpFrom]          = useState('');
+  const [cmpTo,            setCmpTo]            = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -598,7 +635,9 @@ export default function OverviewPage() {
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo)   params.set('dateTo', dateTo);
     setChartLoading(true);
-    const cmp = getComparePeriod(chartRange, chartFrom, chartTo);
+    const cmp = (cmpFrom && cmpTo)
+      ? { dateFrom: cmpFrom, dateTo: cmpTo }
+      : getComparePeriod(chartRange, chartFrom, chartTo);
     const cmpParams = cmp ? new URLSearchParams({ dateFrom: cmp.dateFrom, dateTo: cmp.dateTo }) : null;
     try {
       const [res, cres] = await Promise.all([
@@ -617,7 +656,7 @@ export default function OverviewPage() {
       }
     } catch (e) { console.error('chart fetch:', e); setCompareRaw([]); }
     finally { setChartLoading(false); }
-  }, [chartRange, chartFrom, chartTo]);
+  }, [chartRange, chartFrom, chartTo, cmpFrom, cmpTo]);
 
   const mainBounds = useMemo(() => {
     if (chartRange === 'all' || chartRange === '24h') return null;
@@ -630,7 +669,10 @@ export default function OverviewPage() {
     return null;
   }, [chartRange, chartFrom, chartTo]);
 
-  const cmpBounds = useMemo(() => getComparePeriod(chartRange, chartFrom, chartTo), [chartRange, chartFrom, chartTo]);
+  const cmpBounds = useMemo(() => {
+    if (cmpFrom && cmpTo) return { dateFrom: cmpFrom, dateTo: cmpTo };
+    return getComparePeriod(chartRange, chartFrom, chartTo);
+  }, [chartRange, chartFrom, chartTo, cmpFrom, cmpTo]);
 
   const compareLabel = useMemo(() => {
     if (!cmpBounds?.dateFrom || !cmpBounds?.dateTo) return null;
@@ -656,6 +698,13 @@ export default function OverviewPage() {
     setChartRange(range);
     setChartFrom(from);
     setChartTo(to);
+    setCmpFrom('');
+    setCmpTo('');
+  };
+
+  const handleCmpChange = (from, to) => {
+    setCmpFrom(from);
+    setCmpTo(to);
   };
 
   return (
@@ -765,6 +814,8 @@ export default function OverviewPage() {
                     range={chartRange} from={chartFrom} to={chartTo}
                     onChange={handleRangeChange}
                     cmpLabel={compareLabel}
+                    cmpFrom={cmpFrom} cmpTo={cmpTo}
+                    onCmpChange={handleCmpChange}
                   />
                 </div>
                 <LeadsChart
