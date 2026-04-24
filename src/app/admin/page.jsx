@@ -15,17 +15,17 @@ const CAMPAIGN_NAMES = [
   'impactcraft testing april - company emails',
 ];
 
-const CLIENT_TAGS = [
-  'Hot Lead', 'Enterprise', 'SMB', 'Qualified', 'Not Ready',
-  'Follow Up', 'Demo Booked', 'Closed Won', 'Closed Lost', 'Nurture',
-  'Priority', 'Cold', 'Warm', 'VIP', 'Do Not Contact',
-  'Trial User', 'Free Tier', 'Paid', 'Referred', 'Organic',
+const MOCK_CLIENTS = [
+  { name: 'ImpactCraft', campaigns: ['ImpactCraftAI_April_US_Campaign', 'ImpactCraftAI_April_India_Campaign', 'ImpactCraftAI_April_Testing_B'] },
+  { name: 'Moora',       campaigns: ['Moora_Faire_April_2026'] },
+  { name: 'Growleads',   campaigns: ['Growleads_April_Happier_Leads_Europe', 'Growleads_April_Happier_Leads_India', 'Growleads_April_Cal_Campaign', 'Growleads_April_Happier_Leads_Suggested'] },
 ];
 
-const TAG_COLORS = [
-  '#60a5fa', '#4ade80', '#f59e0b', '#f87171', '#a78bfa',
-  '#34d399', '#fb923c', '#38bdf8', '#e879f9', '#facc15',
-];
+function clientInitials(name) {
+  return name.split(/[\s_]/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4'];
 
 function EyeIcon({ open }) {
   return open ? (
@@ -56,6 +56,14 @@ export default function AdminPage() {
   const [notes, setNotes]               = useState([]);
   const dropdownRef                     = useRef(null);
 
+  // Client Tags tab state
+  const [tagCampaignSearch, setTagCampaignSearch]   = useState('');
+  const [tagCampaignSelected, setTagCampaignSel]    = useState('');
+  const [showTagDropdown, setShowTagDropdown]        = useState(false);
+  const [tagInput, setTagInput]                     = useState('');
+  const [tagChips, setTagChips]                     = useState([]);
+  const tagDropdownRef                              = useRef(null);
+
   useEffect(() => {
     setMounted(true);
     if (sessionStorage.getItem('adminAuth') === 'true') setAuthed(true);
@@ -68,13 +76,20 @@ export default function AdminPage() {
   useEffect(() => {
     if (!showDropdown) return;
     function handleClick(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showDropdown]);
+
+  useEffect(() => {
+    if (!showTagDropdown) return;
+    function handleClick(e) {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target)) setShowTagDropdown(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showTagDropdown]);
 
   function handleAuth(e) {
     e.preventDefault();
@@ -197,8 +212,9 @@ export default function AdminPage() {
             </svg>
             Dashboard
           </Link>
+          <span className="admin-breadcrumb-sep">/</span>
+          <span className="admin-panel-title">Admin Panel</span>
         </div>
-        <div className="admin-panel-title">Admin Panel</div>
         <div className="admin-tabs">
           <button
             className={`admin-tab-btn${activeTab === 'notes' ? ' active' : ''}`}
@@ -352,24 +368,145 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'tags' && (
-        <div className="admin-tags-layout">
-          <div className="admin-section-title">
-            <div className="admin-section-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                <line x1="7" y1="7" x2="7.01" y2="7"/>
-              </svg>
-            </div>
-            Client Tags
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{CLIENT_TAGS.length} tags</span>
-          </div>
-          <div className="admin-tags-grid">
-            {CLIENT_TAGS.map((tag, i) => (
-              <div key={tag} className="admin-tag-chip">
-                <span className="admin-tag-dot" style={{ background: TAG_COLORS[i % TAG_COLORS.length] }} />
-                {tag}
+        <div className="admin-notes-layout">
+          {/* Left: Add / Edit Tags */}
+          <div className="admin-notes-left">
+            <div className="admin-section-title">
+              <div className="admin-section-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
               </div>
-            ))}
+              Add / Edit Tags
+            </div>
+
+            {/* Campaign search */}
+            <div>
+              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>SmartLead Campaign</label>
+              <div className="campaign-search-wrap" ref={tagDropdownRef}>
+                <input
+                  className="form-input"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  placeholder="Search by name or ID…"
+                  value={tagCampaignSelected || tagCampaignSearch}
+                  onChange={e => { setTagCampaignSearch(e.target.value); setTagCampaignSel(''); setShowTagDropdown(true); }}
+                  onFocus={() => setShowTagDropdown(true)}
+                />
+                {showTagDropdown && !tagCampaignSelected && (
+                  <div className="campaign-search-dropdown">
+                    {CAMPAIGN_NAMES.filter(n => n.toLowerCase().includes(tagCampaignSearch.toLowerCase())).map(name => (
+                      <button key={name} className="campaign-search-opt" type="button"
+                        onClick={() => { setTagCampaignSel(name); setTagCampaignSearch(''); setShowTagDropdown(false); }}>
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {tagCampaignSelected && (
+                <div style={{ marginTop: 6 }}>
+                  <span className="selected-campaign-pill">
+                    {tagCampaignSelected}
+                    <button type="button" onClick={() => { setTagCampaignSel(''); setTagCampaignSearch(''); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, lineHeight: 0, marginLeft: 2 }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Client tag input */}
+            <div>
+              <label className="login-label" style={{ display: 'block', marginBottom: 6 }}>Client Tags</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  className="form-input"
+                  style={{ flex: 1, minWidth: 0 }}
+                  placeholder="Type a client name, press Enter…"
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && tagInput.trim()) {
+                      e.preventDefault();
+                      if (!tagChips.includes(tagInput.trim())) setTagChips(v => [...v, tagInput.trim()]);
+                      setTagInput('');
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="admin-submit-btn"
+                  style={{ padding: '0 16px', width: 'auto', height: 38 }}
+                  onClick={() => {
+                    if (tagInput.trim() && !tagChips.includes(tagInput.trim())) {
+                      setTagChips(v => [...v, tagInput.trim()]);
+                      setTagInput('');
+                    }
+                  }}
+                  disabled={!tagInput.trim()}
+                >
+                  Add
+                </button>
+              </div>
+              {tagChips.length > 0 && (
+                <div className="admin-tags-grid" style={{ marginTop: 10 }}>
+                  {tagChips.map(chip => (
+                    <div key={chip} className="admin-tag-chip">
+                      <span className="admin-tag-dot" style={{ background: '#f59e0b' }} />
+                      {chip}
+                      <button type="button" onClick={() => setTagChips(v => v.filter(c => c !== chip))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 0, marginLeft: 2, display: 'flex' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button type="button" className="admin-submit-btn"
+              disabled={!tagCampaignSelected || tagChips.length === 0}
+              onClick={() => { setTagChips([]); setTagCampaignSel(''); setTagCampaignSearch(''); }}>
+              Save Tags
+            </button>
+          </div>
+
+          {/* Right: Clients list */}
+          <div className="admin-notes-right">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div className="admin-section-title" style={{ marginBottom: 0 }}>Clients</div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{MOCK_CLIENTS.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {MOCK_CLIENTS.map((client, i) => (
+                <div key={client.name} className="admin-client-row">
+                  <div className="admin-client-avatar" style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}>
+                    {clientInitials(client.name)}
+                  </div>
+                  <div className="admin-client-info">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <span className="admin-client-name">{client.name}</span>
+                      <span className="admin-client-count">{client.campaigns.length} campaign{client.campaigns.length !== 1 ? 's' : ''}</span>
+                      <span className="admin-l-badge">L</span>
+                    </div>
+                    <div className="admin-campaign-pills">
+                      {client.campaigns.map(c => (
+                        <span key={c} className="admin-campaign-pill-sm">
+                          <span className="admin-tag-dot" style={{ background: 'var(--text-muted)', width: 5, height: 5 }} />
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

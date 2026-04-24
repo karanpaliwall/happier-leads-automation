@@ -1732,6 +1732,12 @@ body { overflow-x: hidden; }
   transition: color 0.15s;
 }
 .admin-breadcrumb-link:hover { color: var(--text-primary); }
+.admin-breadcrumb-sep {
+  color: var(--text-muted);
+  font-size: 14px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
 .admin-panel-title {
   font-size: 15px;
   font-weight: 700;
@@ -1750,7 +1756,7 @@ body { overflow-x: hidden; }
   gap: 6px;
   padding: 5px 14px;
   border-radius: var(--radius);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
   background: none;
   color: var(--text-muted);
   font-size: 13px;
@@ -1763,11 +1769,12 @@ body { overflow-x: hidden; }
 .admin-tab-btn.active {
   background: rgba(245, 158, 11, 0.1);
   color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.35);
 }
 .admin-tab-btn:hover:not(.active) {
   background: var(--bg-hover);
   color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 .admin-tab-count {
   background: rgba(255,255,255,0.1);
@@ -1946,6 +1953,70 @@ body { overflow-x: hidden; }
   border-radius: 50%;
   background: var(--blue-400);
   flex-shrink: 0;
+}
+
+/* ── Admin Clients list (Tags tab right panel) ── */
+.admin-client-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-client-row:last-child { border-bottom: none; }
+.admin-client-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.admin-client-info { flex: 1; min-width: 0; }
+.admin-client-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.admin-client-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.admin-l-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(59,130,246,0.15);
+  color: var(--blue-400);
+  border: 1px solid rgba(59,130,246,0.25);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.admin-campaign-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.admin-campaign-pill-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* ── Campaign search dropdown ── */

@@ -43,6 +43,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Admin Panel: breadcrumb slash, outlined tab buttons, Client Tags redesign
+
+- What changed:
+  1. **Breadcrumb** — Added `/` separator between "Dashboard" and "Admin Panel" (`< Dashboard / Admin Panel`). Title moved inside the breadcrumb div as a `<span>` rather than a standalone div.
+  2. **Tab buttons** — Inactive tabs now show a visible `var(--border-color)` outline so they look like proper rounded-rectangle buttons. Active tab keeps amber fill + amber border. Hover adds border-color darkening.
+  3. **Client Tags tab** — Completely redesigned to match reference UI but SmartLead-only (no HeyReach source toggle). Left panel: "Add / Edit Tags" with SmartLead Campaign search dropdown, Client Tags text input + Add button (chips appear inline, removable), Save Tags button. Right panel: "Clients" list showing avatar initials (colored), client name, campaign count, "L" badge, and campaign pills. Mock clients: ImpactCraft (3), Moora (1), Growleads (4). Added CSS: `.admin-breadcrumb-sep`, `.admin-client-row`, `.admin-client-avatar`, `.admin-client-name`, `.admin-client-count`, `.admin-l-badge`, `.admin-campaign-pills`, `.admin-campaign-pill-sm`.
+- Why: User wanted the `/` gap in breadcrumb, tab buttons as visible outlined rectangles, and the Client Tags tab to look like the reference Growleads dashboard (SmartLead section only).
+- Files affected: `src/app/admin/page.jsx`, `src/styles/custom.css`
+
 ## 2026-04-24 — Campaigns sidebar polish (icon + section label)
 
 - What changed: Campaigns nav item icon changed to a three-bar chart SVG (matching the SmartLead reference UI). Removed the "Smart Lead" section label from the sidebar — Campaigns now appears as a plain nav item below Leads with no header. Section label is controlled via a `hideLabel` flag on the section object so the data structure stays intact.
