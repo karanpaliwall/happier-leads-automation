@@ -5,9 +5,21 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — InfoTooltip fixed positioning (tooltip below icon, no overlap)
+
+- What changed: `InfoTooltip` now renders its popup **below** the icon (`top: pos.y + 20`) instead of above, preventing it from overlapping the chart area. Arrow points upward toward the icon. Earlier iteration fixed the `position:fixed` + `getBoundingClientRect` approach (escaping card overflow:hidden) and removed the `cursor:help` question-mark cursor. Icon fades 50%→85% opacity on hover.
+- Why: Tooltip was first clipped by card overflow (browser native tooltip showed at bottom of screen), then fixed-position version appeared correctly but overlapped the chart since the icon sits at the card's bottom edge.
+- Files affected: `src/app/page.jsx`
+
+## 2026-04-24 — Before/After comparison: cleaner UI, no dashed overlay
+
+- What changed: Removed dashed "Previous" overlay lines, comparison dots, and comparison tooltip section from the chart SVG — the chart is now clean (Exact + Suggested only). `ChartFilter` dropdown now has two clearly labelled sections: "After (current period)" with presets/custom picker, and "Before (previous period)" showing the auto-calculated dates. Below the chart a summary row shows `Prev. period (Apr 11–17) ⓘ : X Exact · Y Suggested → Current (Apr 18–24): A Exact · B Suggested ↑Z%`. Dates use a short `Apr 11–17` format via new `fmtShortRange()` helper. `Total` line was also removed from the chart — only Exact and Suggested are shown. Added `InfoTooltip` component (custom styled popup, `position:fixed`, dark navy theme).
+- Why: Dashed overlay was confusing; filter gave no indication of which dates were "before" vs "after"; date format was verbose; Total line was redundant.
+- Files affected: `src/app/page.jsx`
+
 ## 2026-04-24 — Chart defaults to past 7 days + before/after period comparison
 
-- What changed: Chart on Overview page now opens on "Past 7 days" (was "All time"). Also added an auto-comparison overlay: the previous equivalent period (e.g. Apr 4–10 when viewing Apr 11–17) is fetched in parallel and drawn as dashed dimmed lines on the same SVG. Tooltip shows both current and previous period values when hovering. Legend gains a dashed "Previous" indicator. A "vs dd-mm-yyyy – dd-mm-yyyy" label appears below the date filter button. Comparison works for 7d preset and custom date ranges; 24h and all-time have no comparison. `fillGaps()` now accepts explicit date bounds so zero-data periods still render correctly.
+- What changed: Chart on Overview page now opens on "Past 7 days" (was "All time"). Auto-fetches the previous equivalent period in parallel (`getComparePeriod()`). `fillGaps()` accepts explicit date bounds so zero-data periods render as flat zero lines. `getComparePeriod` returns null for "All time" and "Past 24h"; for "Past 7d" returns today−13 to today−7; for custom ranges returns same-length window immediately before the `from` date.
 - Why: User requested default 7-day view and a before/after comparison to show period-over-period trends at a glance.
 - Files affected: `src/app/page.jsx`
 
