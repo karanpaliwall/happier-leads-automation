@@ -42,17 +42,35 @@ function getRangeParams(range, from, to) {
   return { since: null, dateFrom: null, dateTo: null }; // 'all'
 }
 
+function getComparePeriod(range, from, to) {
+  if (range === 'all' || range === '24h') return null;
+  if (range === '7d') {
+    const compTo   = new Date(); compTo.setDate(compTo.getDate() - 7);
+    const compFrom = new Date(); compFrom.setDate(compFrom.getDate() - 13);
+    return { dateFrom: compFrom.toISOString().slice(0, 10), dateTo: compTo.toISOString().slice(0, 10) };
+  }
+  if (range === 'custom' && from && to) {
+    const fromD    = new Date(from + 'T00:00:00Z');
+    const toD      = new Date(to   + 'T00:00:00Z');
+    const diffDays = Math.round((toD - fromD) / 86400000);
+    const compToD  = new Date(fromD.getTime() - 86400000);
+    const compFromD = new Date(compToD.getTime() - diffDays * 86400000);
+    return { dateFrom: compFromD.toISOString().slice(0, 10), dateTo: compToD.toISOString().slice(0, 10) };
+  }
+  return null;
+}
+
 // ── Chart helpers ───────────────────────────────────────────────────────────
 const CM = { top: 12, right: 16, bottom: 32, left: 42 };
 const CVW = 600, CVH = 240;
 const CPW = CVW - CM.left - CM.right;
 const CPH = CVH - CM.top - CM.bottom;
 
-function fillGaps(pts) {
-  if (!pts.length) return pts;
+function fillGaps(pts, fromIso, toIso) {
+  if (!pts.length && !fromIso) return pts;
   const map = Object.fromEntries(pts.map(p => [p.date, p]));
-  const start = new Date(pts[0].date + 'T00:00:00Z');
-  const end   = new Date(pts[pts.length - 1].date + 'T00:00:00Z');
+  const start = fromIso ? new Date(fromIso + 'T00:00:00Z') : new Date(pts[0].date + 'T00:00:00Z');
+  const end   = toIso   ? new Date(toIso   + 'T00:00:00Z') : new Date(pts[pts.length - 1].date + 'T00:00:00Z');
   const out   = [];
   for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
     const k = d.toISOString().slice(0, 10);
@@ -93,7 +111,7 @@ function smoothPath(pts2d) {
 }
 
 // ── LeadsChart ──────────────────────────────────────────────────────────────
-function LeadsChart({ rawPoints, granularity, loading }) {
+function LeadsChart({ rawPoints, granularity, loading, compareRaw, mainFrom, mainTo, compareFrom, compareTo }) {
   const svgRef   = useRef(null);
   const outerRef = useRef(null);
   const [clipW,    setClipW]    = useState(0);
@@ -123,9 +141,14 @@ function LeadsChart({ rawPoints, granularity, loading }) {
   const localCPH = localCVH - CM.top - CM.bottom;
 
   const points = useMemo(
-    () => granularity === 'day' ? fillGaps(rawPoints ?? []) : fillHourGaps(rawPoints ?? []),
-    [rawPoints, granularity]
+    () => granularity === 'day' ? fillGaps(rawPoints ?? [], mainFrom, mainTo) : fillHourGaps(rawPoints ?? []),
+    [rawPoints, granularity, mainFrom, mainTo]
   );
+
+  const cmpPoints = useMemo(() => {
+    if (!compareFrom || !compareTo || granularity !== 'day') return [];
+    return fillGaps(compareRaw ?? [], compareFrom, compareTo);
+  }, [compareRaw, compareFrom, compareTo, granularity]);
 
   useEffect(() => {
     if (!points.length) return;
@@ -158,7 +181,7 @@ function LeadsChart({ rawPoints, granularity, loading }) {
     );
   }
 
-  const maxVal = Math.max(...points.map(p => p.total), 1);
+  const maxVal = Math.max(...points.map(p => p.total), ...(cmpPoints.length ? cmpPoints.map(p => p.total) : []), 1);
   const yMax   = Math.max(Math.ceil(maxVal / 5) * 5, 5);
 
   const xP = (i) => CM.left + (points.length > 1 ? (i / (points.length - 1)) * CPW : CPW / 2);
@@ -188,8 +211,9 @@ function LeadsChart({ rawPoints, granularity, loading }) {
     setHoverIdx(Math.max(0, Math.min(points.length - 1, Math.round(frac * (points.length - 1)))));
   };
 
-  const hp = hoverIdx !== null ? points[hoverIdx] : null;
-  const hx = hoverIdx !== null ? xP(hoverIdx) : null;
+  const hp    = hoverIdx !== null ? points[hoverIdx] : null;
+  const hx    = hoverIdx !== null ? xP(hoverIdx) : null;
+  const cmpHp = (hoverIdx !== null && cmpPoints.length > 0 && hoverIdx < cmpPoints.length) ? cmpPoints[hoverIdx] : null;
 
   return (
     <div ref={outerRef} className="chart-outer" onMouseLeave={() => setHoverIdx(null)}>
@@ -239,6 +263,13 @@ function LeadsChart({ rawPoints, granularity, loading }) {
           <path d={areaPath('total')}     fill="url(#cg-total)" />
           <path d={areaPath('exact')}     fill="url(#cg-exact)" />
           <path d={areaPath('suggested')} fill="url(#cg-sug)" />
+          {cmpPoints.length > 0 && (
+            <>
+              <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.total)]))}     fill="none" stroke="#60a5fa" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
+              <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.exact)]))}     fill="none" stroke="#4ade80" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
+              <path d={smoothPath(cmpPoints.map((p, i) => [xP(i), yP(p.suggested)]))} fill="none" stroke="#fb923c" strokeWidth="1.4" strokeDasharray="4 3" strokeOpacity="0.42" strokeLinejoin="round" />
+            </>
+          )}
           <path d={smoothPath(coords('total'))}     fill="none" stroke="#60a5fa" strokeWidth="1.8" strokeLinejoin="round" />
           <path d={smoothPath(coords('exact'))}     fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinejoin="round" />
           <path d={smoothPath(coords('suggested'))} fill="none" stroke="#fb923c" strokeWidth="1.8" strokeLinejoin="round" />
@@ -249,6 +280,13 @@ function LeadsChart({ rawPoints, granularity, loading }) {
           <>
             <line x1={hx} y1={CM.top} x2={hx} y2={CM.top + localCPH}
               stroke="rgba(148,163,184,0.35)" strokeWidth="1" strokeDasharray="3 3" />
+            {cmpHp && (
+              <>
+                <circle cx={hx} cy={yP(cmpHp.total)}     r="2.8" fill="#60a5fa" opacity="0.42" />
+                <circle cx={hx} cy={yP(cmpHp.exact)}     r="2.8" fill="#4ade80" opacity="0.42" />
+                <circle cx={hx} cy={yP(cmpHp.suggested)} r="2.8" fill="#fb923c" opacity="0.42" />
+              </>
+            )}
             <circle cx={hx} cy={yP(hp.total)}     r="3.5" fill="#60a5fa" />
             <circle cx={hx} cy={yP(hp.exact)}     r="3.5" fill="#4ade80" />
             <circle cx={hx} cy={yP(hp.suggested)} r="3.5" fill="#fb923c" />
@@ -269,6 +307,14 @@ function LeadsChart({ rawPoints, granularity, loading }) {
           <div className="chart-tip-row" style={{ color: '#60a5fa' }}>Total · {hp.total}</div>
           <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {hp.exact}</div>
           <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {hp.suggested}</div>
+          {cmpHp && (
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 5, paddingTop: 5, opacity: 0.6 }}>
+              <div className="chart-tip-date">{fmtTooltipDate(cmpHp.date, granularity)}</div>
+              <div className="chart-tip-row" style={{ color: '#60a5fa' }}>Total · {cmpHp.total}</div>
+              <div className="chart-tip-row" style={{ color: '#4ade80' }}>Exact · {cmpHp.exact}</div>
+              <div className="chart-tip-row" style={{ color: '#fb923c' }}>Suggested · {cmpHp.suggested}</div>
+            </div>
+          )}
         </div>
       )}
 
@@ -277,6 +323,14 @@ function LeadsChart({ rawPoints, granularity, loading }) {
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#60a5fa' }} />Total</span>
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#4ade80' }} />Exact</span>
         <span className="chart-leg"><span className="chart-leg-dot" style={{ background: '#fb923c' }} />Suggested</span>
+        {cmpPoints.length > 0 && (
+          <span className="chart-leg" style={{ opacity: 0.5 }}>
+            <svg width="14" height="8" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+              <line x1="0" y1="4" x2="14" y2="4" stroke="rgba(148,163,184,0.9)" strokeWidth="1.5" strokeDasharray="3 2" />
+            </svg>
+            Previous
+          </span>
+        )}
       </div>
     </div>
   );
@@ -482,12 +536,13 @@ export default function OverviewPage() {
   const [loading,      setLoading]     = useState(_cache.stats.total === 0);
   const [lastReceived, setLastReceived]= useState(_cache.lastReceived);
 
-  const [chartRange,       setChartRange]       = useState('all');
+  const [chartRange,       setChartRange]       = useState('7d');
   const [chartFrom,        setChartFrom]        = useState('');
   const [chartTo,          setChartTo]          = useState('');
   const [chartPoints,      setChartPoints]      = useState([]);
   const [chartGranularity, setChartGranularity] = useState('day');
   const [chartLoading,     setChartLoading]     = useState(true);
+  const [compareRaw,       setCompareRaw]       = useState([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -510,15 +565,44 @@ export default function OverviewPage() {
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo)   params.set('dateTo', dateTo);
     setChartLoading(true);
+    const cmp = getComparePeriod(chartRange, chartFrom, chartTo);
+    const cmpParams = cmp ? new URLSearchParams({ dateFrom: cmp.dateFrom, dateTo: cmp.dateTo }) : null;
     try {
-      const res  = await fetch(`/api/leads/chart?${params}`);
+      const [res, cres] = await Promise.all([
+        fetch(`/api/leads/chart?${params}`),
+        cmpParams ? fetch(`/api/leads/chart?${cmpParams}`) : Promise.resolve(null),
+      ]);
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
       setChartPoints(data.points ?? []);
       setChartGranularity(data.granularity ?? 'day');
-    } catch (e) { console.error('chart fetch:', e); }
+      if (cres) {
+        const cdata = await cres.json();
+        setCompareRaw(cdata.points ?? []);
+      } else {
+        setCompareRaw([]);
+      }
+    } catch (e) { console.error('chart fetch:', e); setCompareRaw([]); }
     finally { setChartLoading(false); }
   }, [chartRange, chartFrom, chartTo]);
+
+  const mainBounds = useMemo(() => {
+    if (chartRange === 'all' || chartRange === '24h') return null;
+    if (chartRange === '7d') {
+      const today = new Date();
+      const from  = new Date(); from.setDate(from.getDate() - 6);
+      return { from: from.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10) };
+    }
+    if (chartRange === 'custom' && chartFrom && chartTo) return { from: chartFrom, to: chartTo };
+    return null;
+  }, [chartRange, chartFrom, chartTo]);
+
+  const cmpBounds = useMemo(() => getComparePeriod(chartRange, chartFrom, chartTo), [chartRange, chartFrom, chartTo]);
+
+  const compareLabel = useMemo(() => {
+    if (!cmpBounds?.dateFrom || !cmpBounds?.dateTo) return null;
+    return `vs ${fmtCalDate(cmpBounds.dateFrom)} – ${fmtCalDate(cmpBounds.dateTo)}`;
+  }, [cmpBounds]);
 
   useEffect(() => { fetchData(); const iv = setInterval(fetchData, 10000); return () => clearInterval(iv); }, [fetchData]);
   useEffect(() => { fetchChart(); }, [fetchChart]);
@@ -632,12 +716,26 @@ export default function OverviewPage() {
                     <h3 className="card-title">Analytics</h3>
                     <p className="chart-subtitle">Daily leads received</p>
                   </div>
-                  <ChartFilter
-                    range={chartRange} from={chartFrom} to={chartTo}
-                    onChange={handleRangeChange}
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                    <ChartFilter
+                      range={chartRange} from={chartFrom} to={chartTo}
+                      onChange={handleRangeChange}
+                    />
+                    {compareLabel && (
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', opacity: 0.7 }}>{compareLabel}</span>
+                    )}
+                  </div>
                 </div>
-                <LeadsChart rawPoints={chartPoints} granularity={chartGranularity} loading={chartLoading} />
+                <LeadsChart
+                  rawPoints={chartPoints}
+                  granularity={chartGranularity}
+                  loading={chartLoading}
+                  compareRaw={compareRaw}
+                  mainFrom={mainBounds?.from ?? null}
+                  mainTo={mainBounds?.to ?? null}
+                  compareFrom={cmpBounds?.dateFrom ?? null}
+                  compareTo={cmpBounds?.dateTo ?? null}
+                />
               </div>
             </div>
           </>
