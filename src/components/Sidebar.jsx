@@ -80,8 +80,8 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
               <img
                 src="/favicon.png"
                 alt="Growleads"
-                width="40"
-                height="40"
+                width="32"
+                height="32"
                 style={{ objectFit: 'contain', display: 'block' }}
               />
             </div>
