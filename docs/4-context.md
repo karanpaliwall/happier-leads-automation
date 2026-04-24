@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-25 — Fix campaign search dropdown readability in admin panel
+
+- What changed: `.campaign-search-opt` text color changed from `var(--text-muted)` (#5c6080, barely readable) to `var(--text-primary)`. Dropdown border strengthened from `var(--border-color)` to `rgba(148,163,184,0.2)` and box-shadow deepened slightly to 0.55 opacity. Both the Notes-tab dropdown and Client Tags-tab dropdown are fixed (they share the same CSS classes).
+- Why: Screenshots showed campaign names in both dropdowns were extremely dim and the container border was invisible against the dark background.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-25 — Fix mobile: admin link closes sidebar + scroll-to-top on navigation
 
 - What changed: Admin footer link in `Sidebar.jsx` now calls `onClose()` on click — it was missing the handler that all nav items have, so the drawer stayed open. Added `useEffect(() => { window.scrollTo(0,0); }, [pathname])` to `ClientLayout.jsx` so every page navigation resets scroll position to the top (App Router doesn't do this reliably on mobile, causing admin and other pages to open mid-scroll).
