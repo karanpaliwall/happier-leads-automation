@@ -46,6 +46,7 @@ export default function AdminPage() {
   const [password, setPassword]         = useState('');
   const [showPass, setShowPass]         = useState(false);
   const [authError, setAuthError]       = useState('');
+  const [authLoading, setAuthLoading]   = useState(false);
   const [mounted, setMounted]           = useState(false);
   const [activeTab, setActiveTab]       = useState('notes');
   const [campaignSearch, setCampaignSearch] = useState('');
@@ -77,13 +78,17 @@ export default function AdminPage() {
 
   function handleAuth(e) {
     e.preventDefault();
-    if (password === 'Growleads@admin') {
-      sessionStorage.setItem('adminAuth', 'true');
-      setAuthed(true);
-      setAuthError('');
-    } else {
-      setAuthError('Incorrect password');
-    }
+    setAuthLoading(true);
+    setAuthError('');
+    setTimeout(() => {
+      if (password === 'Growleads@admin') {
+        sessionStorage.setItem('adminAuth', 'true');
+        setAuthed(true);
+      } else {
+        setAuthError('Incorrect password');
+        setAuthLoading(false);
+      }
+    }, 700);
   }
 
   function handleSaveNote(e) {
@@ -165,8 +170,15 @@ export default function AdminPage() {
                 </div>
               </div>
               {authError && <div className="login-error">{authError}</div>}
-              <button type="submit" disabled={!password} className="login-submit-btn">
-                Sign in as Admin
+              <button type="submit" disabled={authLoading || !password} className="admin-submit-btn">
+                {authLoading ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.7s linear infinite' }}>
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    Signing in…
+                  </>
+                ) : 'Sign in as Admin'}
               </button>
             </form>
           </div>
@@ -288,7 +300,7 @@ export default function AdminPage() {
             </div>
 
             <button
-              className="login-submit-btn"
+              className="admin-submit-btn"
               onClick={handleSaveNote}
               disabled={!selectedCampaign || !noteText.trim()}
               type="button"

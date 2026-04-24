@@ -45,21 +45,14 @@ export default function LoginPage() {
 
         <div className="login-card">
           <form onSubmit={handleSubmit}>
-            <div className="login-card-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              ADMIN AUTHENTICATION
-            </div>
             <div className="login-field">
-              <label className="login-label">Admin Password</label>
+              <label className="login-label">Password</label>
               <div className="login-input-wrap">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter admin password"
+                  placeholder="Enter password"
                   className="login-input"
                   autoFocus
                   autoComplete="current-password"
@@ -92,7 +85,7 @@ export default function LoginPage() {
               disabled={loading || !password}
               className="login-submit-btn"
             >
-              {loading ? 'Signing in…' : 'Sign in as Admin'}
+              {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
         </div>
