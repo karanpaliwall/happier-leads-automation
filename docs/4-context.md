@@ -5,11 +5,23 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Fix main login style revert + admin auth sign-in spinner
+
+- What changed:
+  1. **Main login page** (`/login`) — Reverted all styling changes from the previous session back to the original design: "Password" label, "Enter password" placeholder, blue submit button (`#1e3a8a`), "Sign in" / "Signing in…" button text. Removed the "ADMIN AUTHENTICATION" lock-icon header that had been added by mistake.
+  2. **Admin page auth gate** (`/admin`) — Added a 700ms loading state to `handleAuth` so clicking "Sign in as Admin" shows a spinning SVG loader + "Signing in…" text before the panel transitions in. Wrong-password errors still surface after the delay. Button class separated from the main login button into `.admin-submit-btn`.
+  3. **Save Note button** — Updated to also use `.admin-submit-btn` for visual consistency within the admin panel.
+  4. **CSS** — `.login-submit-btn` restored to original blue. New `.admin-submit-btn` class added (dark bg + amber text + amber border, flex layout for spinner).
+- Why: User wanted the main login page kept at its original simple blue style; the amber admin theme should only apply to the `/admin` secondary auth gate. Sign-in animation was also missing on the admin auth button since the check was synchronous.
+- Files affected: `src/app/login/page.jsx`, `src/app/admin/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Admin Panel page, login redesign, sidebar "Live" + Admin button
 
 - What changed:
   1. **Sidebar footer** — "Connected" label renamed to "Live". Added an "Admin" link button (pencil icon) to the right of the Live indicator; turns amber with a highlight on hover. Hidden in collapsed mode. Links to `/admin`.
-  2. **Login page** (`/login`) — Redesigned card to match reference Growleads admin UI: lock icon + "ADMIN AUTHENTICATION" header in amber at the top of the card, label changed to "ADMIN PASSWORD", placeholder to "Enter admin password", submit button changed from solid blue to dark-background with amber text "Sign in as Admin".
+  2. **Login page** (`/login`) — Temporarily redesigned (subsequently reverted — see next entry above).
   3. **Admin Panel page** (`/admin`) — New client-side page protected by the main session cookie (middleware) plus a secondary in-page auth gate (sessionStorage key, same password `Growleads@admin`). Shows a centered auth modal until authenticated, then reveals the Admin Panel. Two tabs:
      - **Notes**: SmartLead campaign search (dropdown from campaign list), note textarea with char counter, Save Note button — notes stored in `localStorage` and deletable.
      - **Client Tags**: Grid of 20 color-coded tag chips (mock data).
