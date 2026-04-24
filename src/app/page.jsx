@@ -527,8 +527,8 @@ function ChartFilter({ range, from, to, onChange, cmpLabel, cmpFrom, cmpTo, onCm
             <>
               <div className="chart-filter-sep">Before (comparison period)</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 10px 6px', gap: 8 }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  {cmpLabel.replace('vs ', '')}
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {cmpLabel}
                   <span style={{ opacity: 0.45, marginLeft: 5 }}>· {isCustomCmp ? 'custom' : 'auto'}</span>
                 </span>
                 <button
@@ -676,7 +676,7 @@ export default function OverviewPage() {
 
   const compareLabel = useMemo(() => {
     if (!cmpBounds?.dateFrom || !cmpBounds?.dateTo) return null;
-    return `vs ${fmtCalDate(cmpBounds.dateFrom)} – ${fmtCalDate(cmpBounds.dateTo)}`;
+    return fmtShortRange(cmpBounds.dateFrom, cmpBounds.dateTo);
   }, [cmpBounds]);
 
   const chartSummary = useMemo(() => {
