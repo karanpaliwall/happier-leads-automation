@@ -5,6 +5,21 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Campaigns page: redesigned filter layout
+
+- What changed:
+  1. **Top filter bar** — replaced the old tab-pills-at-top layout with: search input + "All Status" dropdown + date range calendar picker + Export CSV + Sync Live buttons, all in one row.
+  2. **Pills row (below filter bar)** — two `.tabs-pill` groups side by side:
+     - Left group (clickable): All / Active / Paused / Completed / Draft — these filter the table and stay in sync with the Status dropdown.
+     - Right group (display-only metric pills): Leads Completed / In Progress / Yet to Start / Blocked / Last Synced.
+  3. **StatusDropdown component** — custom dropdown using existing `.status-dropdown-wrap/btn/popover/opt` CSS classes; selecting a status here updates the active pill below and vice versa.
+  4. **Removed 24h/7d quick-filter buttons** — not present in the reference design.
+  5. **Added CSS** — `.campaigns-pills-row` (flex row, wraps on mobile) and `.metric-pill` (non-interactive display pill styled like tab-pill-btn) to `custom.css`.
+- Why: User requested top bar to match a reference screenshot (search + dropdown + date range + action buttons) and the stats row to look like the Leads page tab pills.
+- Files affected: `src/app/campaigns/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-24 — Fix three webhook/API bugs; suppress background-tab polling
 
 - What changed:
