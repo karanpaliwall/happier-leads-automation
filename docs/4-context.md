@@ -5,6 +5,12 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Custom comparison period in chart filter
+
+- What changed: The "Before (comparison period)" section in the chart filter popover now has a "Set custom" button that opens a calendar picker, letting users choose any date range for the comparison period. Shows "· auto" when auto-calculated, "· custom" when manually set, with a "Reset to auto" button to revert. Changing the main range clears any custom compare. `fetchChart` and `cmpBounds` both respect custom compare dates.
+- Why: Users wanted to compare a specific historical period rather than the auto-calculated previous interval.
+- Files affected: `src/app/page.jsx`
+
 ## 2026-04-24 — InfoTooltip fixed positioning (tooltip below icon, no overlap)
 
 - What changed: `InfoTooltip` now renders its popup **below** the icon (`top: pos.y + 20`) instead of above, preventing it from overlapping the chart area. Arrow points upward toward the icon. Earlier iteration fixed the `position:fixed` + `getBoundingClientRect` approach (escaping card overflow:hidden) and removed the `cursor:help` question-mark cursor. Icon fades 50%→85% opacity on hover.
