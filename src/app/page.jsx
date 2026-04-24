@@ -108,6 +108,47 @@ function fillHourGaps(pts) {
   return out;
 }
 
+function InfoTooltip({ text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: 'help', flexShrink: 0, opacity: 0.55 }}>
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+      {show && (
+        <div style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 8px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#1e293b',
+          border: '1px solid rgba(148,163,184,0.15)',
+          borderRadius: 6,
+          padding: '7px 11px',
+          fontSize: 11,
+          lineHeight: 1.5,
+          color: 'rgba(148,163,184,0.9)',
+          whiteSpace: 'normal',
+          maxWidth: 230,
+          width: 'max-content',
+          zIndex: 200,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+          pointerEvents: 'none',
+          textAlign: 'center',
+        }}>
+          {text}
+        </div>
+      )}
+    </span>
+  );
+}
+
 function smoothPath(pts2d) {
   if (!pts2d.length) return '';
   if (pts2d.length === 1) return `M ${pts2d[0][0]} ${pts2d[0][1]}`;
@@ -721,13 +762,7 @@ export default function OverviewPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px 10px', fontSize: 12, flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', opacity: 0.7 }}>
                       Prev. period ({fmtShortRange(cmpBounds.dateFrom, cmpBounds.dateTo)})
-                      <svg
-                        width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                        style={{ cursor: 'help', flexShrink: 0 }}
-                      >
-                        <title>The same-length period immediately before the current range, used to compare how leads have changed</title>
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                      </svg>
+                      <InfoTooltip text="The same-length period immediately before the current range, used to compare how leads have changed" />
                       :
                     </span>
                     <span style={{ color: '#4ade80' }}>{chartSummary.beforeExact} Exact</span>
