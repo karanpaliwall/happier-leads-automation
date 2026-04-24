@@ -5,9 +5,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Campaigns sidebar polish (icon + section label)
+
+- What changed: Campaigns nav item icon changed to a three-bar chart SVG (matching the SmartLead reference UI). Removed the "Smart Lead" section label from the sidebar — Campaigns now appears as a plain nav item below Leads with no header. Section label is controlled via a `hideLabel` flag on the section object so the data structure stays intact.
+- Why: Visual polish requested by user after seeing the initial scaffold.
+- Files affected: `src/components/Sidebar.jsx`
+
 ## 2026-04-24 — Campaigns page scaffold
 
-- What changed: Added a new `/campaigns` page (Smart Lead section) with full page structure: search + status dropdown filter, stats bar (Total/Active/Paused/Completed/Draft/Leads Completed/In Progress/Yet to Start/Blocked/Last Synced), and a table (Campaign Name, Status, Total Leads, Completed, In Progress, Yet to Start, Blocked, Sent, Pending). Campaign status badges use color coding (ACTIVE=green, PAUSED=yellow, ARCHIVED=gray). Table numbers are color-coded (completed=blue, in progress=green, yet to start=yellow, blocked=red, pending=orange). "Sync Live" button has a spinner loading state and updates Last Synced timestamp. Export CSV works client-side on filtered data. Sidebar refactored to support sections — "Pipeline" (Overview, Leads) and "Smart Lead" (Campaigns). Added `.btn-primary`, `.campaign-badge-*`, `.campaigns-stats-bar`, `.status-dropdown-*`, `.num-*` CSS classes.
+- What changed: Added a new `/campaigns` page with full page structure: search + status dropdown filter, stats bar (Total/Active/Paused/Completed/Draft/Leads Completed/In Progress/Yet to Start/Blocked/Last Synced), and a table (Campaign Name, Status, Total Leads, Completed, In Progress, Yet to Start, Blocked, Sent, Pending). Campaign status badges color-coded (ACTIVE=green, PAUSED=yellow, ARCHIVED=gray). Table numbers color-coded (completed=blue, in progress=green, yet to start=yellow, blocked=red, pending=orange). "Sync Live" button has a spinner loading state and updates Last Synced timestamp. Export CSV works client-side on filtered data. Sidebar refactored to support sections with optional `hideLabel` flag. Added `.btn-primary`, `.campaign-badge-*`, `.campaigns-stats-bar`, `.status-dropdown-*`, `.num-*` CSS classes.
 - Why: User requested the page structure for the upcoming SmartLead API integration. Data is mock/static for now; API sync will be added later.
 - Files affected: `src/app/campaigns/page.jsx` (new), `src/components/Sidebar.jsx`, `src/styles/custom.css`
 
