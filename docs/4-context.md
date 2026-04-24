@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-25 — Fix mobile: admin link closes sidebar + scroll-to-top on navigation
+
+- What changed: Admin footer link in `Sidebar.jsx` now calls `onClose()` on click — it was missing the handler that all nav items have, so the drawer stayed open. Added `useEffect(() => { window.scrollTo(0,0); }, [pathname])` to `ClientLayout.jsx` so every page navigation resets scroll position to the top (App Router doesn't do this reliably on mobile, causing admin and other pages to open mid-scroll).
+- Why: On mobile: tapping Admin left the sidebar open; navigating to the admin page showed the "Add Note" form instead of the breadcrumb header because the page retained the previous page's scroll position.
+- Files affected: `src/components/Sidebar.jsx`, `src/components/ClientLayout.jsx`
+
+---
+
 ## 2026-04-25 — Unify login design; add spinner to main login; fix CLIENT_TAGS crash; campaigns polish
 
 - What changed:
