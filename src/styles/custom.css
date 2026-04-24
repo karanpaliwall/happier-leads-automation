@@ -483,16 +483,16 @@ body { overflow-x: hidden; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .tab-pill-count {
-  background: var(--border-color);
-  color: var(--text-muted);
   border-radius: var(--radius-full);
   padding: 1px 6px;
   font-size: 10px;
   font-weight: 600;
+  opacity: 0.55;
+  transition: opacity 0.15s;
 }
-.tab-pill-btn.active .tab-pill-count {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--blue-400);
+.tab-pill-btn.active .tab-pill-count,
+.tab-pill-btn:hover .tab-pill-count {
+  opacity: 1;
 }
 
 /* ── Time filter buttons + calendar picker ── */
@@ -1490,3 +1490,160 @@ body { overflow-x: hidden; }
 }
 .login-submit-btn:hover:not(:disabled) { background: #254aa8; }
 .login-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Primary action button (Sync Live, etc.) ── */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-primary:hover:not(:disabled) { background: #3b82f6; }
+.btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Campaign status badges ── */
+.campaign-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.campaign-badge-active    { background: rgba(34,197,94,0.15);   color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.campaign-badge-paused    { background: rgba(234,179,8,0.15);   color: #facc15; border: 1px solid rgba(234,179,8,0.25); }
+.campaign-badge-archived  { background: rgba(107,114,128,0.15); color: #9ca3af; border: 1px solid rgba(107,114,128,0.2); }
+.campaign-badge-completed { background: rgba(59,130,246,0.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+.campaign-badge-draft     { background: rgba(107,114,128,0.1);  color: #9ca3af; border: 1px solid rgba(107,114,128,0.15); }
+
+/* ── Campaigns count badge (header) ── */
+.campaigns-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: rgba(59,130,246,0.12);
+  color: var(--blue-400);
+  border: 1px solid rgba(59,130,246,0.22);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Campaigns filter bar ── */
+.campaigns-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Status filter dropdown ── */
+.status-dropdown-wrap { position: relative; }
+.status-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 138px;
+  transition: border-color 0.12s;
+}
+.status-dropdown-btn:hover { border-color: var(--text-muted); }
+.status-dropdown-btn.open  { border-color: var(--blue-500); }
+.status-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 160px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.55);
+}
+.status-dropdown-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.status-dropdown-opt:hover  { background: var(--bg-hover); color: var(--text-primary); }
+.status-dropdown-opt.active { background: rgba(59,130,246,0.1); color: var(--blue-400); }
+
+/* ── Campaigns stats bar ── */
+.campaigns-stats-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 10px 0;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.campaigns-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 16px;
+  border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.campaigns-stat-item:last-child { border-right: none; }
+.campaigns-stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.campaigns-stat-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.stat-val-default { color: var(--text-primary); }
+.stat-val-green   { color: #4ade80; }
+.stat-val-yellow  { color: #facc15; }
+.stat-val-blue    { color: #60a5fa; }
+.stat-val-red     { color: #f87171; }
+.stat-val-muted   { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+
+/* ── Campaign table number colors ── */
+.num-blue   { color: #60a5fa; font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-green  { color: #4ade80; font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-yellow { color: #facc15; font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-red    { color: #f87171; font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-orange { color: #fb923c; font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-zero   { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .campaigns-stats-bar { flex-wrap: wrap; padding: 8px 12px; row-gap: 6px; }
+  .campaigns-stat-item { padding: 4px 10px; border-right: none; }
+  .btn-primary { padding: 7px 12px; font-size: 12px; }
+}

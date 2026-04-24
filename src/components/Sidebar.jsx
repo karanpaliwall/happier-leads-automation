@@ -2,30 +2,49 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const NAV_ITEMS = [
+const NAV_SECTIONS = [
   {
-    href: '/',
-    label: 'Overview',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-      </svg>
-    ),
+    label: 'Pipeline',
+    items: [
+      {
+        href: '/',
+        label: 'Overview',
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+        ),
+      },
+      {
+        href: '/filtered',
+        label: 'Leads',
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        ),
+      },
+    ],
   },
   {
-    href: '/filtered',
-    label: 'Leads',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
+    label: 'Smart Lead',
+    items: [
+      {
+        href: '/campaigns',
+        label: 'Campaigns',
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+        ),
+      },
+    ],
   },
 ];
 
@@ -91,18 +110,22 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       </div>
 
       <nav className="sidebar-nav">
-        {!isCollapsed && <p className="sidebar-section-label">Pipeline</p>}
-        {NAV_ITEMS.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`sidebar-item${pathname === item.href ? ' active' : ''}`}
-            onClick={!isCollapsed ? onClose : undefined}
-            title={isCollapsed ? item.label : undefined}
-          >
-            {item.icon}
-            {!isCollapsed && <span>{item.label}</span>}
-          </Link>
+        {NAV_SECTIONS.map(section => (
+          <div key={section.label}>
+            {!isCollapsed && <p className="sidebar-section-label">{section.label}</p>}
+            {section.items.map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`sidebar-item${pathname === item.href ? ' active' : ''}`}
+                onClick={!isCollapsed ? onClose : undefined}
+                title={isCollapsed ? item.label : undefined}
+              >
+                {item.icon}
+                {!isCollapsed && <span>{item.label}</span>}
+              </Link>
+            ))}
+          </div>
         ))}
       </nav>
 
