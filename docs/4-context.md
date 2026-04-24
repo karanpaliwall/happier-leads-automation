@@ -5,6 +5,12 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-24 — Chart defaults to past 7 days + before/after period comparison
+
+- What changed: Chart on Overview page now opens on "Past 7 days" (was "All time"). Also added an auto-comparison overlay: the previous equivalent period (e.g. Apr 4–10 when viewing Apr 11–17) is fetched in parallel and drawn as dashed dimmed lines on the same SVG. Tooltip shows both current and previous period values when hovering. Legend gains a dashed "Previous" indicator. A "vs dd-mm-yyyy – dd-mm-yyyy" label appears below the date filter button. Comparison works for 7d preset and custom date ranges; 24h and all-time have no comparison. `fillGaps()` now accepts explicit date bounds so zero-data periods still render correctly.
+- Why: User requested default 7-day view and a before/after comparison to show period-over-period trends at a glance.
+- Files affected: `src/app/page.jsx`
+
 ## 2026-04-24 — Export CSV includes full detail panel data from raw_payload
 
 - What changed: `exportCSV()` now adds 21 new columns extracted from `l.raw_payload`: Personal Email, Position, Phone, Location (city/state/country joined), Contact Type, Sector, Industry, Company Country, Employees Range, Est. Revenue, Year Founded, Total Visits, Total Duration (formatted), First Visit (Yes/No), Referrer, IP Address, Pages Visited (semicolon-separated URLs), UTM Source, UTM Medium, UTM Campaign, UTM Term.
