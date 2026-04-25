@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-25 — Webhook resilience: retry on DB cold start, payload change detection
+
+- What changed: Added `withRetry` helper (2 retries, exponential backoff) wrapping both the dedup SELECT and the INSERT in the webhook route. Added a `console.error` warning when all key identity fields (`leadId`, email, fullName) are null — indicates a Happier Leads payload format change. Replaced bare `throw err` on INSERT failure with an explicit `console.error` + structured `{ ok: false }` 500 response.
+- Why: Neon free-tier compute can suspend; the first DB call after a long idle period can time out. Retries handle the cold-start case without losing the lead. Null-field logging surfaces HL payload schema changes in Vercel logs.
+- Files affected: `src/app/api/webhook/happierleads/route.js`
+
+---
+
 ## 2026-04-25 — Admin Client Tags: add search icon, remove SOURCE toggle
 
 - What changed: Both the Notes tab and Client Tags tab campaign search inputs now have a magnifying glass icon on the left (`.campaign-search-input-wrap` + `.campaign-search-icon` CSS). A SOURCE toggle (HeyReach / SmartLead) was briefly added to the Client Tags tab then immediately removed — only SmartLead is used, so both forms simply show "SmartLead Campaign" as the label with no source selector.

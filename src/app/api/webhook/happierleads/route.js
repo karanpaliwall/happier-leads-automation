@@ -1,5 +1,18 @@
 import sql from '@/lib/db';
 
+// Retries fn up to `retries` times with exponential backoff.
+// Handles transient DB errors such as Neon compute cold starts on the free tier.
+async function withRetry(fn, retries = 2, baseDelayMs = 600) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await new Promise(r => setTimeout(r, baseDelayMs * (attempt + 1)));
+    }
+  }
+}
+
 export async function POST(req) {
   let body;
   try {
@@ -46,26 +59,37 @@ export async function POST(req) {
   const rawActivityAt = body?.summary?.lastSession?.date ?? null;
   const activityAt = rawActivityAt && !isNaN(new Date(rawActivityAt)) ? rawActivityAt : null;
 
+  // Warn if all key identity fields are null — likely a Happier Leads payload format change.
+  if (!hlId && !email && !fullName) {
+    console.error('[webhook] All key fields null — possible HL payload format change. Body:', JSON.stringify(body));
+  }
+
   // Duplicate check — layered: HL ID → email → LinkedIn → name+company
-  const existing = await sql`
-    SELECT id FROM leads
-    WHERE
-      (${hlId}::text IS NOT NULL AND happier_leads_id = ${hlId})
-      OR (${email}::text IS NOT NULL AND email = ${email})
-      OR (${linkedinUrl}::text IS NOT NULL AND linkedin_url = ${linkedinUrl})
-      OR (
-        ${fullName}::text IS NOT NULL AND ${companyName}::text IS NOT NULL
-        AND full_name = ${fullName} AND company_name = ${companyName}
-      )
-    LIMIT 1
-  `;
+  let existing;
+  try {
+    existing = await withRetry(() => sql`
+      SELECT id FROM leads
+      WHERE
+        (${hlId}::text IS NOT NULL AND happier_leads_id = ${hlId})
+        OR (${email}::text IS NOT NULL AND email = ${email})
+        OR (${linkedinUrl}::text IS NOT NULL AND linkedin_url = ${linkedinUrl})
+        OR (
+          ${fullName}::text IS NOT NULL AND ${companyName}::text IS NOT NULL
+          AND full_name = ${fullName} AND company_name = ${companyName}
+        )
+      LIMIT 1
+    `);
+  } catch (err) {
+    console.error('[webhook] DB error during dedup check:', err);
+    return Response.json({ ok: false, error: 'DB error' }, { status: 500 });
+  }
 
   if (existing.length > 0) {
     return Response.json({ ok: true, duplicate: true });
   }
 
   try {
-    await sql`
+    await withRetry(() => sql`
       INSERT INTO leads (
         happier_leads_id,
         first_name, last_name, full_name, email, linkedin_url,
@@ -82,14 +106,15 @@ export async function POST(req) {
         ${activityAt ? new Date(activityAt).toISOString() : null},
         ${JSON.stringify(body)}
       )
-    `;
+    `);
   } catch (err) {
     // 23505 = unique_violation — two webhooks raced past the dedup SELECT simultaneously.
     // Treat as duplicate: return 200 so Happier Leads doesn't retry.
     if (err.code === '23505') {
       return Response.json({ ok: true, duplicate: true });
     }
-    throw err;
+    console.error('[webhook] DB error during insert:', err);
+    return Response.json({ ok: false, error: 'DB error' }, { status: 500 });
   }
 
   return Response.json({ ok: true });
