@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '—';
@@ -120,8 +121,17 @@ function getCriteriaLabel(detailed) {
   return matched.length > 0 ? matched.join(' + ') : 'Criterion';
 }
 
-function LeadDetailPanel({ lead }) {
-  const rp = lead.raw_payload || {};
+function LeadDetailPanel({ rawPayload }) {
+  if (!rawPayload) {
+    return (
+      <tr className="detail-row">
+        <td colSpan={7} className="detail-row-cell">
+          <div className="detail-panel" style={{ padding: '24px', color: 'var(--text-muted)', textAlign: 'center', fontSize: 13 }}>Loading…</div>
+        </td>
+      </tr>
+    );
+  }
+  const rp = rawPayload;
   const contact = rp.contact || {};
   const company = rp.company || {};
   const scores = Array.isArray(rp.scores) ? rp.scores : [];
@@ -299,7 +309,7 @@ function LeadDetailPanel({ lead }) {
   );
 }
 
-function LeadRow({ lead, expanded, onToggle }) {
+function LeadRow({ lead, expanded, rawPayload, onToggle }) {
 
   return (
     <>
@@ -352,162 +362,11 @@ function LeadRow({ lead, expanded, onToggle }) {
           </div>
         </td>
       </tr>
-      {expanded && <LeadDetailPanel lead={lead} />}
+      {expanded && <LeadDetailPanel rawPayload={rawPayload} />}
     </>
   );
 }
 
-function exportCSV(leads) {
-  const headers = [
-    'Name', 'Email', 'LinkedIn', 'Company', 'Domain', 'Type', 'Fit Score', 'Engagement Score', 'Received',
-    'Personal Email', 'Position', 'Phone', 'Location', 'Contact Type',
-    'Sector', 'Industry', 'Company Country', 'Employees Range', 'Est. Revenue', 'Year Founded',
-    'Total Visits', 'Total Duration', 'First Visit', 'Referrer', 'IP Address', 'Pages Visited',
-    'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Term',
-  ];
-  const rows = leads.map(l => {
-    const rp = l.raw_payload || {};
-    const contact = rp.contact || {};
-    const company = rp.company || {};
-    const summary = rp.summary || {};
-    const utm = rp.utm || {};
-    const geo = rp.geo || rp.location || {};
-    const location = [geo.city, geo.state, geo.country].filter(Boolean).join(', ');
-    const pages = Array.isArray(rp.pageVisits)
-      ? rp.pageVisits.map(p => p.url || p.page || p).filter(Boolean).join('; ')
-      : '';
-    return [
-      l.full_name || '',
-      l.email || '',
-      l.linkedin_url || '',
-      l.company_name || '',
-      l.company_domain || '',
-      l.lead_type || '',
-      l.fit_score ?? '',
-      l.engagement_score ?? '',
-      l.received_at ? new Date(l.received_at).toLocaleString() : '',
-      contact.personalEmail || '',
-      contact.position || '',
-      contact.phone || '',
-      location,
-      contact.contactType || '',
-      company.sector || '',
-      company.industry || '',
-      company.country || '',
-      company.employeesRange || '',
-      company.estimatedAnnualRevenue || '',
-      company.yearFounded || '',
-      summary.visits ?? '',
-      summary.duration ? formatDuration(summary.duration) : '',
-      rp.isFirstVisit != null ? (rp.isFirstVisit ? 'Yes' : 'No') : '',
-      rp.referrer || '',
-      rp.ip || '',
-      pages,
-      utm.source || '',
-      utm.medium || '',
-      utm.campaign || '',
-      utm.term || '',
-    ];
-  });
-  const csv = [headers, ...rows]
-    .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const CAL_DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-
-function fmtCalDate(iso) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  return `${d}-${m}-${y}`;
-}
-
-function CalendarPicker({ from, to, editField, onSelect, onClear }) {
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const seed = (editField === 'to' && to) ? new Date(to + 'T00:00:00')
-             : (editField === 'from' && from) ? new Date(from + 'T00:00:00')
-             : new Date();
-  const [vy, setVy] = useState(seed.getFullYear());
-  const [vm, setVm] = useState(seed.getMonth());
-
-  const firstDow = new Date(vy, vm, 1).getDay();
-  const dim = new Date(vy, vm + 1, 0).getDate();
-
-  function iso(d) {
-    return `${vy}-${String(vm + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  }
-
-  function clickDay(d) {
-    const s = iso(d);
-    if (editField === 'from') {
-      const keepTo = to && s <= to ? to : '';
-      onSelect(s, keepTo, 'to');
-    } else {
-      if (!from || s >= from) { onSelect(from || s, s, null); }
-      else { onSelect(s, '', 'to'); }
-    }
-  }
-
-  function clickToday() {
-    if (editField === 'from') { onSelect(todayIso, to && to >= todayIso ? to : '', 'to'); }
-    else { onSelect(from || todayIso, todayIso, null); }
-  }
-
-  function prev() { if (vm === 0) { setVy(y => y - 1); setVm(11); } else setVm(m => m - 1); }
-  function next() { if (vm === 11) { setVy(y => y + 1); setVm(0); } else setVm(m => m + 1); }
-
-  const cells = [...Array(firstDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
-
-  return (
-    <div className="cal-popover">
-      <div className="cal-editing-hint">
-        {editField === 'from' ? 'Select start date' : 'Select end date'}
-      </div>
-      <div className="cal-nav-row">
-        <span className="cal-month-title">{CAL_MONTHS[vm]}, {vy}
-          <svg style={{ marginLeft: 4, verticalAlign: 'middle', opacity: 0.5 }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-        </span>
-        <div style={{ display: 'flex', gap: 2 }}>
-          <button className="cal-nav-btn" onClick={prev}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          </button>
-          <button className="cal-nav-btn" onClick={next}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-        </div>
-      </div>
-      <div className="cal-grid">
-        {CAL_DAYS.map(dl => <div key={dl} className="cal-dow">{dl}</div>)}
-        {cells.map((d, i) => {
-          if (d === null) return <div key={`e${i}`} />;
-          const s = iso(d);
-          const sel = s === from || s === to;
-          const inRange = from && to && s > from && s < to;
-          const isToday = s === todayIso;
-          return (
-            <button
-              key={d}
-              className={`cal-day${sel ? ' cal-sel' : isToday ? ' cal-today' : ''}${inRange ? ' cal-range' : ''}`}
-              onClick={() => clickDay(d)}
-            >{d}</button>
-          );
-        })}
-      </div>
-      <div className="cal-footer-row">
-        <button className="cal-foot-btn" onClick={onClear}>Clear</button>
-        <button className="cal-foot-btn cal-foot-today" onClick={clickToday}>Today</button>
-      </div>
-    </div>
-  );
-}
 
 const TABS = [
   { label: 'All Leads', value: '',          color: 'var(--blue-400)',  bg: 'rgba(59,130,246,0.13)' },
@@ -529,10 +388,11 @@ export default function FilteredPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [detailCache, setDetailCache] = useState({});
   const [timeFilter, setTimeFilter] = useState('');
   const [calFrom, setCalFrom] = useState('');
   const [calTo, setCalTo] = useState('');
-  const [editField, setEditField] = useState(null); // 'from' | 'to' | null
+  const [editField, setEditField] = useState(null);
   const [exporting, setExporting] = useState(false);
   const debounceRef = useRef(null);
   const calRef = useRef(null);
@@ -572,6 +432,20 @@ export default function FilteredPage() {
 
   const hasFilters = activeTab !== '' || debouncedSearch !== '' || timeFilter !== '' || calFrom !== '' || calTo !== '';
 
+  async function handleToggleExpand(id) {
+    if (expandedId === id) { setExpandedId(null); return; }
+    setExpandedId(id);
+    if (!detailCache[id]) {
+      try {
+        const res = await fetch(`/api/leads/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setDetailCache(c => ({ ...c, [id]: data.raw_payload }));
+        }
+      } catch { /* leave panel in loading state */ }
+    }
+  }
+
   const fetchLeads = useCallback(async () => {
     const params = new URLSearchParams({ page, limit: 25 });
     if (activeTab) params.set('type', activeTab);
@@ -608,23 +482,21 @@ export default function FilteredPage() {
   async function handleExportCSV() {
     setExporting(true);
     try {
-      let allLeads = [];
-      let pg = 1;
-      while (true) {
-        const params = new URLSearchParams({ page: pg, limit: 100 });
-        if (activeTab) params.set('type', activeTab);
-        if (debouncedSearch) params.set('search', debouncedSearch);
-        if (timeFilter === '24h') params.set('since', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-        else if (timeFilter === '7d') params.set('since', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-        if (calFrom) params.set('dateFrom', calFrom);
-        if (calTo) params.set('dateTo', calTo);
-        const res  = await fetch(`/api/leads?${params}`);
-        const data = await res.json();
-        allLeads = allLeads.concat(data.leads ?? []);
-        if (allLeads.length >= (data.total ?? 0) || !(data.leads?.length)) break;
-        pg++;
-      }
-      exportCSV(allLeads);
+      const params = new URLSearchParams();
+      if (activeTab) params.set('type', activeTab);
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      if (timeFilter === '24h') params.set('since', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      else if (timeFilter === '7d') params.set('since', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+      if (calFrom) params.set('dateFrom', calFrom);
+      if (calTo) params.set('dateTo', calTo);
+      const res = await fetch(`/api/leads/export?${params}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     } finally {
       setExporting(false);
     }
@@ -777,7 +649,8 @@ export default function FilteredPage() {
                         key={lead.id}
                         lead={lead}
                         expanded={lead.id === expandedId}
-                        onToggle={() => setExpandedId(id => id === lead.id ? null : lead.id)}
+                        rawPayload={detailCache[lead.id]}
+                        onToggle={() => handleToggleExpand(lead.id)}
                       />
                     ))}
                   </tbody>

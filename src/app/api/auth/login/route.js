@@ -1,14 +1,32 @@
 import { NextResponse } from 'next/server';
 
+const attempts = new Map();
+const LIMIT = 10;
+const WINDOW_MS = 60_000;
+
+function clientIp(req) {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+}
+
 export async function POST(request) {
+  const ip = clientIp(request);
+  const now = Date.now();
+  const state = attempts.get(ip) || { count: 0, resetAt: now + WINDOW_MS };
+  if (state.resetAt < now) { state.count = 0; state.resetAt = now + WINDOW_MS; }
+  state.count++;
+  attempts.set(ip, state);
+  if (state.count > LIMIT) {
+    return NextResponse.json({ error: 'Too many attempts' }, { status: 429 });
+  }
+
   const { password } = await request.json();
 
-  if (password !== 'Growleads@admin') {
+  if (password !== (process.env.LOGIN_PASSWORD || 'Growleads@admin')) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set('gl_session', 'gl-auth-v1', {
+  response.cookies.set('gl_session', process.env.SESSION_TOKEN || 'gl-auth-v1', {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',

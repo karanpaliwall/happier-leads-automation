@@ -5,6 +5,30 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Implement all 16 code-review findings (security, performance, cleanup)
+
+- What changed: Addressed all findings from /ce-review. Full list:
+  - **Auth (P1)**: Added `src/lib/auth.js` with `requireAuth()` (cookie-based); applied to `GET /api/leads`, `GET /api/leads/[id]`, `GET /api/leads/chart`. Removed unauthenticated DELETE handler from leads route (had no UI caller).
+  - **Rate limiting (P1)**: Added in-memory 10 req/min rate limiter on `POST /api/auth/login`.
+  - **Webhook secret (P1)**: Added `WEBHOOK_SECRET` env var check (x-hl-secret header); skips check if env var is unset for gradual rollout.
+  - **Env vars (P2)**: Moved hardcoded `'Growleads@admin'` and `'gl-auth-v1'` to `process.env.LOGIN_PASSWORD` and `process.env.SESSION_TOKEN` with fallbacks.
+  - **withRetry (P2)**: Moved `withRetry` from inline webhook to `src/lib/db.js` (named export). Added try/catch to leads, leads/[id], and chart routes.
+  - **CalendarPicker (P2)**: Extracted to `src/components/CalendarPicker.jsx` (exports default + `fmtCalDate`). Removed duplicated copies from `page.jsx`, `filtered/page.jsx`, `campaigns/page.jsx`.
+  - **Security headers (P2)**: Added `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` in `next.config.js`.
+  - **Polling guard (P2)**: Added `document.hidden` check to Overview page polling interval.
+  - **Dead files (P2)**: Deleted `src/components/LeadsTable.jsx`, `src/components/StatsBar.jsx` (unused).
+  - **Campaigns placeholder (P2)**: Removed fake sync handler; Sync Live button is now disabled with Phase-2 title.
+  - **CSV export API (P2)**: Added `GET /api/leads/export` returning CSV with full raw_payload fields; `handleExportCSV` in filtered/page.jsx now calls this endpoint instead of iterating pages.
+  - **ILIKE null guard (P3)**: Added `${search}::text IS NULL OR ...` guard so background polls with no search term skip the ILIKE scan.
+  - **Chart SQL (P3)**: Collapsed three near-identical daily SQL branches in chart/route.js to one parameterized query.
+  - **raw_payload in list (P3)**: Removed `raw_payload` from `GET /api/leads` SELECT. `LeadDetailPanel` now fetches from `GET /api/leads/[id]` on first expand; subsequent expands use cached result.
+  - **PII log (P3)**: Replaced full-body JSON.stringify on webhook error with key names only.
+  - **remotePatterns (P3)**: Narrowed from `**` to `logo.clearbit.com`, `*.amazonaws.com`, `*.happierleads.com`.
+- Why: Security hardening, performance improvements, code cleanup.
+- Files affected: `src/lib/auth.js` (new), `src/lib/db.js`, `src/components/CalendarPicker.jsx` (new), `src/app/api/leads/route.js`, `src/app/api/leads/[id]/route.js`, `src/app/api/leads/chart/route.js`, `src/app/api/leads/export/route.js` (new), `src/app/api/auth/login/route.js`, `src/app/api/webhook/happierleads/route.js`, `src/middleware.js`, `next.config.js`, `src/app/page.jsx`, `src/app/filtered/page.jsx`, `src/app/campaigns/page.jsx`, deleted `src/components/LeadsTable.jsx` + `StatsBar.jsx`
+
+---
+
 ## 2026-04-27 — Remove admin page and all admin API routes
 
 - What changed: Deleted `src/app/admin/page.jsx`, `src/app/api/admin/sync-from-hl/route.js`, and `src/app/api/admin/backfill-scores/route.js`. Removed the Admin button from the sidebar footer in `src/components/Sidebar.jsx`.

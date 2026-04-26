@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const SESSION_COOKIE = 'gl_session';
-const SESSION_VALUE = 'gl-auth-v1';
+const SESSION_VALUE = process.env.SESSION_TOKEN || 'gl-auth-v1';
 
 export function middleware(request) {
   const session = request.cookies.get(SESSION_COOKIE)?.value;

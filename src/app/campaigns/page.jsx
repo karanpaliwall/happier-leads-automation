@@ -1,92 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
 
 const CAMPAIGNS = [];
-
-const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const CAL_DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-
-function fmtCalDate(iso) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  return `${d}-${m}-${y}`;
-}
-
-function CalendarPicker({ from, to, editField, onSelect, onClear }) {
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const seed = (editField === 'to' && to)   ? new Date(to   + 'T00:00:00')
-             : (editField === 'from' && from) ? new Date(from + 'T00:00:00')
-             : new Date();
-  const [vy, setVy] = useState(seed.getFullYear());
-  const [vm, setVm] = useState(seed.getMonth());
-
-  const firstDow = new Date(vy, vm, 1).getDay();
-  const dim      = new Date(vy, vm + 1, 0).getDate();
-
-  function iso(d) {
-    return `${vy}-${String(vm + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  }
-
-  function clickDay(d) {
-    const s = iso(d);
-    if (editField === 'from') {
-      const keepTo = to && s <= to ? to : '';
-      onSelect(s, keepTo, 'to');
-    } else {
-      if (!from || s >= from) onSelect(from || s, s, null);
-      else onSelect(s, '', 'to');
-    }
-  }
-
-  function prev() { if (vm === 0) { setVy(y => y-1); setVm(11); } else setVm(m => m-1); }
-  function next() { if (vm === 11) { setVy(y => y+1); setVm(0);  } else setVm(m => m+1); }
-
-  const cells = [...Array(firstDow).fill(null), ...Array.from({ length: dim }, (_,i) => i+1)];
-
-  return (
-    <div className="cal-popover">
-      <div className="cal-editing-hint">
-        {editField === 'from' ? 'Select start date' : 'Select end date'}
-      </div>
-      <div className="cal-nav-row">
-        <span className="cal-month-title">{CAL_MONTHS[vm]}, {vy}</span>
-        <div style={{ display:'flex', gap:2 }}>
-          <button className="cal-nav-btn" type="button" onClick={prev}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          </button>
-          <button className="cal-nav-btn" type="button" onClick={next}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-        </div>
-      </div>
-      <div className="cal-grid">
-        {CAL_DAYS.map(dl => <div key={dl} className="cal-dow">{dl}</div>)}
-        {cells.map((d, i) => {
-          if (d === null) return <div key={`e${i}`} />;
-          const s   = iso(d);
-          const sel = s === from || s === to;
-          const inR = from && to && s > from && s < to;
-          return (
-            <button
-              key={d}
-              type="button"
-              className={`cal-day${sel ? ' cal-sel' : s === todayIso ? ' cal-today' : ''}${inR ? ' cal-range' : ''}`}
-              onClick={() => clickDay(d)}
-            >{d}</button>
-          );
-        })}
-      </div>
-      <div className="cal-footer-row">
-        <button className="cal-foot-btn" type="button" onClick={onClear}>Clear</button>
-        <button className="cal-foot-btn cal-foot-today" type="button" onClick={() => {
-          const t = new Date().toISOString().slice(0,10);
-          if (editField === 'from') onSelect(t, to && to >= t ? to : '', 'to');
-          else onSelect(from || t, t, null);
-        }}>Today</button>
-      </div>
-    </div>
-  );
-}
 
 const STATUS_PILLS = [
   { label: 'All',       value: 'all',       color: 'var(--blue-400)',  bg: 'rgba(59,130,246,0.13)'  },
@@ -173,8 +89,7 @@ export default function CampaignsPage() {
   const [calFrom, setCalFrom]   = useState('');
   const [calTo, setCalTo]       = useState('');
   const [editField, setEF]      = useState(null);
-  const [syncing, setSyncing]   = useState(false);
-  const [lastSynced, setLastSynced] = useState(null);
+  const [lastSynced] = useState(null);
   const calRef = useRef(null);
   const debounceRef = useRef(null);
   const [dSearch, setDSearch]   = useState('');
@@ -219,11 +134,6 @@ export default function CampaignsPage() {
     yetToStart:     CAMPAIGNS.reduce((s,c) => s + (c.yetToStart || 0), 0),
     blocked:        CAMPAIGNS.reduce((s,c) => s + (c.blocked    || 0), 0),
   };
-
-  function handleSyncLive() {
-    setSyncing(true);
-    setTimeout(() => { setSyncing(false); setLastSynced(new Date()); }, 1500);
-  }
 
   return (
     <>
@@ -307,25 +217,14 @@ export default function CampaignsPage() {
               </svg>
               Export CSV
             </button>
-            <button className="btn-primary" onClick={handleSyncLive} disabled={syncing}>
-              {syncing ? (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation:'spin 0.7s linear infinite' }}>
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                  </svg>
-                  Syncing…
-                </>
-              ) : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21.5 2v6h-6"/>
-                    <path d="M2.5 12a10 10 0 0 1 10-10 10 10 0 0 1 7.07 2.93L21.5 8"/>
-                    <path d="M2.5 22v-6h6"/>
-                    <path d="M21.5 12a10 10 0 0 1-10 10 10 10 0 0 1-7.07-2.93L2.5 16"/>
-                  </svg>
-                  Sync Live
-                </>
-              )}
+            <button className="btn-primary" disabled title="SmartLead sync — Phase 2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.5 2v6h-6"/>
+                <path d="M2.5 12a10 10 0 0 1 10-10 10 10 0 0 1 7.07 2.93L21.5 8"/>
+                <path d="M2.5 22v-6h6"/>
+                <path d="M21.5 12a10 10 0 0 1-10 10 10 10 0 0 1-7.07-2.93L2.5 16"/>
+              </svg>
+              Sync Live
             </button>
           </div>
         </div>

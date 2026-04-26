@@ -1,19 +1,14 @@
-import sql from '@/lib/db';
-
-// Retries fn up to `retries` times with exponential backoff.
-// Handles transient DB errors such as Neon compute cold starts on the free tier.
-async function withRetry(fn, retries = 2, baseDelayMs = 600) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt === retries) throw err;
-      await new Promise(r => setTimeout(r, baseDelayMs * (attempt + 1)));
-    }
-  }
-}
+import sql, { withRetry } from '@/lib/db';
 
 export async function POST(req) {
+  const secret = process.env.WEBHOOK_SECRET;
+  if (secret) {
+    const provided = req.headers.get('x-hl-secret') || req.headers.get('authorization');
+    if (provided !== secret) {
+      return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   let body;
   try {
     body = await req.json();
@@ -61,7 +56,7 @@ export async function POST(req) {
 
   // Warn if all key identity fields are null — likely a Happier Leads payload format change.
   if (!hlId && !email && !fullName) {
-    console.error('[webhook] All key fields null — possible HL payload format change. Body:', JSON.stringify(body));
+    console.error('[webhook] All key fields null — possible HL payload format change. Keys:', Object.keys(body ?? {}), 'contactKeys:', Object.keys(body?.contact ?? {}));
   }
 
   // Duplicate check — layered: HL ID → email → LinkedIn → name+company
