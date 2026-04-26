@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Remove admin page and all admin API routes
+
+- What changed: Deleted `src/app/admin/page.jsx`, `src/app/api/admin/sync-from-hl/route.js`, and `src/app/api/admin/backfill-scores/route.js`. Removed the Admin button from the sidebar footer in `src/components/Sidebar.jsx`.
+- Why: Admin section is no longer needed.
+- Files affected: `src/app/admin/page.jsx` (deleted), `src/app/api/admin/` (deleted), `src/components/Sidebar.jsx`
+
+---
+
 ## 2026-04-25 — Webhook resilience: retry on DB cold start, payload change detection
 
 - What changed: Added `withRetry` helper (2 retries, exponential backoff) wrapping both the dedup SELECT and the INSERT in the webhook route. Added a `console.error` warning when all key identity fields (`leadId`, email, fullName) are null — indicates a Happier Leads payload format change. Replaced bare `throw err` on INSERT failure with an explicit `console.error` + structured `{ ok: false }` 500 response.

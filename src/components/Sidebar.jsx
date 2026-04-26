@@ -146,14 +146,6 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
               <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--green-400)' }}>Live</span>
             )}
           </div>
-          {!isCollapsed && (
-            <Link href="/admin" className="admin-btn" title="Admin Panel" onClick={onClose}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-              </svg>
-              Admin
-            </Link>
-          )}
         </div>
       </div>
     </aside>
