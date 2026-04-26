@@ -47,11 +47,15 @@ CREATE INDEX leads_linkedin_idx    ON leads(linkedin_url) WHERE linkedin_url IS 
 
 ## Authentication
 
-All data API routes (`/api/leads`, `/api/leads/[id]`, `/api/leads/chart`, `/api/leads/export`) require a valid session cookie. The `src/lib/auth.js` `requireAuth()` helper checks for the `gl_session` cookie and returns a 401 if missing or invalid.
+All data API routes (`/api/leads`, `/api/leads/[id]`, `/api/leads/chart`, `/api/leads/export`) require auth. The `src/lib/auth.js` `requireAuth()` helper accepts either:
+
+- **Cookie:** `gl_session=<token>` (set by the browser on login)
+- **Bearer token:** `Authorization: Bearer <token>` (for programmatic/agent access)
+
+Token value: `process.env.SESSION_TOKEN` (falls back to `'gl-auth-v1'`)
 
 - Cookie name: `gl_session`
-- Cookie value: `process.env.SESSION_TOKEN` (falls back to `'gl-auth-v1'`)
-- Set by: `POST /api/auth/login` on successful password entry
+- Cookie set by: `POST /api/auth/login` on successful password entry — `maxAge: 30 days`
 
 The Next.js middleware (`src/middleware.js`) also protects all page routes by redirecting to `/login` if the cookie is absent.
 
@@ -91,7 +95,7 @@ Password gate. Sets the session cookie on success.
 ```json
 { "ok": true }
 ```
-Sets `gl_session` cookie (httpOnly, sameSite: lax, secure in production).
+Sets `gl_session` cookie (httpOnly, sameSite: lax, secure in production, maxAge: 30 days).
 
 ---
 
@@ -106,8 +110,8 @@ Returns paginated leads for the dashboard. **Auth required.**
 - `type` — `"exact"` | `"suggested"` | omit for all
 - `search` — text, searches `company_name`, `full_name`, `email`
 - `since` — ISO timestamp; filters `received_at >= since` (used by 24h / 7d quick filters)
-- `dateFrom` — ISO date string `YYYY-MM-DD`; filters `received_at::date >= dateFrom`
-- `dateTo` — ISO date string `YYYY-MM-DD`; filters `received_at::date <= dateTo`
+- `dateFrom` — ISO date string `YYYY-MM-DD`; filters `received_at >= dateFrom` (inclusive, index-friendly)
+- `dateTo` — ISO date string `YYYY-MM-DD`; filters `received_at < dateTo + 1 day` (inclusive upper bound)
 
 **Response:**
 ```json
@@ -156,7 +160,7 @@ Returns a single lead including `raw_payload`. **Auth required.** Used by the de
 ### GET /api/leads/export
 Returns a CSV file with all matching leads and full `raw_payload` fields expanded. **Auth required.**
 
-Accepts the same filter query params as `GET /api/leads` (`type`, `search`, `since`, `dateFrom`, `dateTo`). No pagination — returns all matching rows.
+Accepts the same filter query params as `GET /api/leads` (`type`, `search`, `since`, `dateFrom`, `dateTo`). No pagination — returns up to **10,000 rows** (safety cap to prevent OOM).
 
 **Response:** `text/csv` with `Content-Disposition: attachment; filename="leads-YYYY-MM-DD.csv"`.
 
@@ -169,8 +173,8 @@ Returns lead counts grouped by day or hour for the Overview page chart. **Auth r
 
 **Query params:**
 - `since` — ISO timestamp; enables hourly mode (`received_at >= since`)
-- `dateFrom` — ISO date `YYYY-MM-DD`; inclusive lower bound (daily mode)
-- `dateTo` — ISO date `YYYY-MM-DD`; inclusive upper bound (daily mode)
+- `dateFrom` — ISO date `YYYY-MM-DD`; inclusive lower bound — `received_at >= dateFrom` (daily mode)
+- `dateTo` — ISO date `YYYY-MM-DD`; inclusive upper bound — `received_at < dateTo + 1 day` (daily mode)
 
 **Response:**
 ```json
