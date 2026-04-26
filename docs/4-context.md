@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Fix mobile filter bar alignment on Leads and Campaigns pages
+
+- What changed: Added mobile-specific CSS rules for both filter bars at ≤640px. Leads page: `tabs-pill` now stretches full width, vertical `filter-divider` hidden, `time-filter-group` goes full width with the date range trigger sharing space equally between both date buttons, and the cal-popover anchors to `left: 0` so it never clips off the right edge. Campaigns page: `campaigns-filter-bar` switches to `flex-direction: column` so every control (search, status dropdown, date range, action buttons) stacks as its own full-width row; action buttons lose `marginLeft: auto` and each button stretches `flex: 1`; `campaigns-pills-row` stacks the two pill groups vertically.
+- Why: On mobile the filter controls were wrapping mid-row with mixed sizes, the date picker was overflowing the viewport, and the campaigns action buttons were misaligned due to `marginLeft: auto` not working correctly in a wrapped flex container.
+- Files affected: `src/styles/custom.css`, `src/app/campaigns/page.jsx` (added `campaigns-filter-actions` class to action buttons div)
+
+---
+
 ## 2026-04-27 — Implement all 16 code-review findings (security, performance, cleanup)
 
 - What changed: Addressed all findings from /ce-review. Full list:
