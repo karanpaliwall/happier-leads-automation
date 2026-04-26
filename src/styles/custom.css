@@ -1250,10 +1250,19 @@ body { overflow-x: hidden; }
   .form-select,
   .login-input { font-size: 16px !important; }
 
-  /* Filter bar: inputs go full-width when wrapped */
+  /* Filter bar: each control stacks as its own full-width row */
   .filter-bar { flex-wrap: wrap; gap: 8px; }
+  .filter-bar .tabs-pill { width: 100%; }
+  .filter-bar .filter-divider { display: none; }
+  .filter-bar .time-filter-group { width: 100%; flex-shrink: 1; }
+  .filter-bar .time-filter-group .cal-wrap { flex: 1; min-width: 0; }
+  .filter-bar .time-filter-group .cal-range-trigger { width: 100%; }
+  .filter-bar .time-filter-group .cal-field-btn { flex: 1; justify-content: center; }
   .filter-bar .form-input,
   .filter-bar .form-select { width: 100% !important; }
+  /* Cal popover: anchor to left edge on mobile so it never clips off-screen */
+  .filter-bar .cal-popover,
+  .campaigns-filter-bar .cal-popover { left: 0; right: auto; }
 
   /* Table scrolls horizontally within its wrapper.
      nowrap prevents column squashing; main-content overflow:hidden stops page zoom. */
@@ -1706,6 +1715,22 @@ body { overflow-x: hidden; }
   .campaigns-stats-bar { flex-wrap: wrap; padding: 8px 12px; row-gap: 6px; }
   .campaigns-stat-item { padding: 4px 10px; border-right: none; }
   .btn-primary { padding: 7px 12px; font-size: 12px; }
+
+  /* Campaigns filter bar: stack vertically, every control full-width */
+  .campaigns-filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .campaigns-filter-bar .status-dropdown-wrap { width: 100%; }
+  .campaigns-filter-bar .status-dropdown-btn { width: 100%; box-sizing: border-box; }
+  .campaigns-filter-bar .cal-wrap { width: 100%; }
+  .campaigns-filter-bar .cal-range-trigger { width: 100%; }
+  .campaigns-filter-bar .cal-field-btn { flex: 1; justify-content: center; }
+  /* Action buttons: cancel the auto-margin and stretch to full width */
+  .campaigns-filter-actions { margin-left: 0 !important; width: 100%; }
+  .campaigns-filter-actions button { flex: 1; justify-content: center; }
+
+  /* Pills row: stack status pills and metric pills on separate rows */
+  .campaigns-pills-row { flex-direction: column; gap: 6px; }
+  .campaigns-pills-row .tabs-pill { width: 100%; }
+  .metric-pill { white-space: normal; }
 }
 
 /* ── Admin sidebar button ── */
