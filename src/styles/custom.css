@@ -1718,6 +1718,8 @@ body { overflow-x: hidden; }
 
   /* Campaigns filter bar: stack vertically, every control full-width */
   .campaigns-filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  /* Reset flex-basis so it doesn't become a height in column layout */
+  .campaigns-search-field { flex: none; width: 100%; }
   .campaigns-filter-bar .status-dropdown-wrap { width: 100%; }
   .campaigns-filter-bar .status-dropdown-btn { width: 100%; box-sizing: border-box; }
   .campaigns-filter-bar .cal-wrap { width: 100%; }
