@@ -866,8 +866,6 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 - [x] Fit Score + Engagement tooltips (position:fixed, never clipped)
 - [x] Engagement score calculated from visit data (formula: visits×2 + duration/60s, max 20)
 - [x] Fit score extraction tries s.fitScore ?? s.score (handles both real + test payloads)
-- [x] Backfill endpoint — POST /api/admin/backfill-scores
-- [x] HL API sync endpoint — POST /api/admin/sync-from-hl (requires HL_API_KEY env var)
 - [x] GET /api/leads/[id] — single-lead endpoint with full raw_payload
 - [x] Next.js devtools button hidden (devIndicators: false)
 - [x] First-time empty state — onboarding guide on Overview when no leads exist
@@ -880,19 +878,17 @@ All changes are made locally and immediately committed + pushed to GitHub (`main
 src/
 ├── app/
 │   ├── api/
-│   │   ├── admin/
-│   │   │   ├── backfill-scores/route.js    ← recalculates fit+engagement from raw_payload
-│   │   │   └── sync-from-hl/route.js       ← imports leads from HL REST API (needs HL_API_KEY)
 │   │   ├── auth/login/route.js             ← POST: checks password, sets gl_session cookie
 │   │   ├── leads/
 │   │   │   ├── route.js                    ← GET (paginated, window-fn count, includes raw_payload)
 │   │   │   └── [id]/route.js               ← GET single lead with full raw_payload
 │   │   └── webhook/happierleads/route.js   ← inbound webhook, dedup, insert
+│   ├── campaigns/page.jsx                  ← Campaigns page: filter bar, stats, table (no live data yet)
 │   ├── filtered/page.jsx                   ← Leads page: tabs/search, expandable rows, Export CSV
 │   │                                           expandedId owned here; detail panel in .lead-detail-outer
 │   │                                           (outside <table> so it never scrolls with table cols)
 │   ├── login/page.jsx                      ← password gate
-│   ├── page.jsx                            ← Overview: stat cards, pipeline status, recent 5 leads
+│   ├── page.jsx                            ← Overview: stat cards, pipeline status, analytics chart
 │   ├── layout.jsx                          ← server root layout; sets viewport + favicon
 │   └── globals.css
 ├── components/
