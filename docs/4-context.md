@@ -5,6 +5,28 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Full system audit + loophole fixes (7-agent /ce-review)
+
+- What changed: Full security, performance, architecture, simplicity, and pattern audit completed (7 agents). All exploitable loopholes fixed:
+  - **auth.js**: Added `Authorization: Bearer <token>` support alongside cookie auth for programmatic/agent access
+  - **auth/login/route.js**: Added `maxAge: 30d` to session cookie (was session-scoped, expired on browser close)
+  - **All user-facing API routes** (`/api/leads`, `/api/leads/[id]`, `/api/leads/chart`, `/api/leads/export`): Wrapped DB calls in `withRetry()` — was only applied to the webhook previously
+  - **Date-cast index miss**: Fixed `received_at::date >= x::date` (bypassed B-tree index) to `received_at >= x::date AND received_at < x::date + INTERVAL '1 day'` across leads, chart, and export routes
+  - **Export OOM**: Added `LIMIT 10000` safety cap to prevent memory exhaustion on large exports
+  - **Permissions-Policy header**: Added `camera=(), microphone=(), geolocation=()` to `next.config.js`
+  - **EmptyState**: Updated ngrok instructions to reflect production state (webhook permanently configured, no ngrok needed)
+- Why: Full system audit to identify and close all loopholes before treating the system as production-ready
+- Files affected: `src/lib/auth.js`, `src/app/api/auth/login/route.js`, `src/app/api/leads/route.js`, `src/app/api/leads/[id]/route.js`, `src/app/api/leads/chart/route.js`, `src/app/api/leads/export/route.js`, `next.config.js`, `src/components/EmptyState.jsx`
+
+**Architectural improvements identified but deferred (not loopholes, require larger refactoring):**
+- Auth dual-system: middleware + requireAuth() are independent — a missed `requireAuth()` call would expose a route
+- `/api/leads` couples stats + paginated data — stats run on every 10s poll unnecessarily
+- `filtered/page.jsx` is a 679-line god component
+- Module-level `_cache` variables in page.jsx and filtered/page.jsx (wrong layer for React)
+- Campaigns page ships full UI (calendar, debounce, dropdowns) over `CAMPAIGNS = []` empty array
+
+---
+
 ## 2026-04-27 — Fix campaigns search field creating blank space on mobile
 
 - What changed: Removed `flex:'0 1 240px'` and `minWidth:130` from the inline style on `.campaigns-search-field` and moved them into a CSS class rule instead.
