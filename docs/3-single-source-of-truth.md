@@ -45,12 +45,28 @@ CREATE INDEX leads_linkedin_idx    ON leads(linkedin_url) WHERE linkedin_url IS 
 
 ---
 
+## Authentication
+
+All data API routes (`/api/leads`, `/api/leads/[id]`, `/api/leads/chart`, `/api/leads/export`) require a valid session cookie. The `src/lib/auth.js` `requireAuth()` helper checks for the `gl_session` cookie and returns a 401 if missing or invalid.
+
+- Cookie name: `gl_session`
+- Cookie value: `process.env.SESSION_TOKEN` (falls back to `'gl-auth-v1'`)
+- Set by: `POST /api/auth/login` on successful password entry
+
+The Next.js middleware (`src/middleware.js`) also protects all page routes by redirecting to `/login` if the cookie is absent.
+
+---
+
 ## API Contracts
 
 ### POST /api/webhook/happierleads
-Receives webhook from Happier Leads automation.
+Receives webhook from Happier Leads automation. No session auth required (public endpoint).
 
-**Request:** JSON body (Happier Leads payload — structure TBD after first real webhook)
+**Optional secret validation:** If `WEBHOOK_SECRET` env var is set, the request must include either:
+- `x-hl-secret: <secret>` header, or
+- `Authorization: <secret>` header
+
+**Request:** JSON body (Happier Leads payload — see Webhook Payload section below)
 
 **Response:**
 ```json
@@ -59,14 +75,36 @@ Receives webhook from Happier Leads automation.
 { "ok": true, "duplicate": true }
 ```
 
+---
+
+### POST /api/auth/login
+Password gate. Sets the session cookie on success.
+
+**Rate limit:** 10 requests/min per IP (in-memory, resets on cold start).
+
+**Request:**
+```json
+{ "password": "..." }
+```
+
+**Response:**
+```json
+{ "ok": true }
+```
+Sets `gl_session` cookie (httpOnly, sameSite: lax, secure in production).
+
+---
+
 ### GET /api/leads
-Returns paginated leads for the dashboard.
+Returns paginated leads for the dashboard. **Auth required.**
+
+`raw_payload` is **not** included in this response — it is only available via `GET /api/leads/[id]`.
 
 **Query params:**
 - `page` — integer, default 1
 - `limit` — integer, default 25, max 100
 - `type` — `"exact"` | `"suggested"` | omit for all
-- `search` — text, searches company_name and full_name
+- `search` — text, searches `company_name`, `full_name`, `email`
 - `since` — ISO timestamp; filters `received_at >= since` (used by 24h / 7d quick filters)
 - `dateFrom` — ISO date string `YYYY-MM-DD`; filters `received_at::date >= dateFrom`
 - `dateTo` — ISO date string `YYYY-MM-DD`; filters `received_at::date <= dateTo`
@@ -78,16 +116,20 @@ Returns paginated leads for the dashboard.
     {
       "id": "uuid",
       "received_at": "2026-04-22T10:30:00Z",
+      "first_name": "John",
+      "last_name": "Doe",
       "full_name": "John Doe",
       "email": "john@example.com",
+      "linkedin_url": "https://linkedin.com/in/johndoe",
       "company_name": "Acme Corp",
       "company_domain": "acme.com",
       "company_logo_url": null,
       "lead_type": "exact",
       "fit_score": 24,
       "engagement_score": 15,
+      "activity_at": "2026-04-21T22:02:42Z",
       "pushed_to_smart_lead": false,
-      "raw_payload": { "...": "full Happier Leads payload, used by detail panel" }
+      "pushed_at": null
     }
   ],
   "total": 42,
@@ -102,34 +144,58 @@ Returns paginated leads for the dashboard.
 }
 ```
 
+---
+
+### GET /api/leads/[id]
+Returns a single lead including `raw_payload`. **Auth required.** Used by the detail panel on first expand; subsequent expands use the client-side cache.
+
+**Response:** Full lead row including `raw_payload` JSONB.
+
+---
+
+### GET /api/leads/export
+Returns a CSV file with all matching leads and full `raw_payload` fields expanded. **Auth required.**
+
+Accepts the same filter query params as `GET /api/leads` (`type`, `search`, `since`, `dateFrom`, `dateTo`). No pagination — returns all matching rows.
+
+**Response:** `text/csv` with `Content-Disposition: attachment; filename="leads-YYYY-MM-DD.csv"`.
+
+Columns: Name, Email, LinkedIn, Company, Domain, Type, Fit Score, Engagement Score, Received, Personal Email, Position, Phone, Location, Contact Type, Sector, Industry, Company Country, Employees Range, Est. Revenue, Year Founded, Total Visits, Total Duration, First Visit, Referrer, IP Address, Pages Visited, UTM Source, UTM Medium, UTM Campaign, UTM Term.
+
+---
+
 ### GET /api/leads/chart
-Returns daily lead counts for the line chart on the Overview page.
+Returns lead counts grouped by day or hour for the Overview page chart. **Auth required.**
 
 **Query params:**
-- `dateFrom` — ISO date `YYYY-MM-DD`; inclusive lower bound
-- `dateTo` — ISO date `YYYY-MM-DD`; inclusive upper bound (omit for today)
+- `since` — ISO timestamp; enables hourly mode (`received_at >= since`)
+- `dateFrom` — ISO date `YYYY-MM-DD`; inclusive lower bound (daily mode)
+- `dateTo` — ISO date `YYYY-MM-DD`; inclusive upper bound (daily mode)
 
 **Response:**
 ```json
 {
+  "granularity": "day",
   "points": [
     { "date": "2026-04-22", "total": 45, "exact": 30, "suggested": 15 },
     { "date": "2026-04-23", "total": 21, "exact": 14, "suggested": 7 }
   ]
 }
 ```
-Note: only dates with at least one lead are returned. The frontend fills gaps with zeros.
+When `since` is provided, `granularity` is `"hour"` and `date` is a full ISO timestamp. Only dates/hours with at least one lead are returned; the frontend fills gaps with zeros.
 
 ---
 
 ## Environment Variables
 
-| Variable          | Where to get it                        | Used in                              |
-|-------------------|----------------------------------------|--------------------------------------|
-| `DATABASE_URL`    | Neon console → Connection Details      | `src/lib/db.js`                      |
-| `AUTH_PASSWORD`   | Set to `Growleads@admin`               | `src/app/api/auth/login/route.js`    |
+| Variable          | Default / fallback      | Purpose                                                         |
+|-------------------|-------------------------|-----------------------------------------------------------------|
+| `DATABASE_URL`    | *(required)*            | Neon PostgreSQL connection string (`src/lib/db.js`)             |
+| `LOGIN_PASSWORD`  | `'Growleads@admin'`     | Password for the `/login` page gate                             |
+| `SESSION_TOKEN`   | `'gl-auth-v1'`          | Value stored in and checked against the `gl_session` cookie     |
+| `WEBHOOK_SECRET`  | *(optional)*            | If set, webhook requires matching `x-hl-secret` header         |
 
-Set both in `.env.local` for local dev, and in Vercel environment settings for production.
+Set all in `.env.local` for local dev, and in Vercel environment settings for production. The fallback values keep the app working with zero config; set the env vars in production to harden.
 
 ---
 
@@ -190,10 +256,10 @@ Happier Leads sends a POST with this structure:
 - `contact.businessEmail` → `email`
 - `contact.linkedin` → `linkedin_url`
 - `contact.contactType` ("Exact Visitor" → `"exact"`, else `"suggested"`) → `lead_type`
-- `company.name/domain` → `company_name`, `company_domain`
-- `scores[].score` summed → `fit_score`
+- `company.name/domain/logo` → `company_name`, `company_domain`, `company_logo_url`
+- `scores[].score` (or `scores[].fitScore`) summed → `fit_score`
 - `summary.lastSession.date` → `activity_at`
-- `engagement_score` — **not present in payload**, stored as null
+- `engagement_score` — **not present in payload**, derived from visits + duration (see below)
 
 ---
 
