@@ -1604,6 +1604,7 @@ body { overflow-x: hidden; }
   flex-wrap: wrap;
 }
 .campaigns-search-field { flex: 0 1 240px; min-width: 130px; }
+.campaigns-search-field { flex: 0 1 240px; min-width: 130px; }
 
 /* ── Status filter dropdown ── */
 .status-dropdown-wrap { position: relative; }

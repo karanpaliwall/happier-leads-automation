@@ -1,4 +1,4 @@
-import sql from '@/lib/db';
+import sql, { withRetry } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // Neon returns date/timestamptz columns as JS Date objects.
@@ -19,7 +19,7 @@ export async function GET(req) {
   try {
     // 24h mode: group by hour
     if (since) {
-      const rows = await sql`
+      const rows = await withRetry(() => sql`
         SELECT
           date_trunc('hour', received_at)                        AS period,
           COUNT(*)                                               AS total,
@@ -29,7 +29,7 @@ export async function GET(req) {
         WHERE received_at >= ${since}::timestamptz
         GROUP BY 1
         ORDER BY 1
-      `;
+      `);
       return Response.json({
         granularity: 'hour',
         points: rows.map(r => ({
@@ -41,17 +41,18 @@ export async function GET(req) {
       });
     }
 
-    // Daily mode — single parameterized query handles all filter combinations
-    const rows = await sql`
+    // Daily mode — single parameterized query handles all filter combinations.
+    // Avoid casting received_at to ::date to preserve B-tree index usage.
+    const rows = await withRetry(() => sql`
       SELECT received_at::date AS day,
         COUNT(*) AS total,
         COUNT(*) FILTER (WHERE lead_type = 'exact') AS exact,
         COUNT(*) FILTER (WHERE lead_type = 'suggested') AS suggested
       FROM leads
-      WHERE (${dateFrom}::date IS NULL OR received_at::date >= ${dateFrom}::date)
-        AND (${dateTo}::date IS NULL OR received_at::date <= ${dateTo}::date)
+      WHERE (${dateFrom}::date IS NULL OR received_at >= ${dateFrom}::date)
+        AND (${dateTo}::date IS NULL OR received_at < ${dateTo}::date + INTERVAL '1 day')
       GROUP BY 1 ORDER BY 1
-    `;
+    `);
 
     return Response.json({
       granularity: 'day',

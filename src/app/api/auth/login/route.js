@@ -31,6 +31,7 @@ export async function POST(request) {
     sameSite: 'lax',
     path: '/',
     secure: process.env.NODE_ENV === 'production',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   });
   return response;
 }

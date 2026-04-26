@@ -1,4 +1,4 @@
-import sql from '@/lib/db';
+import sql, { withRetry } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 function formatDuration(ms) {
@@ -25,7 +25,7 @@ export async function GET(req) {
   const searchPattern = search ? `%${search}%` : '%';
 
   try {
-    const leads = await sql`
+    const leads = await withRetry(() => sql`
       SELECT *
       FROM leads
       WHERE (${type}::text IS NULL OR lead_type = ${type})
@@ -34,10 +34,11 @@ export async function GET(req) {
           OR full_name    ILIKE ${searchPattern}
           OR email        ILIKE ${searchPattern})
         AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
-        AND (${dateFrom}::date IS NULL OR received_at::date >= ${dateFrom}::date)
-        AND (${dateTo}::date IS NULL OR received_at::date <= ${dateTo}::date)
+        AND (${dateFrom}::date IS NULL OR received_at >= ${dateFrom}::date)
+        AND (${dateTo}::date IS NULL OR received_at < ${dateTo}::date + INTERVAL '1 day')
       ORDER BY received_at DESC
-    `;
+      LIMIT 10000
+    `);
 
     const headers = [
       'Name', 'Email', 'LinkedIn', 'Company', 'Domain', 'Type',

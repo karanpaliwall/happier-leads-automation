@@ -1,4 +1,4 @@
-import sql from '@/lib/db';
+import sql, { withRetry } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 export async function GET(req) {
@@ -18,7 +18,7 @@ export async function GET(req) {
 
   try {
     // Two queries instead of three — window function gives filtered total alongside the rows
-    const [leads, statsRows] = await Promise.all([
+    const [leads, statsRows] = await withRetry(() => Promise.all([
       sql`
         SELECT
           id, received_at, first_name, last_name, full_name, email, linkedin_url,
@@ -33,8 +33,8 @@ export async function GET(req) {
             OR full_name    ILIKE ${searchPattern}
             OR email        ILIKE ${searchPattern})
           AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
-          AND (${dateFrom}::date IS NULL OR received_at::date >= ${dateFrom}::date)
-          AND (${dateTo}::date IS NULL OR received_at::date <= ${dateTo}::date)
+          AND (${dateFrom}::date IS NULL OR received_at >= ${dateFrom}::date)
+          AND (${dateTo}::date IS NULL OR received_at < ${dateTo}::date + INTERVAL '1 day')
         ORDER BY received_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `,
@@ -48,7 +48,7 @@ export async function GET(req) {
           COUNT(*) FILTER (WHERE received_at >= CURRENT_DATE AND lead_type = 'suggested')     AS new_today_suggested
         FROM leads
       `,
-    ]);
+    ]));
 
     const total = leads.length > 0 ? parseInt(leads[0]._total) : 0;
     const cleanLeads = leads.map(({ _total, ...l }) => l);

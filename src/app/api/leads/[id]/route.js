@@ -1,4 +1,4 @@
-import sql from '@/lib/db';
+import sql, { withRetry } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 export async function GET(req, { params }) {
@@ -7,9 +7,9 @@ export async function GET(req, { params }) {
 
   const { id } = await params;
   try {
-    const rows = await sql`
+    const rows = await withRetry(() => sql`
       SELECT * FROM leads WHERE id = ${id}::uuid LIMIT 1
-    `;
+    `);
     if (rows.length === 0) {
       return Response.json({ error: 'Not found' }, { status: 404 });
     }

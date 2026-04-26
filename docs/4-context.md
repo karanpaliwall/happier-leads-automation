@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Fix campaigns search field creating blank space on mobile
+
+- What changed: Removed `flex:'0 1 240px'` and `minWidth:130` from the inline style on `.campaigns-search-field` and moved them into a CSS class rule instead.
+- Why: Inline styles override CSS class rules, so the mobile `flex: none` override in the `@media (max-width: 640px)` block was being ignored. In a column flex layout, `flex-basis: 240px` becomes a **height** of 240px — creating ~200px of blank space below the 36px-tall search input, followed by a lone search icon appearing before the rest of the filters.
+- Files affected: `src/styles/custom.css`, `src/app/campaigns/page.jsx`
+
+---
+
 ## 2026-04-27 — Fix mobile filter bar alignment on Leads and Campaigns pages
 
 - What changed: Added mobile-specific CSS rules for both filter bars at ≤640px. Leads page: `tabs-pill` now stretches full width, vertical `filter-divider` hidden, `time-filter-group` goes full width with the date range trigger sharing space equally between both date buttons, and the cal-popover anchors to `left: 0` so it never clips off the right edge. Campaigns page: `campaigns-filter-bar` switches to `flex-direction: column` so every control (search, status dropdown, date range, action buttons) stacks as its own full-width row; action buttons lose `marginLeft: auto` and each button stretches `flex: 1`; `campaigns-pills-row` stacks the two pill groups vertically.
