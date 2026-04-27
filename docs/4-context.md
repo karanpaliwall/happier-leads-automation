@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Donut chart hover: floating cursor-following tooltip
+
+- What changed: The DonutChart hover was changing the SVG center text (label + count + %) when hovering an arc segment. Replaced with a floating HTML tooltip that follows the cursor — matching the reference UI. Implementation: removed `hoveredSeg` state; added `arcTip: { arc, x, y }` state updated on `onMouseMove` with `e.clientX/e.clientY`; tooltip rendered as `position: fixed` so `overflow: hidden` on `.campaigns-charts-inner` never clips it; center text always shows `total + "campaigns"`. The BarChart also has a cursor-following tooltip (via `containerRef` + `getBoundingClientRect()`).
+- Why: Reference UI shows a floating overlay near the cursor, not a center-text replacement. Using `position: fixed` avoids any clipping from ancestor containers.
+- Files affected: `src/app/campaigns/page.jsx`
+
+---
+
 ## 2026-04-28 — Bar chart rewritten as CSS divs; donut card vertically centred
 
 - What changed:
