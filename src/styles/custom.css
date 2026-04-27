@@ -2246,7 +2246,7 @@ body { overflow-x: hidden; }
 /* ── Charts grid layout ── */
 .campaigns-charts-grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 320px;
   gap: 12px;
   padding-bottom: 2px;
   align-items: start;

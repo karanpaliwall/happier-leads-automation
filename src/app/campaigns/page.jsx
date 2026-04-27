@@ -144,8 +144,8 @@ function DonutChart({ campaigns, visible }) {
   });
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-      <svg viewBox="0 0 180 180" width={140} height={140}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'nowrap' }}>
+      <svg viewBox="0 0 180 180" width={120} height={120}
         style={{
           flexShrink: 0,
           opacity: animate ? 1 : 0,
@@ -158,7 +158,7 @@ function DonutChart({ campaigns, visible }) {
             style={{
               opacity: animate ? 1 : 0,
               transform: animate ? 'scale(1)' : 'scale(0.6)',
-              transformOrigin: `${CX}px ${CY}px`,
+              transformOrigin: '50% 50%',
               transition: `opacity 0.35s ease ${i * 0.07}s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.07}s`,
             }}
           />
@@ -168,7 +168,7 @@ function DonutChart({ campaigns, visible }) {
         <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
           style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
       </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 148 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 0 }}>
         {segs.map((seg, i) => (
           <div key={seg.label} style={{
             display: 'flex', alignItems: 'center', gap: 8,
