@@ -5,6 +5,27 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Campaigns page: restore Add Campaign + ID-only tracking, real-time data, UI cleanup
+
+- What changed:
+  - **Restored Add Campaign button + dialog** — was accidentally removed when auto-discovery was added. Campaign IDs are entered manually and persisted in `localStorage` (`sl-campaign-ids`, max 20). Only explicitly-added campaigns are shown.
+  - **Removed auto-discovery of all campaigns** — the earlier "fix" that fetched all 50 SmartLead campaigns regardless of what the user wanted has been reverted. The page now only shows campaigns the user has added by ID.
+  - **Removed Force Sync button** — redundant; merged into a single **Sync** button that always fetches fresh data.
+  - **Renamed Refresh → Sync** — clearer intent.
+  - **Auto-refresh every 2 minutes** — page re-fetches tracked campaign data automatically while open.
+  - **Real-time data fixes** — three caching layers eliminated: `export const dynamic = 'force-dynamic'` on the route (prevents Next.js CDN caching), `Cache-Control: no-store` on the response, and `cache: 'no-store'` + `?_t=<timestamp>` on every frontend fetch.
+  - **Bar chart hallucination fix** — was rendering 2px stub bars for zero values. Now shows "No lead data available yet" when `totalLeads` is 0 for all campaigns.
+  - **Analytics field name fix** — SmartLead returns `total_leads` (not `total_lead_count`). Added broad fallbacks for all analytics fields.
+  - **Push dropdown** — updated to also fetch campaigns without localStorage dependency (calls `/api/smartlead/campaigns` directly); shows "No campaigns found in SmartLead" if empty.
+  - **Stale subtitle** — updated from "add campaign IDs to track live data" to "track specific campaigns by ID".
+- Why: User wanted to track specific campaigns only, not their entire SmartLead account. Data was stale due to multiple caching layers. Chart was showing fake bars.
+- Files affected:
+  - `src/app/campaigns/page.jsx`
+  - `src/app/api/smartlead/campaigns/route.js`
+  - `src/app/filtered/page.jsx`
+
+---
+
 ## 2026-04-27 — Campaigns page: remove duplicate status dropdown
 
 - What changed: Removed the `StatusDropdown` component and `STATUS_OPTS` constant from the campaigns page. The "All Status" dropdown in the filter bar was a redundant second status filter alongside the pills/tabs row. Only the pills row remains.
