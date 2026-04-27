@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Campaigns page: unified single filter+stats tab
+
+- What changed: Replaced the two separate filter rows (an "All Status" dropdown + a stats bar above the pills) with a single unified `tabs-pill` box containing everything — filter buttons (All / Active / Paused / Finished / Draft) followed by a thin vertical divider, then the stats (Total Leads / In Progress / Leads Finished / Leads Failed / Last Synced) — all inside one pill container with consistent hover and styling.
+- Why: User saw two rows that looked like duplicate filters. Consolidated into one bar so there is no visual ambiguity.
+- Files affected: `src/app/campaigns/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-27 — BarChart animation unit bug fixed
 
 - What changed: `BarChart` in `campaigns/page.jsx` was animating `style.width` with a numeric value. React converts numeric style values to `px`, but `barW` is in SVG user units. In a scaled SVG (`viewBox="0 0 530 N"` rendered at any other width) the bars would render at the wrong size. Fixed by keeping `width={barW}` as the SVG attribute and animating via `transform: scaleX(0→1)` with `transformBox: fill-box` and `transformOrigin: left center` — no unit mismatch, scales from the bar's own left edge.
