@@ -29,6 +29,7 @@ const COLS = [
   { key: 'yetToStart',  label: 'Yet to Start',  align: 'right', w: 100 },
   { key: 'blocked',     label: 'Blocked',       align: 'right', w: 90  },
   { key: 'sendPending', label: 'Send Pending',  align: 'right', w: 115 },
+  { key: 'emailsSent',  label: 'Sent',          align: 'right', w: 80  },
   { key: 'opens',       label: 'Opens',         align: 'right', w: 115 },
   { key: 'replies',     label: 'Replies',       align: 'right', w: 115 },
   { key: 'bounces',     label: 'Bounces',       align: 'right', w: 90  },
@@ -752,6 +753,7 @@ export default function CampaignsPage() {
                               case 'yetToStart':  return <td key="yetToStart"  style={{ ...ra, ...ss }}><N v={c.yetToStart}  cls="num-yellow" /></td>;
                               case 'blocked':     return <td key="blocked"     style={{ ...ra, ...ss }}><N v={c.blocked}     cls="num-red"    /></td>;
                               case 'sendPending': return <td key="sendPending" style={{ ...ra, ...ss }}><N v={c.sendPending} cls="num-orange" /></td>;
+                              case 'emailsSent':  return <td key="emailsSent"  style={{ ...ra, ...ss }}><N v={c.emailsSent}  cls="num-blue"   /></td>;
                               case 'opens':       return (
                                 <td key="opens" style={{ ...ra, ...ss }}>
                                   <span className="num-blue">{(c.opens || 0).toLocaleString()}</span>
