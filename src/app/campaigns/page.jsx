@@ -52,6 +52,8 @@ function arcPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 }
 
 // ── Charts ───────────────────────────────────────────────────────────────────
+const LABEL_W = 140; // px — fixed label column, bars fill the rest
+
 function BarChart({ campaigns, visible }) {
   const [animate, setAnimate] = useState(false);
 
@@ -64,50 +66,77 @@ function BarChart({ campaigns, visible }) {
   if (!campaigns.length || !campaigns.some(c => c.emailsSent > 0)) {
     return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No email data available yet</p>;
   }
+
   const top = [...campaigns].sort((a, b) => (b.emailsSent || 0) - (a.emailsSent || 0)).slice(0, 10);
   const maxVal = Math.max(...top.map(c => c.emailsSent || 0), 1);
-  const ROW_H = 30, BAR_H = 16, NAME_W = 145, PAD_L = 8, PAD_R = 12, TICK_H = 22;
-  const VB_W = 530;
-  const BAR_W = VB_W - NAME_W - PAD_L - PAD_R;
-  const VB_H = top.length * ROW_H + TICK_H;
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map(f => Math.round(maxVal * f));
+  const tickFractions = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-      {ticks.map((t, i) => {
-        const x = NAME_W + PAD_L + (t / maxVal) * BAR_W;
-        return (
-          <g key={i}>
-            <line x1={x} y1={0} x2={x} y2={VB_H - TICK_H} stroke="rgba(255,255,255,0.05)" strokeWidth={1} />
-            <text x={x} y={VB_H - 6} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.35)">
-              {t >= 1000 ? `${(t / 1000).toFixed(t % 1000 === 0 ? 0 : 1)}k` : t}
-            </text>
-          </g>
-        );
-      })}
+    <div style={{ position: 'relative' }}>
+      {/* Vertical gridlines spanning all bar rows */}
+      {tickFractions.map((f, i) => (
+        <div key={i} style={{
+          position: 'absolute',
+          left: `calc(${LABEL_W}px + ${f} * (100% - ${LABEL_W}px))`,
+          top: 0,
+          height: `${top.length * 36}px`,
+          width: 1,
+          background: 'rgba(255,255,255,0.06)',
+          pointerEvents: 'none',
+        }} />
+      ))}
+
+      {/* Bar rows — fixed 36px each, never scale with container width */}
       {top.map((c, i) => {
-        const barW = Math.max((c.emailsSent / maxVal) * BAR_W, 2);
-        const y = i * ROW_H;
+        const pct = Math.max((c.emailsSent / maxVal) * 100, 0.3);
         const label = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
         return (
-          <g key={c.id} style={{ opacity: animate ? 1 : 0, transition: `opacity 0.3s ease ${i * 0.06}s` }}>
-            <text x={NAME_W - 6} y={y + ROW_H / 2 + 4} textAnchor="end" fontSize={11} fill="rgba(255,255,255,0.65)">
+          <div key={c.id} style={{
+            display: 'flex', alignItems: 'center', height: 36,
+            opacity: animate ? 1 : 0,
+            transition: `opacity 0.28s ease ${i * 0.05}s`,
+          }}>
+            <div style={{
+              width: LABEL_W, flexShrink: 0, paddingRight: 8,
+              fontSize: 11, color: 'rgba(255,255,255,0.65)',
+              textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden',
+            }}>
               {label}
-            </text>
-            <rect
-              x={NAME_W + PAD_L} y={y + (ROW_H - BAR_H) / 2} width={barW} height={BAR_H} rx={3}
-              fill="#4A7BF7"
-              style={{
-                transformBox: 'fill-box',
+            </div>
+            <div style={{ flex: 1, height: 18, position: 'relative' }}>
+              <div style={{
+                position: 'absolute', left: 0, top: 0, bottom: 0,
+                width: `${pct}%`,
+                background: '#4A7BF7',
+                borderRadius: 3,
                 transformOrigin: 'left center',
                 transform: animate ? 'scaleX(1)' : 'scaleX(0)',
-                transition: `transform 0.55s cubic-bezier(0.4,0,0.2,1) ${i * 0.06}s`,
-              }}
-            />
-          </g>
+                transition: `transform 0.5s cubic-bezier(0.4,0,0.2,1) ${i * 0.05}s`,
+              }} />
+            </div>
+          </div>
         );
       })}
-    </svg>
+
+      {/* X-axis tick labels */}
+      <div style={{ position: 'relative', marginLeft: LABEL_W, height: 20, marginTop: 5 }}>
+        {tickFractions.map((f, i) => {
+          const val = Math.round(maxVal * f);
+          const disp = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k` : String(val);
+          return (
+            <span key={i} style={{
+              position: 'absolute',
+              left: `${f * 100}%`,
+              fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: '20px',
+              transform: f === 0 ? 'none' : f === 1 ? 'translateX(-100%)' : 'translateX(-50%)',
+              whiteSpace: 'nowrap',
+            }}>
+              {disp}
+            </span>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -541,12 +570,14 @@ export default function CampaignsPage() {
               <div className="campaigns-charts-inner">
                 <div className="campaigns-charts-grid">
                   <div className="card" style={{ padding: '18px 20px' }}>
-                    <p className="card-title" style={{ marginBottom: 16 }}>Top 10 Campaigns by Emails Sent</p>
+                    <p className="card-title" style={{ marginBottom: 14 }}>Top 10 Campaigns by Emails Sent</p>
                     <BarChart campaigns={campaigns} visible={showCharts} />
                   </div>
-                  <div className="card" style={{ padding: '18px 20px' }}>
-                    <p className="card-title" style={{ marginBottom: 16 }}>Status Breakdown</p>
-                    <DonutChart campaigns={campaigns} visible={showCharts} />
+                  <div className="card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column' }}>
+                    <p className="card-title" style={{ marginBottom: 14 }}>Status Breakdown</p>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                      <DonutChart campaigns={campaigns} visible={showCharts} />
+                    </div>
                   </div>
                 </div>
               </div>

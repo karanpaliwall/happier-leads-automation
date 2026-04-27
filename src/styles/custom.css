@@ -2249,7 +2249,6 @@ body { overflow-x: hidden; }
   grid-template-columns: 1fr 320px;
   gap: 12px;
   padding-bottom: 2px;
-  align-items: start;
 }
 @media (max-width: 900px) {
   .campaigns-charts-grid { grid-template-columns: 1fr; }
