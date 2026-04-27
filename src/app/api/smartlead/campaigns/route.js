@@ -44,11 +44,14 @@ async function fetchOneCampaign(id, apiKey) {
 
 async function fetchAllIds(apiKey) {
   const res = await fetch(
-    `${SL_BASE}/campaigns?api_key=${encodeURIComponent(apiKey)}&offset=0&limit=100`,
+    `${SL_BASE}/campaigns?api_key=${encodeURIComponent(apiKey)}`,
     { cache: 'no-store' }
   );
-  if (!res.ok) throw new Error(`SmartLead HTTP ${res.status}`);
-  const data = await res.json();
+  const text = await res.text().catch(() => '');
+  if (!res.ok) throw new Error(`SmartLead HTTP ${res.status}${text ? `: ${text.slice(0, 120)}` : ''}`);
+  if (!text) return [];
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error(`SmartLead returned non-JSON: ${text.slice(0, 120)}`); }
   const list = Array.isArray(data) ? data : (data?.data ?? data?.campaigns ?? []);
   return list.map(c => String(c.id)).filter(Boolean);
 }
@@ -69,7 +72,11 @@ export async function GET(request) {
   if (idsParam) {
     ids = idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 50);
   } else {
-    ids = (await fetchAllIds(apiKey)).slice(0, 50);
+    try {
+      ids = (await fetchAllIds(apiKey)).slice(0, 50);
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 502 });
+    }
   }
 
   if (!ids.length) return NextResponse.json({ campaigns: [], fetchedAt: new Date().toISOString() });
