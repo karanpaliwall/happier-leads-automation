@@ -379,35 +379,46 @@ export default function CampaignsPage() {
   const debRef      = useRef(null);
   const dialogInRef = useRef(null);
 
-  // ── Load IDs from server; migrate any localStorage data on first run ──────
+  // ── Load IDs: render from localStorage cache immediately, sync with server ──
   useEffect(() => {
     async function loadIds() {
+      // 1. Show localStorage cache right away so there's no flicker on revisit
+      let localIds = [];
+      try {
+        const raw = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
+        if (Array.isArray(raw)) localIds = raw;
+      } catch {}
+      if (localIds.length) setCampaignIds(localIds);
+
+      // 2. Fetch authoritative list from server
       try {
         const res = await fetch('/api/campaigns/ids');
-        if (!res.ok) return;
-        const data = await res.json();
-        let ids = Array.isArray(data.ids) ? data.ids : [];
+        if (!res.ok) return; // Keep localStorage cache on auth/network error
+        const { ids: serverIds = [] } = await res.json();
 
-        // One-time migration: push localStorage IDs to server if server is empty
-        if (ids.length === 0) {
-          try {
-            const local = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
-            if (Array.isArray(local) && local.length > 0) {
-              for (const id of local.slice(0, 20)) {
-                await fetch('/api/campaigns/ids', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ id }),
-                });
-              }
-              ids = local.slice(0, 20);
-              localStorage.removeItem('sl-campaign-ids');
+        // 3. Push any IDs only in localStorage (not yet on server) — handles migration
+        //    across browsers/devices as long as one browser still has the old data.
+        //    Guarded by a flag so removed IDs don't keep reappearing after migration.
+        if (!localStorage.getItem('sl-ids-migrated')) {
+          for (const id of localIds) {
+            if (!serverIds.includes(id)) {
+              await fetch('/api/campaigns/ids', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id }),
+              }).catch(() => {});
+              serverIds.push(id);
             }
-          } catch {}
+          }
+          localStorage.setItem('sl-ids-migrated', '1');
         }
 
-        setCampaignIds(ids);
-      } catch {}
+        // 4. Server is authoritative; keep localStorage as offline cache
+        setCampaignIds(serverIds);
+        localStorage.setItem('sl-campaign-ids', JSON.stringify(serverIds));
+      } catch {
+        // Network failure — keep showing localStorage cache (already set above)
+      }
     }
     loadIds();
   }, []);
@@ -468,7 +479,9 @@ export default function CampaignsPage() {
       });
       const data = await res.json();
       if (!res.ok) { setDialogErr(data.error || 'Failed to add campaign.'); return; }
-      setCampaignIds(prev => [...prev, id]);
+      const newIds = [...campaignIds, id];
+      setCampaignIds(newIds);
+      localStorage.setItem('sl-campaign-ids', JSON.stringify(newIds));
       closeDialog();
     } catch {
       setDialogErr('Network error. Please try again.');
@@ -477,8 +490,10 @@ export default function CampaignsPage() {
 
   async function removeCampaign(id) {
     const strId = String(id);
-    setCampaignIds(prev => prev.filter(x => x !== strId));
+    const newIds = campaignIds.filter(x => x !== strId);
+    setCampaignIds(newIds);
     setCampaigns(prev => prev.filter(c => String(c.id) !== strId));
+    localStorage.setItem('sl-campaign-ids', JSON.stringify(newIds));
     setHoverRow(null);
     try {
       await fetch('/api/campaigns/ids', {
