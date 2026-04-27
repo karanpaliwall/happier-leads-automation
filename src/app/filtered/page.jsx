@@ -1,5 +1,101 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+
+const PUSH_STATUS_COLORS = {
+  ACTIVE:    '#4ade80',
+  PAUSED:    '#facc15',
+  FINISHED:  '#60a5fa',
+  COMPLETED: '#60a5fa',
+  DRAFT:     '#9ca3af',
+};
+
+// ── Campaign picker popup rendered at fixed screen coords ──────────────────
+function PushDropdown({ leadId, coords, onPushed, onClose }) {
+  const [campaigns, setCampaigns] = useState(null); // null = loading
+  const [pushing, setPushing]     = useState(null);
+  const [err, setErr]             = useState(null);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const ids = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
+        if (!ids.length) { setCampaigns([]); return; }
+        const res  = await fetch(`/api/smartlead/campaigns?ids=${ids.join(',')}`);
+        const data = await res.json();
+        setCampaigns(data.campaigns ?? []);
+      } catch { setCampaigns([]); }
+    }
+    load();
+  }, []);
+
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) onClose(); }
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [onClose]);
+
+  async function handlePush(campaignId) {
+    setPushing(campaignId);
+    setErr(null);
+    try {
+      const res  = await fetch(`/api/leads/${leadId}/push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Push failed');
+      onPushed();
+    } catch (e) {
+      setErr(e.message);
+      setPushing(null);
+    }
+  }
+
+  // Position: below button, flip up if near viewport bottom
+  const style = {
+    position: 'fixed',
+    top: coords.bottom + 4,
+    left: coords.left,
+    zIndex: 1000,
+  };
+
+  return (
+    <div ref={ref} className="push-dropdown" style={style}>
+      <div className="push-dropdown-header">Push to campaign</div>
+      {campaigns === null ? (
+        <div className="push-dropdown-state">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+          Loading campaigns…
+        </div>
+      ) : campaigns.length === 0 ? (
+        <div className="push-dropdown-state" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+          <span>No campaigns added yet.</span>
+          <a href="/campaigns" className="push-dropdown-link" onClick={onClose}>Go to Campaigns →</a>
+        </div>
+      ) : (
+        campaigns.map(c => (
+          <button key={c.id} className="push-dropdown-opt" disabled={!!pushing}
+            onClick={() => handlePush(c.id)}>
+            {pushing === c.id
+              ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+              : <span className="push-dropdown-dot" style={{ background: PUSH_STATUS_COLORS[c.status] || '#9ca3af' }} />
+            }
+            <span className="push-dropdown-name">{c.name}</span>
+          </button>
+        ))
+      )}
+      {err && <div className="push-dropdown-err">{err}</div>}
+    </div>
+  );
+}
 import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
 
 function timeAgo(dateStr) {
@@ -309,7 +405,16 @@ function LeadDetailPanel({ rawPayload }) {
   );
 }
 
-function LeadRow({ lead, expanded, rawPayload, onToggle }) {
+function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick }) {
+  const pushBtnRef = useRef(null);
+
+  function handlePushClick(e) {
+    e.stopPropagation();
+    const rect = pushBtnRef.current.getBoundingClientRect();
+    onPushClick(lead.id, rect);
+  }
+
+  const isPushed = pushed || lead.pushed_to_smart_lead;
 
   return (
     <>
@@ -351,9 +456,18 @@ function LeadRow({ lead, expanded, rawPayload, onToggle }) {
         <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{timeAgo(lead.received_at)}</td>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button className="push-btn" disabled title="Smart Lead integration — Phase 2">
-              Push to Smart Lead
-            </button>
+            {isPushed ? (
+              <span className="push-btn-done">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Pushed
+              </span>
+            ) : (
+              <button ref={pushBtnRef} className="push-btn-live" onClick={handlePushClick}>
+                Push to Smart Lead
+              </button>
+            )}
             <span className={`expand-chevron${expanded ? ' expanded' : ''}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
@@ -393,7 +507,9 @@ export default function FilteredPage() {
   const [calFrom, setCalFrom] = useState('');
   const [calTo, setCalTo] = useState('');
   const [editField, setEditField] = useState(null);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting]     = useState(false);
+  const [pushTarget, setPushTarget]   = useState(null); // { leadId, bottom, left }
+  const [pushedIds, setPushedIds]     = useState(new Set());
   const debounceRef = useRef(null);
   const calRef = useRef(null);
 
@@ -651,6 +767,8 @@ export default function FilteredPage() {
                         expanded={lead.id === expandedId}
                         rawPayload={detailCache[lead.id]}
                         onToggle={() => handleToggleExpand(lead.id)}
+                        pushed={pushedIds.has(lead.id)}
+                        onPushClick={(leadId, rect) => setPushTarget({ leadId, bottom: rect.bottom, left: rect.left })}
                       />
                     ))}
                   </tbody>
@@ -674,6 +792,21 @@ export default function FilteredPage() {
           </div>
         )}
       </div>
+
+      {pushTarget && (
+        <PushDropdown
+          leadId={pushTarget.leadId}
+          coords={{ bottom: pushTarget.bottom, left: pushTarget.left }}
+          onPushed={() => {
+            setPushedIds(prev => new Set([...prev, pushTarget.leadId]));
+            setLeads(prev => prev.map(l =>
+              l.id === pushTarget.leadId ? { ...l, pushed_to_smart_lead: true } : l
+            ));
+            setPushTarget(null);
+          }}
+          onClose={() => setPushTarget(null)}
+        />
+      )}
     </>
   );
 }
