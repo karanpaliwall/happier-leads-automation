@@ -34,24 +34,23 @@ async function fetchOneCampaign(id, apiKey) {
 
   const raw = analyticsRes.value ?? {};
   const a   = raw?.data ?? raw ?? {};
+  const cls = a.campaign_lead_stats ?? {};
 
   return {
     id:          String(info.id),
     name:        info.name       ?? `Campaign ${id}`,
     status:      (info.status    ?? 'UNKNOWN').toUpperCase(),
     created:     info.created_at ?? null,
-    // Try every known SmartLead field variant; || skips 0 so fallbacks are tried
-    totalLeads:  a.total_lead_count || a.total_leads   || a.contact_count
-                   || info.total_lead_count || info.total_leads || 0,
-    completed:   a.completed_count   || a.completed   || 0,
-    inProgress:  a.in_progress_count || a.in_progress || 0,
-    yetToStart:  a.not_contacted_count || a.yet_to_start_count || a.not_contacted || 0,
-    blocked:     a.blocked_count     || a.blocked     || 0,
-    sendPending: a.send_pending_count || a.email_send_pending_count || 0,
-    opens:       a.open_count        || a.unique_open_count || 0,
-    replies:     a.reply_count       || 0,
-    bounces:     a.bounce_count      || 0,
-    clicks:      a.click_count       || 0,
+    totalLeads:  cls.total      || a.total_count      || 0,
+    completed:   cls.completed  || 0,
+    inProgress:  cls.inprogress || 0,
+    yetToStart:  cls.notStarted || 0,
+    blocked:     cls.blocked    || 0,
+    sendPending: cls.notStarted || 0,
+    opens:       a.open_count   || a.unique_open_count || 0,
+    replies:     a.reply_count  || 0,
+    bounces:     a.bounce_count || 0,
+    clicks:      a.click_count  || 0,
   };
 }
 
