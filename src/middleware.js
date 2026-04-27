@@ -12,5 +12,8 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/((?!_next|favicon\\.png|api/webhook|api/auth|login).*)'],
+  // Exclude all /api/* — those routes have their own requireAuth() which returns 401 JSON
+  // and also support Authorization: Bearer for programmatic access.
+  // Middleware only redirects browser page navigation to /login.
+  matcher: ['/((?!_next|favicon\\.png|api|login).*)'],
 };

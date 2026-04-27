@@ -80,11 +80,13 @@ function BarChart({ campaigns, visible }) {
               {label}
             </text>
             <rect
-              x={NAME_W + PAD_L} y={y + (ROW_H - BAR_H) / 2} height={BAR_H} rx={3}
+              x={NAME_W + PAD_L} y={y + (ROW_H - BAR_H) / 2} width={barW} height={BAR_H} rx={3}
               fill="rgba(59,130,246,0.75)"
               style={{
-                width: animate ? barW : 0,
-                transition: `width 0.55s cubic-bezier(0.4,0,0.2,1) ${i * 0.06}s`,
+                transformBox: 'fill-box',
+                transformOrigin: 'left center',
+                transform: animate ? 'scaleX(1)' : 'scaleX(0)',
+                transition: `transform 0.55s cubic-bezier(0.4,0,0.2,1) ${i * 0.06}s`,
               }}
             />
           </g>

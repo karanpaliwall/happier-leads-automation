@@ -2,6 +2,9 @@ import sql, { withRetry } from '@/lib/db';
 
 export async function POST(req) {
   const secret = process.env.WEBHOOK_SECRET;
+  if (!secret) {
+    console.warn('[webhook] WEBHOOK_SECRET is not set — endpoint is open to unauthenticated requests');
+  }
   if (secret) {
     const provided = req.headers.get('x-hl-secret') || req.headers.get('authorization');
     if (provided !== secret) {

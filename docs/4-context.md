@@ -5,6 +5,30 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — BarChart animation unit bug fixed
+
+- What changed: `BarChart` in `campaigns/page.jsx` was animating `style.width` with a numeric value. React converts numeric style values to `px`, but `barW` is in SVG user units. In a scaled SVG (`viewBox="0 0 530 N"` rendered at any other width) the bars would render at the wrong size. Fixed by keeping `width={barW}` as the SVG attribute and animating via `transform: scaleX(0→1)` with `transformBox: fill-box` and `transformOrigin: left center` — no unit mismatch, scales from the bar's own left edge.
+- Why: SVG geometry attributes and CSS length units are in different coordinate spaces when the SVG has a viewBox.
+- Files affected: `src/app/campaigns/page.jsx`
+
+---
+
+## 2026-04-27 — Full system audit: 4 bugs fixed
+
+- What changed:
+  - **Campaigns page date filter now works** — `calFrom`/`calTo` were stored in state and shown in the filter bar (triggering the "Clear" button) but were never applied to the campaign list. Now filters campaigns by their `created` date client-side.
+  - **Push route UUID cast** — `WHERE id = ${id}` in `POST /api/leads/[id]/push` was missing `::uuid` cast. A non-UUID `id` path param now gets a proper DB error rather than a confusing 500. Consistent with the GET handler in the same directory.
+  - **Middleware now excludes all `/api/*` routes** — previously the matcher covered `/api/leads`, `/api/smartlead/*`, etc. This silently broke the `Authorization: Bearer` support in `auth.js` — programmatic requests with a Bearer token (no cookie) were redirected to `/login` HTML before the handler ran. API routes all have their own `requireAuth()` returning 401 JSON; they don't need middleware protection.
+  - **Webhook open-secret warning** — added `console.warn` when `WEBHOOK_SECRET` env var is not set so the oversight surfaces in Vercel function logs.
+- Why: Audit discovered dead UI code, an inconsistency in UUID handling, a middleware/auth mismatch, and a silent security gap.
+- Files affected:
+  - `src/app/campaigns/page.jsx`
+  - `src/app/api/leads/[id]/push/route.js`
+  - `src/middleware.js`
+  - `src/app/api/webhook/happierleads/route.js`
+
+---
+
 ## 2026-04-27 — Campaigns page: restore Add Campaign + ID-only tracking, real-time data, UI cleanup
 
 - What changed:

@@ -21,7 +21,7 @@ export async function POST(request, { params }) {
   // Fetch lead from DB
   const rows = await withRetry(() => sql`
     SELECT id, first_name, last_name, full_name, email, company_name, company_domain, linkedin_url
-    FROM leads WHERE id = ${id}
+    FROM leads WHERE id = ${id}::uuid
   `);
   if (!rows.length) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
 
