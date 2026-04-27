@@ -587,7 +587,7 @@ export default function CampaignsPage() {
         ) : (
           <div className="card" style={{ padding: 0 }}>
             <div className="table-wrap">
-              <table>
+              <table style={{ minWidth: COLS.reduce((s, c) => s + c.w, 0) }}>
                 <thead>
                   <tr>
                     {COLS.map(col => {
