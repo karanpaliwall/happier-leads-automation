@@ -46,8 +46,8 @@ function arcPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 
 // ── Charts ───────────────────────────────────────────────────────────────────
 function BarChart({ campaigns }) {
-  if (!campaigns.length) {
-    return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No data</p>;
+  if (!campaigns.length || !campaigns.some(c => c.totalLeads > 0)) {
+    return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No lead data available yet</p>;
   }
   const top = [...campaigns].sort((a, b) => (b.totalLeads || 0) - (a.totalLeads || 0)).slice(0, 10);
   const maxVal = Math.max(...top.map(c => c.totalLeads || 0), 1);
@@ -309,7 +309,7 @@ export default function CampaignsPage() {
             <span className="campaigns-count-badge">{stats.total}</span>
           </div>
         </div>
-        <p className="page-subtitle">SmartLead campaign analytics · add campaign IDs to track live data</p>
+        <p className="page-subtitle">SmartLead campaign analytics · live data from your account</p>
       </div>
 
       <div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -371,23 +371,13 @@ export default function CampaignsPage() {
               </svg>
               Export CSV
             </button>
-            <button className="force-sync-btn" onClick={() => fetchCampaigns(true)}
-              disabled={loading} title="Force re-sync from SmartLead">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            <button className="btn-primary" onClick={() => fetchCampaigns(true)} disabled={loading}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 style={loading ? { animation: 'spin 1s linear infinite' } : {}}>
-                <path d="M21.5 2v6h-6" />
-                <path d="M2.5 12a10 10 0 0 1 10-10 10 10 0 0 1 7.07 2.93L21.5 8" />
-                <path d="M2.5 22v-6h6" />
-                <path d="M21.5 12a10 10 0 0 1-10 10 10 10 0 0 1-7.07-2.93L2.5 16" />
-              </svg>
-              Force Sync
-            </button>
-            <button className="btn-primary" onClick={() => fetchCampaigns()} disabled={loading}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
-              Refresh
+              Sync
             </button>
           </div>
         </div>
