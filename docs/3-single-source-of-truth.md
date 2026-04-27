@@ -190,14 +190,80 @@ When `since` is provided, `granularity` is `"hour"` and `date` is a full ISO tim
 
 ---
 
+### GET /api/smartlead/campaigns
+Returns normalized campaign data for a list of SmartLead campaign IDs. **Auth required.**
+
+**Query params:**
+- `ids` — comma-separated SmartLead campaign IDs (max 20), e.g. `?ids=123,456,789`
+
+Fetches `GET /campaigns/{id}` and `GET /campaigns/{id}/analytics` in parallel per ID using `Promise.allSettled` (single failure doesn't block others).
+
+**Response:**
+```json
+{
+  "campaigns": [
+    {
+      "id": "123",
+      "name": "My Campaign",
+      "status": "ACTIVE",
+      "created": "2024-01-01T00:00:00.000Z",
+      "totalLeads": 500,
+      "completed": 200,
+      "inProgress": 250,
+      "yetToStart": 50,
+      "blocked": 5,
+      "sendPending": 10,
+      "opens": 100,
+      "replies": 30,
+      "bounces": 5,
+      "clicks": 20
+    }
+  ],
+  "fetchedAt": "2026-04-27T10:00:00.000Z"
+}
+```
+
+---
+
+### POST /api/leads/[id]/push
+Pushes a single lead to a SmartLead campaign and marks it as pushed in the DB. **Auth required.**
+
+**Request:**
+```json
+{ "campaignId": "12345" }
+```
+
+**What it does:**
+1. Fetches lead from DB (name, email, company, LinkedIn)
+2. Calls `POST https://server.smartlead.ai/api/v1/campaigns/{campaignId}/leads` with the lead's contact data
+3. Updates the lead row: `pushed_to_smart_lead = true`, `pushed_at = now()`
+
+**Response:**
+```json
+{ "ok": true }
+```
+
+**Error responses:** `400` (missing campaignId), `404` (lead not found), `500` (API key missing), `502` (SmartLead rejected the request).
+
+---
+
+## SmartLead Campaign Persistence
+
+Campaign IDs added on the Campaigns page are stored in **browser `localStorage`** under the key `sl-campaign-ids` (JSON array of strings, max 20). This is per-browser — not synced to the DB. The same list powers:
+- The Campaigns page analytics table
+- The "Push to Smart Lead" campaign picker on the Leads page
+
+---
+
 ## Environment Variables
 
-| Variable          | Default / fallback      | Purpose                                                         |
-|-------------------|-------------------------|-----------------------------------------------------------------|
-| `DATABASE_URL`    | *(required)*            | Neon PostgreSQL connection string (`src/lib/db.js`)             |
-| `LOGIN_PASSWORD`  | `'Growleads@admin'`     | Password for the `/login` page gate                             |
-| `SESSION_TOKEN`   | `'gl-auth-v1'`          | Value stored in and checked against the `gl_session` cookie     |
-| `WEBHOOK_SECRET`  | *(optional)*            | If set, webhook requires matching `x-hl-secret` header         |
+| Variable             | Default / fallback      | Purpose                                                                  |
+|----------------------|-------------------------|--------------------------------------------------------------------------|
+| `DATABASE_URL`       | *(required)*            | Neon PostgreSQL connection string (`src/lib/db.js`)                      |
+| `LOGIN_PASSWORD`     | `'Growleads@admin'`     | Password for the `/login` page gate                                      |
+| `SESSION_TOKEN`      | `'gl-auth-v1'`          | Value stored in and checked against the `gl_session` cookie              |
+| `WEBHOOK_SECRET`     | *(optional)*            | If set, webhook requires matching `x-hl-secret` header                  |
+| `SMARTLEAD_API_KEY`  | *(required for SL)*     | SmartLead API key — used by `/api/smartlead/campaigns` and `/api/leads/[id]/push` |
 
 Set all in `.env.local` for local dev, and in Vercel environment settings for production. The fallback values keep the app working with zero config; set the env vars in production to harden.
 

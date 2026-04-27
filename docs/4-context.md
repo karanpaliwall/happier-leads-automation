@@ -5,6 +5,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Push to Smart Lead button made live — campaign picker + push API
+
+- What changed:
+  - **`POST /api/leads/[id]/push`** — new API route. Accepts `{ campaignId }`, fetches the lead from DB, POSTs to SmartLead `POST /campaigns/{id}/leads`, then sets `pushed_to_smart_lead = true` and `pushed_at = now()` in DB. Auth-protected.
+  - **Push button on Leads page** is now active (was permanently disabled). Clicking it opens a fixed-position **campaign picker popup** that loads campaign names from `/api/smartlead/campaigns` using the IDs stored in `localStorage` (`sl-campaign-ids`).
+  - Selecting a campaign in the popup triggers the push immediately — no separate confirm step.
+  - On success the button switches to green **"Pushed ✓"** state for the rest of the session; DB is updated server-side.
+  - If no campaigns have been added yet, the popup shows "No campaigns added yet" with a link to the Campaigns page.
+- Why: The Add Campaign feature (same session) stores campaign IDs in localStorage — this feature uses those same IDs to populate the picker, completing the push-to-campaign flow end-to-end.
+- Files affected:
+  - `src/app/api/leads/[id]/push/route.js` (new)
+  - `src/app/filtered/page.jsx` (PushDropdown component, push state wiring)
+  - `src/styles/custom.css` (push-btn-live, push-btn-done, push-dropdown styles)
+
+---
+
 ## 2026-04-27 — SmartLead Campaigns page: Add Campaign, live analytics, charts
 
 - What changed:
