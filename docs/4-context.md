@@ -5,6 +5,21 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Full responsive system audit + fixes
+
+- What changed:
+  - **Campaigns pills row (tablet/mobile)** — added `overflow-x: auto; flex-wrap: nowrap` at ≤1100px so the entire status pills + stat row scrolls horizontally as a single row instead of wrapping into a multi-line block. Scrollbar hidden (`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`).
+  - **Campaign dialog (tiny screens)** — added `max-width: calc(100vw - 40px)` at ≤480px so the dialog never overflows a 320px viewport.
+  - **Push dropdown (mobile)** — changed from `min-width: 220px; max-width: 320px` to `min-width: 160px; max-width: calc(100vw - 32px)` at ≤640px. Prevents overflow on narrow screens.
+  - **Overview chart filter popover (mobile)** — added `left: 0; right: auto` at ≤640px to prevent right-edge overflow when button is near left side.
+  - **Calendar popover (mobile)** — added `max-width: calc(100vw - 32px)` at ≤640px to prevent overflow on 320px screens.
+  - **Calendar nav touch targets** — added `min-width: 36px; min-height: 36px` to `.cal-nav-btn` at ≤640px for easier tapping.
+  - **Duplicate CSS removed** — `.campaigns-search-field` rule was duplicated; removed the duplicate.
+- Why: Full responsive system audit requested across all pages, all breakpoints (desktop/tablet/mobile). All identified high/medium severity issues resolved.
+- Files affected: `src/styles/custom.css`
+
+---
+
 ## 2026-04-28 — Full campaigns audit + fixes
 
 - What changed:

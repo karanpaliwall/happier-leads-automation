@@ -1359,8 +1359,9 @@ body { overflow-x: hidden; }
   /* Recent leads list person cell on overview */
   .recent-lead-row .person-cell { min-width: 0; flex: 1; }
 
-  /* Larger touch targets for pagination */
+  /* Larger touch targets for pagination and calendar nav */
   .page-btn { min-width: 44px; height: 44px; font-size: 14px; }
+  .cal-nav-btn { min-width: 36px; min-height: 36px; justify-content: center; }
 
   /* Chart filter: open popover and calendar above the button so they don't
      push content down and require scrolling on small screens */
@@ -1369,6 +1370,10 @@ body { overflow-x: hidden; }
     top: auto;
     bottom: calc(100% + 6px);
   }
+  /* Chart filter popover: anchor left on mobile to prevent right-edge overflow */
+  .overview-chart-card .chart-filter-popover { left: 0; right: auto; }
+  /* Calendar popovers: prevent overflow beyond viewport on narrow screens */
+  .cal-popover { max-width: calc(100vw - 32px); }
 }
 
 @media (max-width: 480px) {
@@ -1380,6 +1385,8 @@ body { overflow-x: hidden; }
   .overview-status-card, .overview-recent-card { padding: 16px 14px; }
   .page-header-top { flex-wrap: wrap; gap: 4px; }
   .tabs-pill { flex-wrap: wrap; }
+  /* Dialog: explicit max-width so it never overflows on 320px screens */
+  .campaign-dialog-card { max-width: calc(100vw - 40px); }
   /* Person name truncates on tiny screens */
   .person-cell > div > div:first-child {
     max-width: 130px;
@@ -1604,7 +1611,6 @@ body { overflow-x: hidden; }
   flex-wrap: wrap;
 }
 .campaigns-search-field { flex: 0 1 240px; min-width: 130px; }
-.campaigns-search-field { flex: 0 1 240px; min-width: 130px; }
 
 /* ── Status filter dropdown ── */
 .status-dropdown-wrap { position: relative; }
@@ -1782,6 +1788,8 @@ body { overflow-x: hidden; }
   .campaigns-pills-row { flex-direction: column; gap: 6px; }
   .campaigns-pills-row .tabs-pill { width: 100%; }
   .metric-pill { white-space: normal; }
+  /* Push dropdown: prevent overflow on small screens */
+  .push-dropdown { min-width: 160px; max-width: calc(100vw - 32px); }
 }
 
 /* ── Admin sidebar button ── */
@@ -2252,6 +2260,17 @@ body { overflow-x: hidden; }
 }
 @media (max-width: 900px) {
   .campaigns-charts-grid { grid-template-columns: 1fr; }
+}
+
+/* Campaigns pills: single scrollable row on tablet so filters+stats never wrap */
+@media (max-width: 1100px) {
+  .campaigns-pills-row .tabs-pill {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .campaigns-pills-row .tabs-pill::-webkit-scrollbar { display: none; }
 }
 
 /* ── Hover remove button on campaign rows ── */
