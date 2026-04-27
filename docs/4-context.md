@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Campaign IDs: move from localStorage to server DB
+
+- What changed:
+  - **New API route** `GET/POST/DELETE /api/campaigns/ids` — stores tracked campaign IDs in a `campaign_ids` Neon table (created automatically on first request via `CREATE TABLE IF NOT EXISTS`).
+  - **Campaigns page** now loads IDs from the server API on mount instead of `localStorage`. Add/remove operations call the API instead of writing to localStorage.
+  - **One-time migration**: on first load, if the server has no IDs but `localStorage` has some (from a previous desktop session), those IDs are automatically pushed to the server and localStorage is cleared.
+- Why: `localStorage` is per-browser and not synced across devices. Campaign IDs added on desktop were invisible on mobile, showing the empty state.
+- Files affected: `src/app/api/campaigns/ids/route.js` (new), `src/app/campaigns/page.jsx`
+- DB schema addition: `CREATE TABLE IF NOT EXISTS campaign_ids (id TEXT PRIMARY KEY, added_at TIMESTAMPTZ DEFAULT now())`
+
+---
+
 ## 2026-04-27 — Full responsive system audit + fixes
 
 - What changed:

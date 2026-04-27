@@ -39,9 +39,15 @@ CREATE INDEX leads_company_idx     ON leads(company_name);
 CREATE INDEX leads_type_idx        ON leads(lead_type);
 CREATE INDEX leads_email_idx       ON leads(email)        WHERE email IS NOT NULL;
 CREATE INDEX leads_linkedin_idx    ON leads(linkedin_url) WHERE linkedin_url IS NOT NULL;
+
+-- Campaign IDs tracked on the Campaigns page (auto-created on first API request)
+CREATE TABLE IF NOT EXISTS campaign_ids (
+  id       TEXT        PRIMARY KEY,
+  added_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-**Status:** Schema is live in Neon production (created 2026-04-22). This SQL is for reference only.
+**Status:** `leads` schema is live in Neon production (created 2026-04-22). `campaign_ids` is auto-created on first request to `GET /api/campaigns/ids`.
 
 ---
 

@@ -379,12 +379,37 @@ export default function CampaignsPage() {
   const debRef      = useRef(null);
   const dialogInRef = useRef(null);
 
-  // ── Load IDs from localStorage on mount ───────────────────────────────────
+  // ── Load IDs from server; migrate any localStorage data on first run ──────
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
-      setCampaignIds(Array.isArray(stored) ? stored : []);
-    } catch {}
+    async function loadIds() {
+      try {
+        const res = await fetch('/api/campaigns/ids');
+        if (!res.ok) return;
+        const data = await res.json();
+        let ids = Array.isArray(data.ids) ? data.ids : [];
+
+        // One-time migration: push localStorage IDs to server if server is empty
+        if (ids.length === 0) {
+          try {
+            const local = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
+            if (Array.isArray(local) && local.length > 0) {
+              for (const id of local.slice(0, 20)) {
+                await fetch('/api/campaigns/ids', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id }),
+                });
+              }
+              ids = local.slice(0, 20);
+              localStorage.removeItem('sl-campaign-ids');
+            }
+          } catch {}
+        }
+
+        setCampaignIds(ids);
+      } catch {}
+    }
+    loadIds();
   }, []);
 
   // ── Fetch specific campaigns whenever IDs change ───────────────────────────
@@ -429,25 +454,39 @@ export default function CampaignsPage() {
   function openDialog()  { setDialogInput(''); setDialogErr(''); setShowDialog(true); }
   function closeDialog() { setShowDialog(false); setDialogInput(''); setDialogErr(''); }
 
-  function handleConfirmAdd() {
+  async function handleConfirmAdd() {
     const id = dialogInput.trim();
     if (!id)                      { setDialogErr('Please enter a Campaign ID.'); return; }
     if (!/^\d+$/.test(id))        { setDialogErr('Campaign ID must be a number.'); return; }
     if (campaignIds.includes(id)) { setDialogErr('This campaign is already added.'); return; }
     if (campaignIds.length >= 20) { setDialogErr('Maximum 20 campaigns allowed.'); return; }
-    const newIds = [...campaignIds, id];
-    localStorage.setItem('sl-campaign-ids', JSON.stringify(newIds));
-    setCampaignIds(newIds);
-    closeDialog();
+    try {
+      const res = await fetch('/api/campaigns/ids', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setDialogErr(data.error || 'Failed to add campaign.'); return; }
+      setCampaignIds(prev => [...prev, id]);
+      closeDialog();
+    } catch {
+      setDialogErr('Network error. Please try again.');
+    }
   }
 
-  function removeCampaign(id) {
+  async function removeCampaign(id) {
     const strId = String(id);
-    const newIds = campaignIds.filter(x => x !== strId);
-    localStorage.setItem('sl-campaign-ids', JSON.stringify(newIds));
-    setCampaignIds(newIds);
+    setCampaignIds(prev => prev.filter(x => x !== strId));
     setCampaigns(prev => prev.filter(c => String(c.id) !== strId));
     setHoverRow(null);
+    try {
+      await fetch('/api/campaigns/ids', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: strId }),
+      });
+    } catch {}
   }
 
   function handleSearch(e) {
