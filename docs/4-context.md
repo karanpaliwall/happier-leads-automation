@@ -5,6 +5,17 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Bar chart rewritten as CSS divs; donut card vertically centred
+
+- What changed:
+  - **BarChart rewritten with CSS flex divs** — replaced the SVG-based bar chart entirely. SVG scaled proportionally with container width (1.8× on wide viewports), making bars appear huge with few campaigns. CSS divs have a fixed **36px row height** regardless of container width, matching the reference exactly. Vertical gridlines are absolutely-positioned divs using `calc(${LABEL_W}px + ${f} * (100% - ${LABEL_W}px))`. Tick labels absolutely positioned at exact percentages. scaleX animation preserved.
+  - **Donut card vertically centres its content** — card is now `display: flex; flex-direction: column`; the DonutChart is wrapped in a `flex: 1` div with `align-items: center` so the donut sits centred when the card stretches to match the bar chart height.
+  - **Grid cards equalised** — removed `align-items: start` from `.campaigns-charts-grid` so both cards stretch to the same height (default grid behaviour).
+- Why: Single-campaign view showed an oversized bar because SVG aspect ratio (530:~52) rendered at 1.8× scale in a wide container. CSS divs with fixed pixel heights eliminate the scaling problem entirely.
+- Files affected: `src/app/campaigns/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-28 — Campaigns table: column pin on hover + Opens/Replies percentages + Created column fix
 
 - What changed:
