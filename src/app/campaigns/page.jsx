@@ -122,12 +122,12 @@ function BarChart({ campaigns, visible }) {
               }} />
             </div>
 
-            {/* Tooltip */}
+            {/* Tooltip — positioned below the row so it stays within overflow:hidden bounds */}
             {hovered && (
               <div style={{
                 position: 'absolute',
-                left: `calc(${LABEL_W}px + ${pct / 100} * (100% - ${LABEL_W}px))`,
-                bottom: 'calc(100% + 6px)',
+                left: `calc(${LABEL_W}px + ${Math.min(pct, 85) / 100} * (100% - ${LABEL_W}px))`,
+                top: 'calc(100% + 4px)',
                 transform: 'translateX(-50%)',
                 background: '#1a2035',
                 border: '1px solid rgba(255,255,255,0.12)',
@@ -212,7 +212,7 @@ function DonutChart({ campaigns, visible }) {
           transform: animate ? 'scale(1)' : 'scale(0.8)',
           transition: 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
           transformOrigin: 'center',
-          cursor: 'default',
+          overflow: 'visible',
         }}>
         {arcs.map((arc, i) => (
           <path key={arc.label} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color}
