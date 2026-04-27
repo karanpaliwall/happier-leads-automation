@@ -396,50 +396,6 @@ export default function CampaignsPage() {
           </div>
         </div>
 
-        {/* Stats bar */}
-        <div className="campaigns-stats-bar">
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Total</span>
-            <span className="campaigns-stat-value stat-val-default">{stats.total}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Active</span>
-            <span className="campaigns-stat-value stat-val-green">{stats.active}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Paused</span>
-            <span className="campaigns-stat-value stat-val-yellow">{stats.paused}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Finished</span>
-            <span className="campaigns-stat-value stat-val-blue">{stats.finished}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Total Leads</span>
-            <span className="campaigns-stat-value stat-val-default">{stats.totalLeads.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">In Progress</span>
-            <span className="campaigns-stat-value stat-val-blue">{stats.inProgress.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Leads Finished</span>
-            <span className="campaigns-stat-value stat-val-green">{stats.leadsFinished.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item">
-            <span className="campaigns-stat-label">Leads Failed</span>
-            <span className="campaigns-stat-value stat-val-red">{stats.leadsFailed.toLocaleString()}</span>
-          </div>
-          <div className="campaigns-stat-item" style={{ borderRight: 'none' }}>
-            <span className="campaigns-stat-label">Last Synced</span>
-            <span className="campaigns-stat-value stat-val-muted">
-              {lastSynced
-                ? lastSynced.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })
-                : '—'}
-            </span>
-          </div>
-        </div>
-
         {/* Pills row */}
         <div className="campaigns-pills-row">
           <div className="tabs-pill">
