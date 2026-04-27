@@ -35,24 +35,26 @@ async function fetchOneCampaign(id, apiKey) {
   const raw = analyticsRes.value ?? {};
   const a   = raw?.data ?? raw ?? {};
   const cls = a.campaign_lead_stats ?? {};
-  console.log(`[SL audit] campaign ${id} raw analytics:`, JSON.stringify({ a_keys: Object.keys(a), cls_keys: Object.keys(cls), cls, a_counts: { open_count: a.open_count, reply_count: a.reply_count, bounce_count: a.bounce_count, click_count: a.click_count, total_count: a.total_count, unique_sent_count: a.unique_sent_count, pending_count: a.pending_count, sent_count: a.sent_count } }));
+
+  const totalCount = Number(a.total_count)        || 0;
+  const sentCount  = Number(a.sent_count)         || Number(a.unique_sent_count) || 0;
 
   return {
     id:          String(info.id),
     name:        info.name       ?? `Campaign ${id}`,
     status:      (info.status    ?? 'UNKNOWN').toUpperCase(),
     created:     info.created_at ?? null,
-    totalLeads:  cls.total      || 0,
-    emailsSent:  a.total_count  || a.unique_sent_count || 0,
+    totalLeads:  totalCount,
+    emailsSent:  sentCount,
     completed:   cls.completed  || 0,
     inProgress:  cls.inprogress || 0,
     yetToStart:  cls.notStarted || 0,
     blocked:     cls.blocked    || 0,
-    sendPending: cls.notStarted || 0,
-    opens:       a.open_count   || a.unique_open_count || 0,
-    replies:     a.reply_count  || 0,
-    bounces:     a.bounce_count || 0,
-    clicks:      a.click_count  || 0,
+    sendPending: Math.max(0, totalCount - sentCount),
+    opens:       Number(a.open_count)   || Number(a.unique_open_count) || 0,
+    replies:     Number(a.reply_count)  || 0,
+    bounces:     Number(a.bounce_count) || 0,
+    clicks:      Number(a.click_count)  || 0,
   };
 }
 

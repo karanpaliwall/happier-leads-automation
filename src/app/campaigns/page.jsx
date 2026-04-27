@@ -722,7 +722,7 @@ export default function CampaignsPage() {
                     </tr>
                   ) : (
                     filtered.map(c => {
-                      const pct = v => c.totalLeads > 0 ? Math.round((v || 0) / c.totalLeads * 100) : 0;
+                      const pct = v => c.emailsSent > 0 ? Math.round((v || 0) / c.emailsSent * 100) : 0;
                       return (
                         <tr key={c.id} className="lead-row campaign-data-row"
                           onMouseEnter={() => setHoverRow(c.id)}
