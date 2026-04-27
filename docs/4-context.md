@@ -5,6 +5,29 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — SmartLead Campaigns page: Add Campaign, live analytics, charts
+
+- What changed:
+  - **Add Campaign button** in campaigns page header — opens a dialog where the user enters a SmartLead campaign ID (number). IDs are persisted in `localStorage` under `sl-campaign-ids` (max 20).
+  - **`GET /api/smartlead/campaigns?ids=…`** — new API route. Accepts comma-separated campaign IDs, fetches campaign info + analytics from SmartLead API in parallel using `Promise.allSettled`, returns normalized data. Auth-protected. Requires `SMARTLEAD_API_KEY` env var.
+  - **Campaign table** updated with columns: Campaign Name, Status, Total, Completed, In Progress, Yet to Start, Blocked, Send Pending, Opens, Replies, Bounces, Clicks, Created.
+  - **Remove campaign** — hover over a row to see the ✕ remove button; right-click shows a context menu with "Remove Campaign". Removing updates localStorage and removes the row instantly.
+  - **Stats bar** — Total, Active, Paused, Finished, Total Leads, In Progress, Leads Finished, Leads Failed, Last Synced (matches the reference UI).
+  - **Show/Hide Charts** toggle with smooth CSS grid animation (`grid-template-rows: 0fr → 1fr`).
+  - **Bar chart** (SVG, pure, no library) — Top 10 campaigns by Total Leads.
+  - **Donut chart** (SVG, pure, no library) — Status Breakdown with count + percentage legend.
+  - **Force Sync** (orange) and **Refresh** (blue) buttons replace the old disabled Sync Live button.
+  - **Add Campaign dialog** — smooth `dialog-in` keyframe animation, validates numeric ID, duplicate detection, max-20 guard.
+- Why: Phase 2 SmartLead integration — user wanted to track campaign analytics from their existing SmartLead account.
+- Files affected:
+  - `src/app/campaigns/page.jsx` (full rewrite)
+  - `src/app/api/smartlead/campaigns/route.js` (new)
+  - `src/styles/custom.css` (appended new component styles)
+  - `.env.local` (added `SMARTLEAD_API_KEY=` placeholder)
+- Config required: Set `SMARTLEAD_API_KEY` in Vercel environment variables (Project Settings → Environment Variables).
+
+---
+
 ## 2026-04-27 — Full system audit + loophole fixes (7-agent /ce-review)
 
 - What changed: Full security, performance, architecture, simplicity, and pattern audit completed (7 agents). All exploitable loopholes fixed:
