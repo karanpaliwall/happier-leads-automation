@@ -5,6 +5,17 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Campaigns table: column pin on hover + Opens/Replies percentages + Created column fix
+
+- What changed:
+  - **Column pin** — hovering any column header shows a pushpin icon. Clicking pins that column sticky (stays visible while scrolling horizontally). Pinned columns show the icon in blue permanently. Implemented via `pinnedCols` Set state, a `stickyStyle(key)` helper that computes `left` offsets by summing widths of preceding pinned columns, and a `COLS` array defining each column's key/label/align/width.
+  - **Opens/Replies percentages** — both columns now show `N (X%)` where X = `Math.round(value / totalLeads * 100)`, matching the reference UI.
+  - **Created column no longer clipped** — `table { width: 100% }` in reference.css was forcing the table into the container width, squeezing the last column instead of triggering horizontal scroll. Fixed by adding `minWidth: COLS.reduce((s,c) => s+c.w, 0)` (1405px) to the `<table>` element.
+- Why: User requested pin icon, percentage display on opens/replies, and the Created column was being cut off at the card edge.
+- Files affected: `src/app/campaigns/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-28 — Campaigns charts: match reference UI + fix donut layout overflow
 
 - What changed:
