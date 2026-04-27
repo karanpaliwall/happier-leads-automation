@@ -55,7 +55,8 @@ function arcPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 const LABEL_W = 140; // px — fixed label column, bars fill the rest
 
 function BarChart({ campaigns, visible }) {
-  const [animate, setAnimate] = useState(false);
+  const [animate,    setAnimate]    = useState(false);
+  const [hoveredBar, setHoveredBar] = useState(null);
 
   useEffect(() => {
     if (!visible) { setAnimate(false); return; }
@@ -88,14 +89,20 @@ function BarChart({ campaigns, visible }) {
 
       {/* Bar rows — fixed 36px each, never scale with container width */}
       {top.map((c, i) => {
-        const pct = Math.max((c.emailsSent / maxVal) * 100, 0.3);
-        const label = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
+        const pct     = Math.max((c.emailsSent / maxVal) * 100, 0.3);
+        const label   = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
+        const hovered = hoveredBar === c.id;
         return (
-          <div key={c.id} style={{
-            display: 'flex', alignItems: 'center', height: 36,
-            opacity: animate ? 1 : 0,
-            transition: `opacity 0.28s ease ${i * 0.05}s`,
-          }}>
+          <div key={c.id}
+            style={{
+              display: 'flex', alignItems: 'center', height: 36,
+              position: 'relative', zIndex: hovered ? 10 : 1,
+              opacity: animate ? 1 : 0,
+              transition: `opacity 0.28s ease ${i * 0.05}s`,
+            }}
+            onMouseEnter={() => setHoveredBar(c.id)}
+            onMouseLeave={() => setHoveredBar(null)}
+          >
             <div style={{
               width: LABEL_W, flexShrink: 0, paddingRight: 8,
               fontSize: 11, color: 'rgba(255,255,255,0.65)',
@@ -107,13 +114,34 @@ function BarChart({ campaigns, visible }) {
               <div style={{
                 position: 'absolute', left: 0, top: 0, bottom: 0,
                 width: `${pct}%`,
-                background: '#4A7BF7',
+                background: hovered ? '#6B95FF' : '#4A7BF7',
                 borderRadius: 3,
                 transformOrigin: 'left center',
                 transform: animate ? 'scaleX(1)' : 'scaleX(0)',
-                transition: `transform 0.5s cubic-bezier(0.4,0,0.2,1) ${i * 0.05}s`,
+                transition: `transform 0.5s cubic-bezier(0.4,0,0.2,1) ${i * 0.05}s, background 0.15s ease`,
               }} />
             </div>
+
+            {/* Tooltip */}
+            {hovered && (
+              <div style={{
+                position: 'absolute',
+                left: `calc(${LABEL_W}px + ${pct / 100} * (100% - ${LABEL_W}px))`,
+                bottom: 'calc(100% + 6px)',
+                transform: 'translateX(-50%)',
+                background: '#1a2035',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 6,
+                padding: '5px 10px',
+                pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                zIndex: 20,
+              }}>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>{c.name}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{(c.emailsSent || 0).toLocaleString()}</div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -147,7 +175,8 @@ const DONUT_SEGS = [
 ];
 
 function DonutChart({ campaigns, visible }) {
-  const [animate, setAnimate] = useState(false);
+  const [animate,    setAnimate]    = useState(false);
+  const [hoveredSeg, setHoveredSeg] = useState(null);
 
   useEffect(() => {
     if (!visible) { setAnimate(false); return; }
@@ -172,6 +201,8 @@ function DonutChart({ campaigns, visible }) {
     return { ...seg, start, end: start + sweep };
   });
 
+  const hs = hoveredSeg;
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'nowrap' }}>
       <svg viewBox="0 0 180 180" width={120} height={120}
@@ -181,21 +212,42 @@ function DonutChart({ campaigns, visible }) {
           transform: animate ? 'scale(1)' : 'scale(0.8)',
           transition: 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
           transformOrigin: 'center',
+          cursor: 'default',
         }}>
         {arcs.map((arc, i) => (
           <path key={arc.label} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color}
             style={{
-              opacity: animate ? 1 : 0,
+              opacity: animate ? (hs && hs.label !== arc.label ? 0.45 : 1) : 0,
               transform: animate ? 'scale(1)' : 'scale(0.6)',
               transformOrigin: '50% 50%',
-              transition: `opacity 0.35s ease ${i * 0.07}s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.07}s`,
+              transition: `opacity 0.18s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.07}s`,
+              cursor: 'pointer',
             }}
+            onMouseEnter={() => setHoveredSeg(arc)}
+            onMouseLeave={() => setHoveredSeg(null)}
           />
         ))}
-        <text x={CX} y={CY - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#e2e4f0"
-          style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.3s' }}>{total}</text>
-        <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
-          style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
+
+        {hs ? (
+          <>
+            <text x={CX} y={CY - 8} textAnchor="middle" fontSize={13} fontWeight={700} fill={hs.color}>
+              {hs.label}
+            </text>
+            <text x={CX} y={CY + 8} textAnchor="middle" fontSize={16} fontWeight={700} fill="#e2e4f0">
+              {hs.count}
+            </text>
+            <text x={CX} y={CY + 22} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.45)">
+              {Math.round((hs.count / total) * 100)}%
+            </text>
+          </>
+        ) : (
+          <>
+            <text x={CX} y={CY - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#e2e4f0"
+              style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.3s' }}>{total}</text>
+            <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
+              style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
+          </>
+        )}
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 0 }}>
         {segs.map((seg, i) => (
