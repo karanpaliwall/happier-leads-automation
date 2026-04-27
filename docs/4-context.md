@@ -5,6 +5,21 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Campaign ID sync: robust cross-device strategy
+
+- What changed:
+  - **Bug**: Previous migration only triggered when `(server empty) AND (this browser's localStorage has IDs)`. If mobile was opened first (empty localStorage → nothing pushed), server stayed empty forever and all devices showed the empty state.
+  - **Fix — new `loadIds()` strategy**:
+    1. Render localStorage cache immediately (no flicker on revisit)
+    2. Fetch server list; push any IDs present locally but missing on server (handles migration from whichever device still has old localStorage data, regardless of order)
+    3. One-time flag `sl-ids-migrated` in localStorage prevents removed IDs from reappearing after migration
+    4. Server is authoritative once migration completes; localStorage kept as offline fallback cache
+  - **Add/remove** now updates both server AND localStorage to keep the cache in sync
+- Why: Campaigns were invisible on mobile because the DB was never populated — the migration conditions were never simultaneously true across devices.
+- Files affected: `src/app/campaigns/page.jsx`
+
+---
+
 ## 2026-04-28 — Campaign IDs: move from localStorage to server DB
 
 - What changed:
