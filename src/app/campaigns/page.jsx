@@ -41,16 +41,15 @@ function BarChart({ campaigns, visible }) {
 
   useEffect(() => {
     if (!visible) { setAnimate(false); return; }
-    // Wait for the grid reveal transition (380ms) then grow bars in
     const t = setTimeout(() => setAnimate(true), 420);
     return () => clearTimeout(t);
   }, [visible]);
 
-  if (!campaigns.length || !campaigns.some(c => c.totalLeads > 0)) {
-    return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No lead data available yet</p>;
+  if (!campaigns.length || !campaigns.some(c => c.emailsSent > 0)) {
+    return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No email data available yet</p>;
   }
-  const top = [...campaigns].sort((a, b) => (b.totalLeads || 0) - (a.totalLeads || 0)).slice(0, 10);
-  const maxVal = Math.max(...top.map(c => c.totalLeads || 0), 1);
+  const top = [...campaigns].sort((a, b) => (b.emailsSent || 0) - (a.emailsSent || 0)).slice(0, 10);
+  const maxVal = Math.max(...top.map(c => c.emailsSent || 0), 1);
   const ROW_H = 38, BAR_H = 20, NAME_W = 145, PAD_L = 8, PAD_R = 12, TICK_H = 28;
   const VB_W = 530;
   const BAR_W = VB_W - NAME_W - PAD_L - PAD_R;
@@ -71,7 +70,7 @@ function BarChart({ campaigns, visible }) {
         );
       })}
       {top.map((c, i) => {
-        const barW = Math.max((c.totalLeads / maxVal) * BAR_W, 2);
+        const barW = Math.max((c.emailsSent / maxVal) * BAR_W, 2);
         const y = i * ROW_H;
         const label = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
         return (
@@ -81,7 +80,7 @@ function BarChart({ campaigns, visible }) {
             </text>
             <rect
               x={NAME_W + PAD_L} y={y + (ROW_H - BAR_H) / 2} width={barW} height={BAR_H} rx={3}
-              fill="rgba(59,130,246,0.75)"
+              fill="#4A7BF7"
               style={{
                 transformBox: 'fill-box',
                 transformOrigin: 'left center',
@@ -96,6 +95,12 @@ function BarChart({ campaigns, visible }) {
   );
 }
 
+const DONUT_SEGS = [
+  { label: 'Active',    statuses: ['ACTIVE'],               color: '#4ade80' },
+  { label: 'Paused',    statuses: ['PAUSED'],               color: '#facc15' },
+  { label: 'Completed', statuses: ['COMPLETED', 'FINISHED'], color: '#60a5fa' },
+];
+
 function DonutChart({ campaigns, visible }) {
   const [animate, setAnimate] = useState(false);
 
@@ -108,17 +113,12 @@ function DonutChart({ campaigns, visible }) {
   const total = campaigns.length;
   if (!total) return <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No data</p>;
 
-  const counts = campaigns.reduce((acc, c) => {
-    const s = c.status || 'UNKNOWN';
-    acc[s] = (acc[s] || 0) + 1;
-    return acc;
-  }, {});
+  const segs = DONUT_SEGS.map(s => ({
+    ...s,
+    count: campaigns.filter(c => s.statuses.includes(c.status)).length,
+  })).filter(s => s.count > 0);
 
-  const segs = Object.entries(counts)
-    .map(([s, n]) => ({ status: s, count: n, color: STATUS_COLORS[s] || '#9ca3af' }))
-    .sort((a, b) => b.count - a.count);
-
-  const CX = 90, CY = 90, OR = 72, IR = 52;
+  const CX = 90, CY = 90, OR = 74, IR = 52;
   let angle = -90;
   const arcs = segs.map(seg => {
     const start = angle;
@@ -128,8 +128,8 @@ function DonutChart({ campaigns, visible }) {
   });
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-      <svg viewBox="0 0 180 180" width={156} height={156}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+      <svg viewBox="0 0 180 180" width={160} height={160}
         style={{
           flexShrink: 0,
           opacity: animate ? 1 : 0,
@@ -138,7 +138,7 @@ function DonutChart({ campaigns, visible }) {
           transformOrigin: 'center',
         }}>
         {arcs.map((arc, i) => (
-          <path key={arc.status} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color}
+          <path key={arc.label} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color}
             style={{
               opacity: animate ? 1 : 0,
               transform: animate ? 'scale(1)' : 'scale(0.6)',
@@ -147,25 +147,27 @@ function DonutChart({ campaigns, visible }) {
             }}
           />
         ))}
-        <text x={CX} y={CY - 5} textAnchor="middle" fontSize={22} fontWeight={700} fill="#e2e4f0"
+        <text x={CX} y={CY - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#e2e4f0"
           style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.3s' }}>{total}</text>
-        <text x={CX} y={CY + 14} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
+        <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
           style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
       </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 130 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 148 }}>
         {segs.map((seg, i) => (
-          <div key={seg.status} style={{
+          <div key={seg.label} style={{
             display: 'flex', alignItems: 'center', gap: 8,
             opacity: animate ? 1 : 0,
             transform: animate ? 'translateX(0)' : 'translateX(12px)',
             transition: `opacity 0.35s ease ${0.2 + i * 0.06}s, transform 0.35s ease ${0.2 + i * 0.06}s`,
           }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: seg.color, flexShrink: 0, display: 'inline-block' }} />
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>
-              {seg.status.charAt(0) + seg.status.slice(1).toLowerCase()}
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{seg.count}</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 38, textAlign: 'right' }}>
+            <span style={{ width: 9, height: 9, borderRadius: '50%', background: seg.color, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{seg.label}</span>
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: 'var(--text-primary)',
+              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 4, padding: '1px 7px', minWidth: 22, textAlign: 'center',
+            }}>{seg.count}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 34, textAlign: 'right' }}>
               {Math.round((seg.count / total) * 100)}%
             </span>
           </div>
@@ -505,7 +507,7 @@ export default function CampaignsPage() {
               <div className="campaigns-charts-inner">
                 <div className="campaigns-charts-grid">
                   <div className="card" style={{ padding: '18px 20px' }}>
-                    <p className="card-title" style={{ marginBottom: 16 }}>Top 10 Campaigns by Total Leads</p>
+                    <p className="card-title" style={{ marginBottom: 16 }}>Top 10 Campaigns by Emails Sent</p>
                     <BarChart campaigns={campaigns} visible={showCharts} />
                   </div>
                   <div className="card" style={{ padding: '18px 20px' }}>
