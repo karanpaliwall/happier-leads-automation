@@ -285,6 +285,8 @@ export default function CampaignsPage() {
   const filtered = campaigns.filter(c => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
     if (dSearch && !c.name.toLowerCase().includes(dSearch.toLowerCase())) return false;
+    if (calFrom && c.created && new Date(c.created) < new Date(calFrom + 'T00:00:00Z')) return false;
+    if (calTo   && c.created && new Date(c.created) > new Date(calTo   + 'T23:59:59Z')) return false;
     return true;
   });
 
@@ -409,27 +411,26 @@ export default function CampaignsPage() {
                 </span>
               </button>
             ))}
-          </div>
-          <div className="campaigns-pill-stats">
-            <span className="campaigns-pill-stat-item">
-              <span className="campaigns-pill-stat-label">Total Leads</span>
-              <span className="campaigns-pill-stat-value">{stats.totalLeads.toLocaleString()}</span>
+            <span className="tab-pill-divider" />
+            <span className="tab-pill-stat">
+              <span className="tab-pill-stat-label">Total Leads</span>
+              <span className="tab-pill-stat-value">{stats.totalLeads.toLocaleString()}</span>
             </span>
-            <span className="campaigns-pill-stat-item">
-              <span className="campaigns-pill-stat-label">In Progress</span>
-              <span className="campaigns-pill-stat-value stat-val-blue">{stats.inProgress.toLocaleString()}</span>
+            <span className="tab-pill-stat">
+              <span className="tab-pill-stat-label">In Progress</span>
+              <span className="tab-pill-stat-value stat-val-blue">{stats.inProgress.toLocaleString()}</span>
             </span>
-            <span className="campaigns-pill-stat-item">
-              <span className="campaigns-pill-stat-label">Leads Finished</span>
-              <span className="campaigns-pill-stat-value stat-val-green">{stats.leadsFinished.toLocaleString()}</span>
+            <span className="tab-pill-stat">
+              <span className="tab-pill-stat-label">Leads Finished</span>
+              <span className="tab-pill-stat-value stat-val-green">{stats.leadsFinished.toLocaleString()}</span>
             </span>
-            <span className="campaigns-pill-stat-item">
-              <span className="campaigns-pill-stat-label">Leads Failed</span>
-              <span className="campaigns-pill-stat-value stat-val-red">{stats.leadsFailed.toLocaleString()}</span>
+            <span className="tab-pill-stat">
+              <span className="tab-pill-stat-label">Leads Failed</span>
+              <span className="tab-pill-stat-value stat-val-red">{stats.leadsFailed.toLocaleString()}</span>
             </span>
-            <span className="campaigns-pill-stat-item" style={{ borderRight: 'none' }}>
-              <span className="campaigns-pill-stat-label">Last Synced</span>
-              <span className="campaigns-pill-stat-value stat-val-muted">
+            <span className="tab-pill-stat">
+              <span className="tab-pill-stat-label">Last Synced</span>
+              <span className="tab-pill-stat-value stat-val-muted">
                 {lastSynced
                   ? lastSynced.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })
                   : '—'}
