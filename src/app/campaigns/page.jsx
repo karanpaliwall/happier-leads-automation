@@ -2,15 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
 
-const STATUS_OPTS = [
-  { label: 'All Status', value: 'all'       },
-  { label: 'Active',     value: 'ACTIVE'    },
-  { label: 'Paused',     value: 'PAUSED'    },
-  { label: 'Completed',  value: 'COMPLETED' },
-  { label: 'Finished',   value: 'FINISHED'  },
-  { label: 'Draft',      value: 'DRAFT'     },
-];
-
 const STATUS_PILLS = [
   { label: 'All',      value: 'all',      color: 'var(--blue-400)', bg: 'rgba(59,130,246,0.13)'  },
   { label: 'Active',   value: 'ACTIVE',   color: '#4ade80',         bg: 'rgba(74,222,128,0.12)'  },
@@ -138,38 +129,6 @@ function DonutChart({ campaigns }) {
 }
 
 // ── UI helpers ───────────────────────────────────────────────────────────────
-function StatusDropdown({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!open) return;
-    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [open]);
-  const sel = STATUS_OPTS.find(o => o.value === value) ?? STATUS_OPTS[0];
-  return (
-    <div className="status-dropdown-wrap" ref={ref}>
-      <button className={`status-dropdown-btn${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
-        {sel.label}
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', opacity: 0.6 }}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
-        <div className="status-dropdown-popover">
-          {STATUS_OPTS.map(o => (
-            <button key={o.value} className={`status-dropdown-opt${o.value === value ? ' active' : ''}`}
-              onClick={() => { onChange(o.value); setOpen(false); }}>
-              {o.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function CampaignBadge({ status }) {
   const cls = {
     ACTIVE:    'campaign-badge campaign-badge-active',
@@ -381,8 +340,6 @@ export default function CampaignsPage() {
             <input className="form-input" style={{ paddingLeft: 32, width: '100%', boxSizing: 'border-box' }}
               placeholder="Search campaigns…" value={search} onChange={handleSearch} />
           </div>
-
-          <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
 
           <div className="cal-wrap" ref={calRef}>
             <div className="cal-range-trigger">

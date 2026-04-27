@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — Campaigns page: remove duplicate status dropdown
+
+- What changed: Removed the `StatusDropdown` component and `STATUS_OPTS` constant from the campaigns page. The "All Status" dropdown in the filter bar was a redundant second status filter alongside the pills/tabs row. Only the pills row remains.
+- Why: User reported seeing two status filters. The pills row is preferred — smaller, cleaner, shows counts per status.
+- Files affected: `src/app/campaigns/page.jsx`
+
+---
+
 ## 2026-04-27 — Push to Smart Lead button made live — campaign picker + push API
 
 - What changed:
