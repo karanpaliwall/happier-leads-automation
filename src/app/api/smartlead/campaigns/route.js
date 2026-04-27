@@ -35,6 +35,7 @@ async function fetchOneCampaign(id, apiKey) {
   const raw = analyticsRes.value ?? {};
   const a   = raw?.data ?? raw ?? {};
   const cls = a.campaign_lead_stats ?? {};
+  console.log(`[SL audit] campaign ${id} raw analytics:`, JSON.stringify({ a_keys: Object.keys(a), cls_keys: Object.keys(cls), cls, a_counts: { open_count: a.open_count, reply_count: a.reply_count, bounce_count: a.bounce_count, click_count: a.click_count, total_count: a.total_count, unique_sent_count: a.unique_sent_count, pending_count: a.pending_count, sent_count: a.sent_count } }));
 
   return {
     id:          String(info.id),
