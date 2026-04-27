@@ -2246,9 +2246,10 @@ body { overflow-x: hidden; }
 /* ── Charts grid layout ── */
 .campaigns-charts-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 300px;
   gap: 12px;
   padding-bottom: 2px;
+  align-items: start;
 }
 @media (max-width: 900px) {
   .campaigns-charts-grid { grid-template-columns: 1fr; }

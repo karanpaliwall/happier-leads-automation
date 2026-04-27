@@ -66,7 +66,7 @@ function BarChart({ campaigns, visible }) {
   }
   const top = [...campaigns].sort((a, b) => (b.emailsSent || 0) - (a.emailsSent || 0)).slice(0, 10);
   const maxVal = Math.max(...top.map(c => c.emailsSent || 0), 1);
-  const ROW_H = 38, BAR_H = 20, NAME_W = 145, PAD_L = 8, PAD_R = 12, TICK_H = 28;
+  const ROW_H = 30, BAR_H = 16, NAME_W = 145, PAD_L = 8, PAD_R = 12, TICK_H = 22;
   const VB_W = 530;
   const BAR_W = VB_W - NAME_W - PAD_L - PAD_R;
   const VB_H = top.length * ROW_H + TICK_H;
@@ -134,7 +134,7 @@ function DonutChart({ campaigns, visible }) {
     count: campaigns.filter(c => s.statuses.includes(c.status)).length,
   })).filter(s => s.count > 0);
 
-  const CX = 90, CY = 90, OR = 74, IR = 52;
+  const CX = 90, CY = 90, OR = 66, IR = 46;
   let angle = -90;
   const arcs = segs.map(seg => {
     const start = angle;
@@ -145,7 +145,7 @@ function DonutChart({ campaigns, visible }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-      <svg viewBox="0 0 180 180" width={160} height={160}
+      <svg viewBox="0 0 180 180" width={140} height={140}
         style={{
           flexShrink: 0,
           opacity: animate ? 1 : 0,
