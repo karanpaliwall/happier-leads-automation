@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-27 — SmartLead analytics: fix zero-data by correcting field names
+
+- What changed: All lead-stat columns on the Campaigns page (Total Leads, In Progress, Yet to Start, Completed, Blocked) were showing 0 despite real data existing. Root cause was wrong field names in `fetchOneCampaign` — the code guessed at names like `total_lead_count`, `in_progress_count`, `not_contacted_count` which SmartLead does not return. Fixed to use the real response structure: lead stats live inside a nested `campaign_lead_stats` object with fields `total`, `inprogress` (no underscore), `notStarted` (camelCase), `completed`, `blocked`. Top-level fields `open_count`, `reply_count`, `click_count`, `total_count` were already correct.
+- Why: SmartLead analytics endpoint returns `{ campaign_lead_stats: { total, inprogress, notStarted, completed, blocked, … }, open_count, reply_count, … }`. Previous guesses were never validated against real API responses.
+- Files affected: `src/app/api/smartlead/campaigns/route.js`
+
+---
+
 ## 2026-04-27 — Campaigns page: unified single filter+stats tab
 
 - What changed: Replaced the two separate filter rows (an "All Status" dropdown + a stats bar above the pills) with a single unified `tabs-pill` box containing everything — filter buttons (All / Active / Paused / Finished / Draft) followed by a thin vertical divider, then the stats (Total Leads / In Progress / Leads Finished / Leads Failed / Last Synced) — all inside one pill container with consistent hover and styling.
