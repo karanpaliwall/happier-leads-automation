@@ -42,6 +42,17 @@ async function fetchOneCampaign(id, apiKey) {
   };
 }
 
+async function fetchAllIds(apiKey) {
+  const res = await fetch(
+    `${SL_BASE}/campaigns?api_key=${encodeURIComponent(apiKey)}&offset=0&limit=100`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error(`SmartLead HTTP ${res.status}`);
+  const data = await res.json();
+  const list = Array.isArray(data) ? data : (data?.data ?? data?.campaigns ?? []);
+  return list.map(c => String(c.id)).filter(Boolean);
+}
+
 export async function GET(request) {
   const authErr = await requireAuth();
   if (authErr) return authErr;
@@ -52,13 +63,16 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const ids = (searchParams.get('ids') ?? '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-    .slice(0, 20);
+  const idsParam = searchParams.get('ids');
 
-  if (!ids.length) return NextResponse.json({ campaigns: [] });
+  let ids;
+  if (idsParam) {
+    ids = idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 50);
+  } else {
+    ids = (await fetchAllIds(apiKey)).slice(0, 50);
+  }
+
+  if (!ids.length) return NextResponse.json({ campaigns: [], fetchedAt: new Date().toISOString() });
 
   const results = await Promise.allSettled(ids.map(id => fetchOneCampaign(id, apiKey)));
 

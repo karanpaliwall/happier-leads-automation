@@ -19,9 +19,7 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
   useEffect(() => {
     async function load() {
       try {
-        const ids = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
-        if (!ids.length) { setCampaigns([]); return; }
-        const res  = await fetch(`/api/smartlead/campaigns?ids=${ids.join(',')}`);
+        const res  = await fetch('/api/smartlead/campaigns');
         const data = await res.json();
         setCampaigns(data.campaigns ?? []);
       } catch { setCampaigns([]); }
@@ -73,9 +71,8 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
           Loading campaigns…
         </div>
       ) : campaigns.length === 0 ? (
-        <div className="push-dropdown-state" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-          <span>No campaigns added yet.</span>
-          <a href="/campaigns" className="push-dropdown-link" onClick={onClose}>Go to Campaigns →</a>
+        <div className="push-dropdown-state">
+          No campaigns found in SmartLead.
         </div>
       ) : (
         campaigns.map(c => (

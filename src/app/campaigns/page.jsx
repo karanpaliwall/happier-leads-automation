@@ -209,16 +209,10 @@ function exportCSV(campaigns) {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function CampaignsPage() {
-  const [campaignIds, setCampaignIds]   = useState([]);
   const [campaigns,   setCampaigns]     = useState([]);
   const [loading,     setLoading]       = useState(false);
   const [error,       setError]         = useState(null);
   const [lastSynced,  setLastSynced]    = useState(null);
-
-  // Dialog
-  const [showDialog,  setShowDialog]    = useState(false);
-  const [dialogInput, setDialogInput]   = useState('');
-  const [dialogErr,   setDialogErr]     = useState('');
 
   // Charts
   const [showCharts,  setShowCharts]    = useState(false);
@@ -231,30 +225,15 @@ export default function CampaignsPage() {
   const [calTo,        setCalTo]        = useState('');
   const [editField,    setEF]           = useState(null);
 
-  // Hover/context menu
-  const [hoverRow,    setHoverRow]      = useState(null);
-  const [ctxMenu,     setCtxMenu]       = useState(null);
+  const calRef  = useRef(null);
+  const debRef  = useRef(null);
 
-  const calRef      = useRef(null);
-  const debRef      = useRef(null);
-  const dialogInRef = useRef(null);
-  const ctxRef      = useRef(null);
-
-  // ── Load IDs from localStorage on mount ───────────────────────────────────
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('sl-campaign-ids') || '[]');
-      setCampaignIds(Array.isArray(stored) ? stored : []);
-    } catch {}
-  }, []);
-
-  // ── Fetch campaign data whenever IDs change ────────────────────────────────
-  const fetchCampaigns = useCallback(async (ids, force = false) => {
-    if (!ids.length) { setCampaigns([]); return; }
+  // ── Fetch all campaigns from SmartLead ────────────────────────────────────
+  const fetchCampaigns = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
     try {
-      const qs = force ? `?ids=${ids.join(',')}&_t=${Date.now()}` : `?ids=${ids.join(',')}`;
+      const qs = force ? `?_t=${Date.now()}` : '';
       const res = await fetch(`/api/smartlead/campaigns${qs}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -268,8 +247,8 @@ export default function CampaignsPage() {
   }, []);
 
   useEffect(() => {
-    fetchCampaigns(campaignIds);
-  }, [campaignIds, fetchCampaigns]);
+    fetchCampaigns();
+  }, [fetchCampaigns]);
 
   // ── Close calendar on outside click ───────────────────────────────────────
   useEffect(() => {
@@ -278,19 +257,6 @@ export default function CampaignsPage() {
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, [editField]);
-
-  // ── Close context menu on outside click ───────────────────────────────────
-  useEffect(() => {
-    if (!ctxMenu) return;
-    function h(e) { if (ctxRef.current && !ctxRef.current.contains(e.target)) setCtxMenu(null); }
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [ctxMenu]);
-
-  // ── Focus dialog input on open ────────────────────────────────────────────
-  useEffect(() => {
-    if (showDialog) setTimeout(() => dialogInRef.current?.focus(), 50);
-  }, [showDialog]);
 
   function handleSearch(e) {
     const v = e.target.value;
@@ -304,41 +270,6 @@ export default function CampaignsPage() {
   }
 
   const hasFilters = statusFilter !== 'all' || dSearch !== '' || calFrom !== '' || calTo !== '';
-
-  // ── Add campaign ─────────────────────────────────────────────────────────
-  function handleConfirmAdd() {
-    const id = dialogInput.trim();
-    if (!id)                           { setDialogErr('Please enter a Campaign ID.'); return; }
-    if (!/^\d+$/.test(id))             { setDialogErr('Campaign ID must be a number.'); return; }
-    if (campaignIds.includes(id))      { setDialogErr('This campaign is already added.'); return; }
-    if (campaignIds.length >= 20)      { setDialogErr('Maximum 20 campaigns allowed.'); return; }
-
-    const newIds = [...campaignIds, id];
-    localStorage.setItem('sl-campaign-ids', JSON.stringify(newIds));
-    setCampaignIds(newIds);
-    setShowDialog(false);
-    setDialogInput('');
-    setDialogErr('');
-  }
-
-  // ── Remove campaign ───────────────────────────────────────────────────────
-  function removeCampaign(id) {
-    const strId = String(id);
-    const newIds = campaignIds.filter(x => x !== strId);
-    localStorage.setItem('sl-campaign-ids', JSON.stringify(newIds));
-    setCampaignIds(newIds);
-    setCampaigns(prev => prev.filter(c => String(c.id) !== strId));
-    setCtxMenu(null);
-    setHoverRow(null);
-  }
-
-  function openDialog() {
-    setDialogInput(''); setDialogErr(''); setShowDialog(true);
-  }
-
-  function closeDialog() {
-    setShowDialog(false); setDialogInput(''); setDialogErr('');
-  }
 
   // ── Filtering ─────────────────────────────────────────────────────────────
   const filtered = campaigns.filter(c => {
@@ -377,12 +308,6 @@ export default function CampaignsPage() {
             <h1 className="page-title">Campaigns</h1>
             <span className="campaigns-count-badge">{stats.total}</span>
           </div>
-          <button className="btn-primary" style={{ marginLeft: 'auto' }} onClick={openDialog}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Campaign
-          </button>
         </div>
         <p className="page-subtitle">SmartLead campaign analytics · add campaign IDs to track live data</p>
       </div>
@@ -446,8 +371,8 @@ export default function CampaignsPage() {
               </svg>
               Export CSV
             </button>
-            <button className="force-sync-btn" onClick={() => fetchCampaigns(campaignIds, true)}
-              disabled={loading || !campaignIds.length} title="Force re-sync from SmartLead">
+            <button className="force-sync-btn" onClick={() => fetchCampaigns(true)}
+              disabled={loading} title="Force re-sync from SmartLead">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                 style={loading ? { animation: 'spin 1s linear infinite' } : {}}>
                 <path d="M21.5 2v6h-6" />
@@ -457,7 +382,7 @@ export default function CampaignsPage() {
               </svg>
               Force Sync
             </button>
-            <button className="btn-primary" onClick={() => fetchCampaigns(campaignIds)} disabled={loading || !campaignIds.length}>
+            <button className="btn-primary" onClick={() => fetchCampaigns()} disabled={loading}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
@@ -569,42 +494,7 @@ export default function CampaignsPage() {
         )}
 
         {/* Table or empty */}
-        {campaignIds.length === 0 ? (
-          <div className="empty-onboarding">
-            <div className="empty-onboarding-hero">
-              <div className="empty-onboarding-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-              </div>
-              <h2 className="empty-onboarding-title">No campaigns added</h2>
-              <p className="empty-onboarding-sub">Click <strong>Add Campaign</strong> and enter a SmartLead campaign ID to start tracking live analytics.</p>
-            </div>
-            <div className="empty-steps">
-              <div className="empty-step">
-                <div className="empty-step-num">1</div>
-                <div className="empty-step-body">
-                  <div className="empty-step-title">Configure API key</div>
-                  <div className="empty-step-desc">Add <code className="empty-step-code" style={{ display: 'inline', padding: '1px 6px' }}>SMARTLEAD_API_KEY</code> to your Vercel environment variables.</div>
-                </div>
-              </div>
-              <div className="empty-step">
-                <div className="empty-step-num">2</div>
-                <div className="empty-step-body">
-                  <div className="empty-step-title">Add a campaign</div>
-                  <div className="empty-step-desc">Click <strong>Add Campaign</strong> at the top-right and enter your SmartLead campaign ID (a number).</div>
-                </div>
-              </div>
-              <div className="empty-step">
-                <div className="empty-step-num">3</div>
-                <div className="empty-step-body">
-                  <div className="empty-step-title">Track performance</div>
-                  <div className="empty-step-desc">View live analytics: leads, opens, replies, clicks, and more — up to 20 campaigns at a time.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : loading && campaigns.length === 0 ? (
+        {loading && campaigns.length === 0 ? (
           <div className="card" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
               style={{ animation: 'spin 1s linear infinite', display: 'inline-block', marginBottom: 10 }}>
@@ -642,28 +532,9 @@ export default function CampaignsPage() {
                     </tr>
                   ) : (
                     filtered.map(c => (
-                      <tr key={c.id}
-                        className="lead-row campaign-data-row"
-                        onMouseEnter={() => setHoverRow(c.id)}
-                        onMouseLeave={() => setHoverRow(null)}
-                        onContextMenu={e => {
-                          e.preventDefault();
-                          setCtxMenu({ id: c.id, x: e.clientX, y: e.clientY });
-                        }}
-                      >
+                      <tr key={c.id} className="lead-row campaign-data-row">
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.name}</span>
-                            {hoverRow === c.id && (
-                              <button className="campaign-remove-btn"
-                                onClick={e => { e.stopPropagation(); removeCampaign(c.id); }}
-                                title="Remove campaign">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
+                          <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.name}</span>
                         </td>
                         <td><CampaignBadge status={c.status} /></td>
                         <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(c.totalLeads || 0).toLocaleString()}</td>
@@ -689,54 +560,6 @@ export default function CampaignsPage() {
         )}
       </div>
 
-      {/* Right-click context menu */}
-      {ctxMenu && (
-        <div ref={ctxRef} className="campaign-ctx-menu" style={{ top: ctxMenu.y, left: ctxMenu.x }}>
-          <button className="campaign-ctx-remove" onClick={() => removeCampaign(ctxMenu.id)}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-              <path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
-            </svg>
-            Remove Campaign
-          </button>
-        </div>
-      )}
-
-      {/* Add Campaign dialog */}
-      {showDialog && (
-        <div className="campaign-dialog-overlay" onMouseDown={e => { if (e.target === e.currentTarget) closeDialog(); }}>
-          <div className="campaign-dialog-card">
-            <div className="campaign-dialog-header">
-              <h2 className="campaign-dialog-title">Add Campaign</h2>
-              <button className="campaign-dialog-close" onClick={closeDialog}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <p className="campaign-dialog-desc">
-              Enter your SmartLead campaign ID to track its analytics on this page.
-            </p>
-            <div className="campaign-dialog-field">
-              <label className="campaign-dialog-label">Campaign ID</label>
-              <input ref={dialogInRef} className="form-input campaign-dialog-input"
-                placeholder="e.g. 12345"
-                value={dialogInput}
-                onChange={e => { setDialogInput(e.target.value); setDialogErr(''); }}
-                onKeyDown={e => { if (e.key === 'Enter') handleConfirmAdd(); if (e.key === 'Escape') closeDialog(); }}
-                type="text" inputMode="numeric" autoComplete="off" />
-              {dialogErr && <p className="campaign-dialog-err">{dialogErr}</p>}
-            </div>
-            <div className="campaign-dialog-actions">
-              <button className="campaign-dialog-cancel" onClick={closeDialog}>Cancel</button>
-              <button className="btn-primary campaign-dialog-confirm" onClick={handleConfirmAdd} disabled={!dialogInput.trim()}>
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
