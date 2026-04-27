@@ -36,7 +36,16 @@ function arcPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 }
 
 // ── Charts ───────────────────────────────────────────────────────────────────
-function BarChart({ campaigns }) {
+function BarChart({ campaigns, visible }) {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    if (!visible) { setAnimate(false); return; }
+    // Wait for the grid reveal transition (380ms) then grow bars in
+    const t = setTimeout(() => setAnimate(true), 420);
+    return () => clearTimeout(t);
+  }, [visible]);
+
   if (!campaigns.length || !campaigns.some(c => c.totalLeads > 0)) {
     return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No lead data available yet</p>;
   }
@@ -66,11 +75,18 @@ function BarChart({ campaigns }) {
         const y = i * ROW_H;
         const label = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
         return (
-          <g key={c.id}>
+          <g key={c.id} style={{ opacity: animate ? 1 : 0, transition: `opacity 0.3s ease ${i * 0.06}s` }}>
             <text x={NAME_W - 6} y={y + ROW_H / 2 + 4} textAnchor="end" fontSize={11} fill="rgba(255,255,255,0.65)">
               {label}
             </text>
-            <rect x={NAME_W + PAD_L} y={y + (ROW_H - BAR_H) / 2} width={barW} height={BAR_H} rx={3} fill="rgba(59,130,246,0.75)" />
+            <rect
+              x={NAME_W + PAD_L} y={y + (ROW_H - BAR_H) / 2} height={BAR_H} rx={3}
+              fill="rgba(59,130,246,0.75)"
+              style={{
+                width: animate ? barW : 0,
+                transition: `width 0.55s cubic-bezier(0.4,0,0.2,1) ${i * 0.06}s`,
+              }}
+            />
           </g>
         );
       })}
@@ -78,7 +94,15 @@ function BarChart({ campaigns }) {
   );
 }
 
-function DonutChart({ campaigns }) {
+function DonutChart({ campaigns, visible }) {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    if (!visible) { setAnimate(false); return; }
+    const t = setTimeout(() => setAnimate(true), 440);
+    return () => clearTimeout(t);
+  }, [visible]);
+
   const total = campaigns.length;
   if (!total) return <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No data</p>;
 
@@ -103,16 +127,37 @@ function DonutChart({ campaigns }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-      <svg viewBox="0 0 180 180" width={156} height={156} style={{ flexShrink: 0 }}>
-        {arcs.map(arc => (
-          <path key={arc.status} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color} />
+      <svg viewBox="0 0 180 180" width={156} height={156}
+        style={{
+          flexShrink: 0,
+          opacity: animate ? 1 : 0,
+          transform: animate ? 'scale(1)' : 'scale(0.8)',
+          transition: 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+          transformOrigin: 'center',
+        }}>
+        {arcs.map((arc, i) => (
+          <path key={arc.status} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color}
+            style={{
+              opacity: animate ? 1 : 0,
+              transform: animate ? 'scale(1)' : 'scale(0.6)',
+              transformOrigin: `${CX}px ${CY}px`,
+              transition: `opacity 0.35s ease ${i * 0.07}s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.07}s`,
+            }}
+          />
         ))}
-        <text x={CX} y={CY - 5} textAnchor="middle" fontSize={22} fontWeight={700} fill="#e2e4f0">{total}</text>
-        <text x={CX} y={CY + 14} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)">campaigns</text>
+        <text x={CX} y={CY - 5} textAnchor="middle" fontSize={22} fontWeight={700} fill="#e2e4f0"
+          style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.3s' }}>{total}</text>
+        <text x={CX} y={CY + 14} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
+          style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 130 }}>
-        {segs.map(seg => (
-          <div key={seg.status} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {segs.map((seg, i) => (
+          <div key={seg.status} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            opacity: animate ? 1 : 0,
+            transform: animate ? 'translateX(0)' : 'translateX(12px)',
+            transition: `opacity 0.35s ease ${0.2 + i * 0.06}s, transform 0.35s ease ${0.2 + i * 0.06}s`,
+          }}>
             <span style={{ width: 9, height: 9, borderRadius: '50%', background: seg.color, flexShrink: 0, display: 'inline-block' }} />
             <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>
               {seg.status.charAt(0) + seg.status.slice(1).toLowerCase()}
@@ -459,11 +504,11 @@ export default function CampaignsPage() {
                 <div className="campaigns-charts-grid">
                   <div className="card" style={{ padding: '18px 20px' }}>
                     <p className="card-title" style={{ marginBottom: 16 }}>Top 10 Campaigns by Total Leads</p>
-                    <BarChart campaigns={campaigns} />
+                    <BarChart campaigns={campaigns} visible={showCharts} />
                   </div>
                   <div className="card" style={{ padding: '18px 20px' }}>
                     <p className="card-title" style={{ marginBottom: 16 }}>Status Breakdown</p>
-                    <DonutChart campaigns={campaigns} />
+                    <DonutChart campaigns={campaigns} visible={showCharts} />
                   </div>
                 </div>
               </div>

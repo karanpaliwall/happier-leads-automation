@@ -13,39 +13,51 @@ async function slFetch(path, apiKey) {
   return res.json();
 }
 
+async function slFetchSafe(path, apiKey) {
+  try {
+    const res = await fetch(`${SL_BASE}${path}?api_key=${encodeURIComponent(apiKey)}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text) return null;
+    return JSON.parse(text);
+  } catch { return null; }
+}
+
 async function fetchOneCampaign(id, apiKey) {
-  const [infoResult, analyticsResult] = await Promise.allSettled([
+  const [infoResult, analyticsResult, leadsResult] = await Promise.allSettled([
     slFetch(`/campaigns/${id}`, apiKey),
     slFetch(`/campaigns/${id}/analytics`, apiKey),
+    slFetchSafe(`/campaigns/${id}/lead-list?limit=1&offset=0`, apiKey),
   ]);
 
   const info = infoResult.status === 'fulfilled' ? infoResult.value : null;
   if (!info?.id) return null;
 
   const raw = analyticsResult.status === 'fulfilled' ? analyticsResult.value : {};
-  // SmartLead returns analytics either at root or nested under `data`
   const a = raw?.data ?? raw ?? {};
+
+  // Lead list gives us the real total count (analytics endpoint often lacks it)
+  const leadsRaw = leadsResult.status === 'fulfilled' ? leadsResult.value : null;
+  const totalFromList = leadsRaw?.total_leads ?? leadsRaw?.total ?? leadsRaw?.count
+    ?? leadsRaw?.data?.total_leads ?? leadsRaw?.data?.total ?? null;
 
   return {
     id:          String(info.id),
-    name:        info.name        ?? `Campaign ${id}`,
-    status:      (info.status     ?? 'UNKNOWN').toUpperCase(),
-    created:     info.created_at  ?? null,
-    // Use || not ?? so a field that exists as 0 doesn't block the next fallback
-    // Also check info (campaign object) in case SmartLead puts counts there not in analytics
-    totalLeads:  a.total_lead_count || a.total_leads || a.contact_count || a.leads_count
+    name:        info.name       ?? `Campaign ${id}`,
+    status:      (info.status    ?? 'UNKNOWN').toUpperCase(),
+    created:     info.created_at ?? null,
+    totalLeads:  totalFromList || a.total_lead_count || a.total_leads || a.contact_count
                    || info.total_lead_count || info.total_leads || 0,
-    completed:   a.completed_count   || a.completed   || info.completed_count   || 0,
-    inProgress:  a.in_progress_count || a.in_progress || info.in_progress_count || 0,
-    yetToStart:  a.not_contacted_count || a.yet_to_start_count || a.not_contacted
-                   || a.yet_to_start || info.not_contacted_count || 0,
-    blocked:     a.blocked_count     || a.blocked     || info.blocked_count     || 0,
+    completed:   a.completed_count   || a.completed   || 0,
+    inProgress:  a.in_progress_count || a.in_progress || 0,
+    yetToStart:  a.not_contacted_count || a.yet_to_start_count || a.not_contacted || a.yet_to_start || 0,
+    blocked:     a.blocked_count     || a.blocked     || 0,
     sendPending: a.send_pending_count || a.email_send_pending_count || a.send_pending || 0,
     opens:       a.open_count        || a.unique_open_count || a.email_open_count || 0,
     replies:     a.reply_count       || a.replied_count     || 0,
     bounces:     a.bounce_count      || a.bounced_count     || 0,
     clicks:      a.click_count       || a.clicked_count     || 0,
-    _raw:        a,
+    _raw:        { analytics: a, leads: leadsRaw, info: { status: info.status, total_lead_count: info.total_lead_count } },
   };
 }
 
