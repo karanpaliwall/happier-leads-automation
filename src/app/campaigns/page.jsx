@@ -229,12 +229,11 @@ export default function CampaignsPage() {
   const debRef  = useRef(null);
 
   // ── Fetch all campaigns from SmartLead ────────────────────────────────────
-  const fetchCampaigns = useCallback(async (force = false) => {
+  const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const qs = force ? `?_t=${Date.now()}` : '';
-      const res = await fetch(`/api/smartlead/campaigns${qs}`);
+      const res = await fetch(`/api/smartlead/campaigns?_t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setCampaigns(data.campaigns ?? []);
@@ -246,8 +245,11 @@ export default function CampaignsPage() {
     }
   }, []);
 
+  // Initial load + auto-refresh every 2 minutes
   useEffect(() => {
     fetchCampaigns();
+    const interval = setInterval(fetchCampaigns, 2 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [fetchCampaigns]);
 
   // ── Close calendar on outside click ───────────────────────────────────────
@@ -371,7 +373,7 @@ export default function CampaignsPage() {
               </svg>
               Export CSV
             </button>
-            <button className="btn-primary" onClick={() => fetchCampaigns(true)} disabled={loading}>
+            <button className="btn-primary" onClick={() => fetchCampaigns()} disabled={loading}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                 style={loading ? { animation: 'spin 1s linear infinite' } : {}}>
                 <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />

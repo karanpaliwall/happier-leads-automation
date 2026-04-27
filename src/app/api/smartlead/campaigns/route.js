@@ -1,6 +1,8 @@
 import { requireAuth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const SL_BASE = 'https://server.smartlead.ai/api/v1';
 
 async function slFetch(path, apiKey) {
@@ -87,5 +89,8 @@ export async function GET(request) {
     .filter(r => r.status === 'fulfilled' && r.value != null)
     .map(r => r.value);
 
-  return NextResponse.json({ campaigns, fetchedAt: new Date().toISOString() });
+  return NextResponse.json(
+    { campaigns, fetchedAt: new Date().toISOString() },
+    { headers: { 'Cache-Control': 'no-store, no-cache' } }
+  );
 }
