@@ -2214,7 +2214,7 @@ body { overflow-x: hidden; }
   transition: grid-template-rows 0.38s ease;
 }
 .campaigns-charts-area.visible { grid-template-rows: 1fr; }
-.campaigns-charts-inner { overflow: hidden; }
+.campaigns-charts-inner { overflow: hidden; min-height: 0; }
 
 /* ── Charts grid layout ── */
 .campaigns-charts-grid {

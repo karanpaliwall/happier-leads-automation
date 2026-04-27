@@ -31,16 +31,21 @@ async function fetchOneCampaign(id, apiKey) {
     name:        info.name        ?? `Campaign ${id}`,
     status:      (info.status     ?? 'UNKNOWN').toUpperCase(),
     created:     info.created_at  ?? null,
-    totalLeads:  a.total_leads            ?? a.total_lead_count      ?? 0,
-    completed:   a.completed_count        ?? a.completed             ?? 0,
-    inProgress:  a.in_progress_count      ?? a.in_progress           ?? 0,
-    yetToStart:  a.not_contacted_count    ?? a.yet_to_start_count    ?? a.not_contacted ?? a.yet_to_start ?? 0,
-    blocked:     a.blocked_count          ?? a.blocked               ?? 0,
-    sendPending: a.send_pending_count     ?? a.email_send_pending_count ?? a.send_pending ?? 0,
-    opens:       a.open_count             ?? a.unique_open_count     ?? a.email_open_count ?? 0,
-    replies:     a.reply_count            ?? a.replied_count         ?? 0,
-    bounces:     a.bounce_count           ?? a.bounced_count         ?? 0,
-    clicks:      a.click_count            ?? a.clicked_count         ?? 0,
+    // Use || not ?? so a field that exists as 0 doesn't block the next fallback
+    // Also check info (campaign object) in case SmartLead puts counts there not in analytics
+    totalLeads:  a.total_lead_count || a.total_leads || a.contact_count || a.leads_count
+                   || info.total_lead_count || info.total_leads || 0,
+    completed:   a.completed_count   || a.completed   || info.completed_count   || 0,
+    inProgress:  a.in_progress_count || a.in_progress || info.in_progress_count || 0,
+    yetToStart:  a.not_contacted_count || a.yet_to_start_count || a.not_contacted
+                   || a.yet_to_start || info.not_contacted_count || 0,
+    blocked:     a.blocked_count     || a.blocked     || info.blocked_count     || 0,
+    sendPending: a.send_pending_count || a.email_send_pending_count || a.send_pending || 0,
+    opens:       a.open_count        || a.unique_open_count || a.email_open_count || 0,
+    replies:     a.reply_count       || a.replied_count     || 0,
+    bounces:     a.bounce_count      || a.bounced_count     || 0,
+    clicks:      a.click_count       || a.clicked_count     || 0,
+    _raw:        a,
   };
 }
 
