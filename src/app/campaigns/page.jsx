@@ -55,8 +55,9 @@ function arcPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 const LABEL_W = 140; // px — fixed label column, bars fill the rest
 
 function BarChart({ campaigns, visible }) {
-  const [animate,    setAnimate]    = useState(false);
-  const [hoveredBar, setHoveredBar] = useState(null);
+  const [animate,  setAnimate]  = useState(false);
+  const [tooltip,  setTooltip]  = useState(null); // { campaign, x, y }
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (!visible) { setAnimate(false); return; }
@@ -72,36 +73,37 @@ function BarChart({ campaigns, visible }) {
   const maxVal = Math.max(...top.map(c => c.emailsSent || 0), 1);
   const tickFractions = [0, 0.25, 0.5, 0.75, 1];
 
+  const TOOLTIP_H = 58;
+
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Vertical gridlines spanning all bar rows */}
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      {/* Vertical gridlines */}
       {tickFractions.map((f, i) => (
         <div key={i} style={{
           position: 'absolute',
           left: `calc(${LABEL_W}px + ${f} * (100% - ${LABEL_W}px))`,
-          top: 0,
-          height: `${top.length * 36}px`,
-          width: 1,
-          background: 'rgba(255,255,255,0.06)',
-          pointerEvents: 'none',
+          top: 0, height: `${top.length * 36}px`, width: 1,
+          background: 'rgba(255,255,255,0.06)', pointerEvents: 'none',
         }} />
       ))}
 
-      {/* Bar rows — fixed 36px each, never scale with container width */}
+      {/* Bar rows */}
       {top.map((c, i) => {
-        const pct     = Math.max((c.emailsSent / maxVal) * 100, 0.3);
-        const label   = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
-        const hovered = hoveredBar === c.id;
+        const pct    = Math.max((c.emailsSent / maxVal) * 100, 0.3);
+        const label  = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
+        const hovered = tooltip?.campaign?.id === c.id;
         return (
           <div key={c.id}
             style={{
               display: 'flex', alignItems: 'center', height: 36,
-              position: 'relative', zIndex: hovered ? 10 : 1,
               opacity: animate ? 1 : 0,
               transition: `opacity 0.28s ease ${i * 0.05}s`,
             }}
-            onMouseEnter={() => setHoveredBar(c.id)}
-            onMouseLeave={() => setHoveredBar(null)}
+            onMouseMove={(e) => {
+              const r = containerRef.current?.getBoundingClientRect();
+              if (r) setTooltip({ campaign: c, x: e.clientX - r.left, y: e.clientY - r.top });
+            }}
+            onMouseLeave={() => setTooltip(null)}
           >
             <div style={{
               width: LABEL_W, flexShrink: 0, paddingRight: 8,
@@ -121,30 +123,33 @@ function BarChart({ campaigns, visible }) {
                 transition: `transform 0.5s cubic-bezier(0.4,0,0.2,1) ${i * 0.05}s, background 0.15s ease`,
               }} />
             </div>
-
-            {/* Tooltip — positioned below the row so it stays within overflow:hidden bounds */}
-            {hovered && (
-              <div style={{
-                position: 'absolute',
-                left: `calc(${LABEL_W}px + ${Math.min(pct, 85) / 100} * (100% - ${LABEL_W}px))`,
-                top: 'calc(100% + 4px)',
-                transform: 'translateX(-50%)',
-                background: '#1a2035',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 6,
-                padding: '5px 10px',
-                pointerEvents: 'none',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                zIndex: 20,
-              }}>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>{c.name}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{(c.emailsSent || 0).toLocaleString()}</div>
-              </div>
-            )}
           </div>
         );
       })}
+
+      {/* Cursor-following tooltip */}
+      {tooltip && (() => {
+        const tipTop = tooltip.y < TOOLTIP_H + 12 ? tooltip.y + 12 : tooltip.y - TOOLTIP_H - 8;
+        return (
+          <div style={{
+            position: 'absolute',
+            left: tooltip.x,
+            top: tipTop,
+            transform: 'translateX(-50%)',
+            background: '#1a2035',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 6,
+            padding: '5px 10px',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+            zIndex: 20,
+          }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>{tooltip.campaign.name}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{(tooltip.campaign.emailsSent || 0).toLocaleString()}</div>
+          </div>
+        );
+      })()}
 
       {/* X-axis tick labels */}
       <div style={{ position: 'relative', marginLeft: LABEL_W, height: 20, marginTop: 5 }}>
@@ -153,14 +158,11 @@ function BarChart({ campaigns, visible }) {
           const disp = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k` : String(val);
           return (
             <span key={i} style={{
-              position: 'absolute',
-              left: `${f * 100}%`,
+              position: 'absolute', left: `${f * 100}%`,
               fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: '20px',
               transform: f === 0 ? 'none' : f === 1 ? 'translateX(-100%)' : 'translateX(-50%)',
               whiteSpace: 'nowrap',
-            }}>
-              {disp}
-            </span>
+            }}>{disp}</span>
           );
         })}
       </div>
@@ -175,8 +177,8 @@ const DONUT_SEGS = [
 ];
 
 function DonutChart({ campaigns, visible }) {
-  const [animate,    setAnimate]    = useState(false);
-  const [hoveredSeg, setHoveredSeg] = useState(null);
+  const [animate, setAnimate] = useState(false);
+  const [arcTip,  setArcTip]  = useState(null); // { arc, x, y } in viewport coords
 
   useEffect(() => {
     if (!visible) { setAnimate(false); return; }
@@ -201,8 +203,6 @@ function DonutChart({ campaigns, visible }) {
     return { ...seg, start, end: start + sweep };
   });
 
-  const hs = hoveredSeg;
-
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'nowrap' }}>
       <svg viewBox="0 0 180 180" width={120} height={120}
@@ -217,38 +217,24 @@ function DonutChart({ campaigns, visible }) {
         {arcs.map((arc, i) => (
           <path key={arc.label} d={arcPath(CX, CY, OR, IR, arc.start, arc.end)} fill={arc.color}
             style={{
-              opacity: animate ? (hs && hs.label !== arc.label ? 0.45 : 1) : 0,
+              opacity: animate ? (arcTip && arcTip.arc.label !== arc.label ? 0.45 : 1) : 0,
               transform: animate ? 'scale(1)' : 'scale(0.6)',
               transformOrigin: '50% 50%',
               transition: `opacity 0.18s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.07}s`,
               cursor: 'pointer',
             }}
-            onMouseEnter={() => setHoveredSeg(arc)}
-            onMouseLeave={() => setHoveredSeg(null)}
+            onMouseMove={(e) => setArcTip({ arc, x: e.clientX, y: e.clientY })}
+            onMouseLeave={() => setArcTip(null)}
           />
         ))}
 
-        {hs ? (
-          <>
-            <text x={CX} y={CY - 8} textAnchor="middle" fontSize={13} fontWeight={700} fill={hs.color}>
-              {hs.label}
-            </text>
-            <text x={CX} y={CY + 8} textAnchor="middle" fontSize={16} fontWeight={700} fill="#e2e4f0">
-              {hs.count}
-            </text>
-            <text x={CX} y={CY + 22} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.45)">
-              {Math.round((hs.count / total) * 100)}%
-            </text>
-          </>
-        ) : (
-          <>
-            <text x={CX} y={CY - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#e2e4f0"
-              style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.3s' }}>{total}</text>
-            <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
-              style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
-          </>
-        )}
+        {/* Center text — always shows total count */}
+        <text x={CX} y={CY - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#e2e4f0"
+          style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.3s' }}>{total}</text>
+        <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.4)"
+          style={{ opacity: animate ? 1 : 0, transition: 'opacity 0.3s ease 0.35s' }}>campaigns</text>
       </svg>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 0 }}>
         {segs.map((seg, i) => (
           <div key={seg.label} style={{
@@ -270,6 +256,34 @@ function DonutChart({ campaigns, visible }) {
           </div>
         ))}
       </div>
+
+      {/* Cursor-following tooltip — fixed so overflow:hidden never clips it */}
+      {arcTip && (
+        <div style={{
+          position: 'fixed',
+          left: arcTip.x + 14,
+          top: arcTip.y - 56,
+          background: '#1a2035',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 6,
+          padding: '6px 10px',
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+          zIndex: 9999,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: arcTip.arc.color, flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{arcTip.arc.label}</span>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
+            {arcTip.arc.count}
+            <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 5 }}>
+              ({Math.round((arcTip.arc.count / total) * 100)}%)
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
