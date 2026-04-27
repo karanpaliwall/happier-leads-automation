@@ -5,6 +5,19 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Campaigns charts: match reference UI + fix donut layout overflow
+
+- What changed:
+  - **Bar chart** now sorts by Emails Sent (`total_count` / `unique_sent_count`) instead of Total Leads, title updated to "Top 10 Campaigns by Emails Sent". Bar color changed to solid `#4A7BF7`. Row height reduced (38→30), bar height (20→16), tick height (28→22) for more compact rows.
+  - **API route** gains an `emailsSent` field (`a.total_count || a.unique_sent_count`). `totalLeads` no longer falls back to `total_count` (different metric — would have mixed lead counts with email send counts).
+  - **Donut chart** simplified to 3 fixed segments only — Active (green `#4ade80`), Paused (gold `#facc15`), Completed (blue `#60a5fa`, merges FINISHED). Count shown as a small dark chip badge beside the percentage. Ring dimensions: OR=66, IR=46.
+  - **Donut layout overflow fixed** — root cause: `SVG(140px) + gap(24px) + legend-minWidth(148px) = 312px` overflowed the 260px inner width of the right card, forcing the legend to wrap below the donut and doubling the card height. Fixed by: right grid column 300px→320px, SVG 140→120px, gap 24→16px, legend uses `flex: 1 / minWidth: 0` instead of a fixed minWidth, `flexWrap: nowrap`.
+  - **Chart grid**: `align-items: start` added so the bar chart card doesn't stretch to match the taller donut card.
+- Why: Reference UI screenshot shows compact, proportional charts. Previous implementation had wrong metric (Total Leads vs Emails Sent), all-status donut instead of 3 fixed segments, and a layout bug that made the donut card very tall when the legend wrapped.
+- Files affected: `src/app/campaigns/page.jsx`, `src/app/api/smartlead/campaigns/route.js`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-27 — SmartLead analytics: fix zero-data by correcting field names
 
 - What changed: All lead-stat columns on the Campaigns page (Total Leads, In Progress, Yet to Start, Completed, Blocked) were showing 0 despite real data existing. Root cause was wrong field names in `fetchOneCampaign` — the code guessed at names like `total_lead_count`, `in_progress_count`, `not_contacted_count` which SmartLead does not return. Fixed to use the real response structure: lead stats live inside a nested `campaign_lead_stats` object with fields `total`, `inprogress` (no underscore), `notStarted` (camelCase), `completed`, `blocked`. Top-level fields `open_count`, `reply_count`, `click_count`, `total_count` were already correct.
