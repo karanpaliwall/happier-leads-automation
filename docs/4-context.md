@@ -5,6 +5,20 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Full campaigns audit + fixes
+
+- What changed:
+  - **Donut chart** — added ARCHIVED, DRAFT, FAILED to `DONUT_SEGS`. Previously those 3 statuses were silently excluded from the chart; campaigns with those statuses would not appear in the breakdown at all.
+  - **SmartLead field mappings (previous commit)** — `totalLeads` now uses `total_count` (502, matches SmartLead native UI) not `cls.total` (127). `sendPending` now correctly uses `total_count − sent_count` (pending emails) instead of `cls.notStarted` (duplicate of Yet to Start). `emailsSent` uses `sent_count`. All numeric fields wrapped in `Number()` since SmartLead returns counts as strings.
+  - **Opens/Replies %** — denominator changed to `emailsSent` (sent_count = 180), giving 1% for replies instead of 2%. Matches SmartLead native UI reference.
+  - **Sent column** — added to campaigns table showing `sent_count` from SmartLead.
+  - **Debug log** — `console.log` used to audit field names has been removed.
+- Why: Full audit requested to ensure every new campaign added shows accurate real-time data with no duplicate or wrong field mappings.
+- Real-time data confirmed: `force-dynamic` on route, `cache: 'no-store'` on all SmartLead fetches, `Cache-Control: no-store` on response, `?_t=timestamp` + `cache: 'no-store'` on frontend fetch, auto-refresh every 2 min.
+- Files affected: `src/app/campaigns/page.jsx`, `src/app/api/smartlead/campaigns/route.js`
+
+---
+
 ## 2026-04-27 — Donut chart hover: floating cursor-following tooltip
 
 - What changed: The DonutChart hover was changing the SVG center text (label + count + %) when hovering an arc segment. Replaced with a floating HTML tooltip that follows the cursor — matching the reference UI. Implementation: removed `hoveredSeg` state; added `arcTip: { arc, x, y }` state updated on `onMouseMove` with `e.clientX/e.clientY`; tooltip rendered as `position: fixed` so `overflow: hidden` on `.campaigns-charts-inner` never clips it; center text always shows `total + "campaigns"`. The BarChart also has a cursor-following tooltip (via `containerRef` + `getBoundingClientRect()`).

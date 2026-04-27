@@ -172,9 +172,12 @@ function BarChart({ campaigns, visible }) {
 }
 
 const DONUT_SEGS = [
-  { label: 'Active',    statuses: ['ACTIVE'],               color: '#4ade80' },
-  { label: 'Paused',    statuses: ['PAUSED'],               color: '#facc15' },
+  { label: 'Active',    statuses: ['ACTIVE'],                color: '#4ade80' },
+  { label: 'Paused',    statuses: ['PAUSED'],                color: '#facc15' },
   { label: 'Completed', statuses: ['COMPLETED', 'FINISHED'], color: '#60a5fa' },
+  { label: 'Archived',  statuses: ['ARCHIVED'],              color: '#9ca3af' },
+  { label: 'Draft',     statuses: ['DRAFT'],                 color: '#6b7280' },
+  { label: 'Failed',    statuses: ['FAILED'],                color: '#f87171' },
 ];
 
 function DonutChart({ campaigns, visible }) {
