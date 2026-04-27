@@ -1662,6 +1662,35 @@ body { overflow-x: hidden; }
   flex-wrap: wrap;
   align-items: center;
 }
+/* ── Column pin button & percentage ── */
+.col-header-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.col-pin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: 0.5;
+  border-radius: 3px;
+  transition: opacity 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.col-pin-btn:hover { opacity: 1; color: var(--text-primary); }
+.col-pin-btn.col-pin-active { opacity: 1; color: var(--blue-400); }
+.col-pct {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 .tab-pill-divider {
   display: inline-block;
   width: 1px;

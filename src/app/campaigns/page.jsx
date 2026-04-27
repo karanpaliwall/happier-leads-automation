@@ -20,6 +20,22 @@ const STATUS_COLORS = {
   ARCHIVED:  '#9ca3af',
 };
 
+const COLS = [
+  { key: 'name',        label: 'Campaign Name', align: 'left',  w: 220 },
+  { key: 'status',      label: 'Status',        align: 'left',  w: 90  },
+  { key: 'totalLeads',  label: 'Total',         align: 'right', w: 80  },
+  { key: 'completed',   label: 'Completed',     align: 'right', w: 100 },
+  { key: 'inProgress',  label: 'In Progress',   align: 'right', w: 100 },
+  { key: 'yetToStart',  label: 'Yet to Start',  align: 'right', w: 100 },
+  { key: 'blocked',     label: 'Blocked',       align: 'right', w: 90  },
+  { key: 'sendPending', label: 'Send Pending',  align: 'right', w: 115 },
+  { key: 'opens',       label: 'Opens',         align: 'right', w: 115 },
+  { key: 'replies',     label: 'Replies',       align: 'right', w: 115 },
+  { key: 'bounces',     label: 'Bounces',       align: 'right', w: 90  },
+  { key: 'clicks',      label: 'Clicks',        align: 'right', w: 80  },
+  { key: 'created',     label: 'Created',       align: 'left',  w: 110 },
+];
+
 // ── SVG arc helpers ──────────────────────────────────────────────────────────
 function polar(cx, cy, r, deg) {
   const rad = (deg * Math.PI) / 180;
@@ -241,6 +257,24 @@ export default function CampaignsPage() {
 
   // Hover row (for remove button)
   const [hoverRow,    setHoverRow]      = useState(null);
+
+  // Column pin
+  const [hoverCol,   setHoverCol]       = useState(null);
+  const [pinnedCols, setPinnedCols]     = useState(new Set());
+
+  function togglePin(key) {
+    setPinnedCols(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  }
+
+  function stickyStyle(key) {
+    if (!pinnedCols.has(key)) return {};
+    let left = 0;
+    for (const col of COLS) {
+      if (col.key === key) break;
+      if (pinnedCols.has(col.key)) left += col.w;
+    }
+    return { position: 'sticky', left, zIndex: 2, background: 'var(--bg-card)' };
+  }
 
   const calRef      = useRef(null);
   const debRef      = useRef(null);
@@ -556,63 +590,92 @@ export default function CampaignsPage() {
               <table>
                 <thead>
                   <tr>
-                    <th style={{ minWidth: 220 }}>Campaign Name</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Total</th>
-                    <th style={{ textAlign: 'right' }}>Completed</th>
-                    <th style={{ textAlign: 'right' }}>In Progress</th>
-                    <th style={{ textAlign: 'right' }}>Yet to Start</th>
-                    <th style={{ textAlign: 'right' }}>Blocked</th>
-                    <th style={{ textAlign: 'right' }}>Send Pending</th>
-                    <th style={{ textAlign: 'right' }}>Opens</th>
-                    <th style={{ textAlign: 'right' }}>Replies</th>
-                    <th style={{ textAlign: 'right' }}>Bounces</th>
-                    <th style={{ textAlign: 'right' }}>Clicks</th>
-                    <th style={{ minWidth: 100 }}>Created</th>
+                    {COLS.map(col => {
+                      const isP = pinnedCols.has(col.key);
+                      const showPin = hoverCol === col.key || isP;
+                      return (
+                        <th key={col.key}
+                          style={{ textAlign: col.align, minWidth: col.w, ...stickyStyle(col.key) }}
+                          onMouseEnter={() => setHoverCol(col.key)}
+                          onMouseLeave={() => setHoverCol(null)}>
+                          <span className="col-header-wrap">
+                            <span>{col.label}</span>
+                            {showPin && (
+                              <button className={`col-pin-btn${isP ? ' col-pin-active' : ''}`}
+                                onClick={e => { e.stopPropagation(); togglePin(col.key); }}
+                                title={isP ? 'Unpin column' : 'Pin column'}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill={isP ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="12" y1="17" x2="12" y2="22"/>
+                                  <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+                                </svg>
+                              </button>
+                            )}
+                          </span>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={13} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                      <td colSpan={COLS.length} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
                         No campaigns match your filters.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map(c => (
-                      <tr key={c.id} className="lead-row campaign-data-row"
-                        onMouseEnter={() => setHoverRow(c.id)}
-                        onMouseLeave={() => setHoverRow(null)}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.name}</span>
-                            {hoverRow === c.id && (
-                              <button className="campaign-remove-btn"
-                                onClick={e => { e.stopPropagation(); removeCampaign(c.id); }}
-                                title="Remove campaign">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                        <td><CampaignBadge status={c.status} /></td>
-                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(c.totalLeads || 0).toLocaleString()}</td>
-                        <td style={{ textAlign: 'right' }}><N v={c.completed}   cls="num-blue"   /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.inProgress}  cls="num-green"  /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.yetToStart}  cls="num-yellow" /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.blocked}     cls="num-red"    /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.sendPending} cls="num-orange" /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.opens}       cls="num-blue"   /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.replies}     cls="num-green"  /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.bounces}     cls="num-red"    /></td>
-                        <td style={{ textAlign: 'right' }}><N v={c.clicks}      cls="num-orange" /></td>
-                        <td style={{ color: 'var(--text-muted)', fontSize: 12, whiteSpace: 'nowrap' }}>
-                          {c.created ? new Date(c.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                        </td>
-                      </tr>
-                    ))
+                    filtered.map(c => {
+                      const pct = v => c.totalLeads > 0 ? Math.round((v || 0) / c.totalLeads * 100) : 0;
+                      return (
+                        <tr key={c.id} className="lead-row campaign-data-row"
+                          onMouseEnter={() => setHoverRow(c.id)}
+                          onMouseLeave={() => setHoverRow(null)}>
+                          {COLS.map(col => {
+                            const ss = stickyStyle(col.key);
+                            const ra = { textAlign: 'right' };
+                            switch (col.key) {
+                              case 'name': return (
+                                <td key="name" style={ss}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{c.name}</span>
+                                    {hoverRow === c.id && (
+                                      <button className="campaign-remove-btn" onClick={e => { e.stopPropagation(); removeCampaign(c.id); }} title="Remove campaign">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                              case 'status':      return <td key="status"      style={ss}><CampaignBadge status={c.status} /></td>;
+                              case 'totalLeads':  return <td key="totalLeads"  style={{ ...ra, fontVariantNumeric: 'tabular-nums', ...ss }}>{(c.totalLeads || 0).toLocaleString()}</td>;
+                              case 'completed':   return <td key="completed"   style={{ ...ra, ...ss }}><N v={c.completed}   cls="num-blue"   /></td>;
+                              case 'inProgress':  return <td key="inProgress"  style={{ ...ra, ...ss }}><N v={c.inProgress}  cls="num-green"  /></td>;
+                              case 'yetToStart':  return <td key="yetToStart"  style={{ ...ra, ...ss }}><N v={c.yetToStart}  cls="num-yellow" /></td>;
+                              case 'blocked':     return <td key="blocked"     style={{ ...ra, ...ss }}><N v={c.blocked}     cls="num-red"    /></td>;
+                              case 'sendPending': return <td key="sendPending" style={{ ...ra, ...ss }}><N v={c.sendPending} cls="num-orange" /></td>;
+                              case 'opens':       return (
+                                <td key="opens" style={{ ...ra, ...ss }}>
+                                  <span className="num-blue">{(c.opens || 0).toLocaleString()}</span>
+                                  <span className="col-pct"> ({pct(c.opens)}%)</span>
+                                </td>
+                              );
+                              case 'replies':     return (
+                                <td key="replies" style={{ ...ra, ...ss }}>
+                                  <span className="num-green">{(c.replies || 0).toLocaleString()}</span>
+                                  <span className="col-pct"> ({pct(c.replies)}%)</span>
+                                </td>
+                              );
+                              case 'bounces':     return <td key="bounces"     style={{ ...ra, ...ss }}><N v={c.bounces}     cls="num-red"    /></td>;
+                              case 'clicks':      return <td key="clicks"      style={{ ...ra, ...ss }}><N v={c.clicks}      cls="num-orange" /></td>;
+                              case 'created':     return <td key="created"     style={{ color: 'var(--text-muted)', fontSize: 12, whiteSpace: 'nowrap', ...ss }}>{c.created ? new Date(c.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</td>;
+                              default: return <td key={col.key} />;
+                            }
+                          })}
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
