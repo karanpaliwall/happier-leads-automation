@@ -15,6 +15,7 @@ async function hrGet(path, apiKey) {
       cache: 'no-store',
       signal: ctrl.signal,
     });
+    if (res.status === 401) return { __authError: true };
     if (!res.ok) return null;
     const text = await res.text();
     if (!text) return null;
@@ -33,11 +34,14 @@ async function fetchOneCampaign(id, apiKey) {
   ]);
 
   const info = infoRes.value;
+  if (info?.__authError) throw new Error('HEYREACH_INVALID_KEY');
   if (!info?.id) return null;
 
   // Stats may be embedded in info.statistics or come from the dedicated stats endpoint
   const embedded = info.statistics ?? info.stats ?? {};
-  const s = (statsRes.status === 'fulfilled' && statsRes.value) ? statsRes.value : embedded;
+  const s = (statsRes.status === 'fulfilled' && statsRes.value && !statsRes.value.__authError)
+    ? statsRes.value
+    : embedded;
 
   // Normalize status: HeyReach uses IN_PROGRESS for running campaigns
   const rawStatus = (info.status ?? '').toUpperCase();
@@ -69,6 +73,13 @@ export async function GET(request) {
   if (!ids.length) return NextResponse.json({ campaigns: [], fetchedAt: new Date().toISOString() });
 
   const results = await Promise.allSettled(ids.map(id => fetchOneCampaign(id, apiKey)));
+
+  // Surface auth errors immediately so the UI can show a clear message
+  const invalidKey = results.some(r => r.status === 'rejected' && r.reason?.message === 'HEYREACH_INVALID_KEY');
+  if (invalidKey) {
+    return NextResponse.json({ error: 'HEYREACH_INVALID_KEY' }, { status: 401 });
+  }
+
   const campaigns = results
     .filter(r => r.status === 'fulfilled' && r.value != null)
     .map(r => r.value);

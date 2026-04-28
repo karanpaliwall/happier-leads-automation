@@ -364,18 +364,15 @@ export default function HeyReachCampaignsPage() {
         if (!res.ok) return;
         const { ids: serverIds = [] } = await res.json();
 
-        if (!localStorage.getItem('hr-ids-migrated')) {
-          for (const id of localIds) {
-            if (!serverIds.includes(id)) {
-              await fetch('/api/heyreach/campaign-ids', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id }),
-              }).catch(() => {});
-              serverIds.push(id);
-            }
+        for (const id of localIds) {
+          if (!serverIds.includes(id)) {
+            await fetch('/api/heyreach/campaign-ids', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            }).catch(() => {});
+            serverIds.push(id);
           }
-          localStorage.setItem('hr-ids-migrated', '1');
         }
 
         setCampaignIds(serverIds);
@@ -668,7 +665,9 @@ export default function HeyReachCampaignsPage() {
         {/* Error */}
         {error && (
           <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red-400)', fontSize: 13 }}>
-            {error.includes('HEYREACH_API_KEY')
+            {error.includes('HEYREACH_INVALID_KEY')
+              ? 'HeyReach API key is invalid. Please update HEYREACH_API_KEY in Vercel environment settings with the correct key from your HeyReach account (Settings → API).'
+              : error.includes('HEYREACH_API_KEY')
               ? 'HeyReach API key not configured. Add HEYREACH_API_KEY to your environment variables.'
               : `Failed to load campaign data: ${error}`}
           </div>

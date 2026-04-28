@@ -396,21 +396,18 @@ export default function CampaignsPage() {
         if (!res.ok) return; // Keep localStorage cache on auth/network error
         const { ids: serverIds = [] } = await res.json();
 
-        // 3. Push any IDs only in localStorage (not yet on server) — handles migration
-        //    across browsers/devices as long as one browser still has the old data.
-        //    Guarded by a flag so removed IDs don't keep reappearing after migration.
-        if (!localStorage.getItem('sl-ids-migrated')) {
-          for (const id of localIds) {
-            if (!serverIds.includes(id)) {
-              await fetch('/api/campaigns/ids', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id }),
-              }).catch(() => {});
-              serverIds.push(id);
-            }
+        // 3. Push any IDs present locally but missing on server — runs every load
+        //    so any device that still has localStorage data can sync to server,
+        //    regardless of which device visits first.
+        for (const id of localIds) {
+          if (!serverIds.includes(id)) {
+            await fetch('/api/campaigns/ids', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            }).catch(() => {});
+            serverIds.push(id);
           }
-          localStorage.setItem('sl-ids-migrated', '1');
         }
 
         // 4. Server is authoritative; keep localStorage as offline cache
