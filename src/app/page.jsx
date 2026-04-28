@@ -599,7 +599,7 @@ export default function OverviewPage() {
     const beforeSug   = compareRaw.reduce((s, p) => s + p.suggested, 0);
     const afterTotal  = afterExact + afterSug;
     const beforeTotal = beforeExact + beforeSug;
-    const pct = beforeTotal === 0 ? null : Math.round(((afterTotal - beforeTotal) / beforeTotal) * 100);
+    const pct = beforeTotal < 5 ? null : Math.round(((afterTotal - beforeTotal) / beforeTotal) * 100);
     return { afterExact, afterSug, beforeExact, beforeSug, afterTotal, beforeTotal, pct };
   }, [chartPoints, compareRaw, cmpBounds, chartLoading]);
 
