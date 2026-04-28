@@ -10,26 +10,20 @@ const STATUS_PILLS = [
   { label: 'Draft',     value: 'DRAFT',     color: '#9ca3af',         bg: 'rgba(107,114,128,0.13)' },
 ];
 
-const STATUS_COLORS = {
-  ACTIVE:    '#4ade80',
-  PAUSED:    '#facc15',
-  COMPLETED: '#60a5fa',
-  FINISHED:  '#60a5fa',
-  DRAFT:     '#9ca3af',
-  CANCELLED: '#f87171',
-  CANCELED:  '#f87171',
-  FAILED:    '#f87171',
-};
-
 const COLS = [
-  { key: 'name',         label: 'Campaign Name', align: 'left',  w: 220 },
-  { key: 'status',       label: 'Status',        align: 'left',  w: 90  },
-  { key: 'totalLeads',   label: 'Total',         align: 'right', w: 80  },
-  { key: 'invitesSent',  label: 'Invites Sent',  align: 'right', w: 110 },
-  { key: 'accepted',     label: 'Accepted',      align: 'right', w: 130 },
-  { key: 'messagesSent', label: 'Msgs Sent',     align: 'right', w: 100 },
-  { key: 'replies',      label: 'Replies',       align: 'right', w: 110 },
-  { key: 'created',      label: 'Created',       align: 'left',  w: 110 },
+  { key: 'name',       label: 'Campaign Name', align: 'left',  w: 220 },
+  { key: 'status',     label: 'Status',        align: 'left',  w: 90  },
+  { key: 'list',       label: 'List',          align: 'left',  w: 160 },
+  { key: 'total',      label: 'Total',         align: 'right', w: 70  },
+  { key: 'inProgress', label: 'In Progress',   align: 'right', w: 105 },
+  { key: 'pending',    label: 'Pending',       align: 'right', w: 85  },
+  { key: 'finished',   label: 'Finished',      align: 'right', w: 85  },
+  { key: 'failed',     label: 'Failed',        align: 'right', w: 70  },
+  { key: 'stopped',    label: 'Stopped',       align: 'right', w: 85  },
+  { key: 'excluded',   label: 'Excluded',      align: 'right', w: 85  },
+  { key: 'acceptRate', label: 'Accept Rate',   align: 'right', w: 105 },
+  { key: 'replyRate',  label: 'Reply Rate',    align: 'right', w: 95  },
+  { key: 'created',    label: 'Created',       align: 'left',  w: 110 },
 ];
 
 // ── SVG arc helpers ──────────────────────────────────────────────────────────
@@ -61,12 +55,12 @@ function BarChart({ campaigns, visible }) {
     return () => clearTimeout(t);
   }, [visible]);
 
-  if (!campaigns.length || !campaigns.some(c => c.invitesSent > 0)) {
-    return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No invite data available yet</p>;
+  if (!campaigns.length || !campaigns.some(c => c.total > 0)) {
+    return <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '20px 0', textAlign: 'center' }}>No data available yet</p>;
   }
 
-  const top = [...campaigns].sort((a, b) => (b.invitesSent || 0) - (a.invitesSent || 0)).slice(0, 10);
-  const maxVal = Math.max(...top.map(c => c.invitesSent || 0), 1);
+  const top = [...campaigns].sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 10);
+  const maxVal = Math.max(...top.map(c => c.total || 0), 1);
   const tickFractions = [0, 0.25, 0.5, 0.75, 1];
   const TOOLTIP_H = 58;
 
@@ -82,7 +76,7 @@ function BarChart({ campaigns, visible }) {
       ))}
 
       {top.map((c, i) => {
-        const pct    = Math.max((c.invitesSent / maxVal) * 100, 0.3);
+        const pct    = Math.max((c.total / maxVal) * 100, 0.3);
         const label  = c.name.length > 21 ? c.name.slice(0, 20) + '…' : c.name;
         const hovered = tooltip?.campaign?.id === c.id;
         return (
@@ -131,7 +125,7 @@ function BarChart({ campaigns, visible }) {
             whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(0,0,0,0.5)', zIndex: 20,
           }}>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>{tooltip.campaign.name}</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{(tooltip.campaign.invitesSent || 0).toLocaleString()}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{(tooltip.campaign.total || 0).toLocaleString()}</div>
           </div>
         );
       })()}
@@ -285,14 +279,16 @@ function N({ v, cls }) {
 }
 
 function exportCSV(campaigns) {
-  const headers = ['Campaign Name', 'Status', 'Total Leads', 'Invites Sent', 'Accepted', 'Accept Rate', 'Msgs Sent', 'Replies', 'Reply Rate', 'Created'];
+  const headers = ['Campaign Name', 'Status', 'List', 'Total', 'In Progress', 'Pending', 'Finished', 'Failed', 'Stopped', 'Excluded', 'Accept Rate', 'Reply Rate', 'Created'];
   const rows = campaigns.map(c => {
     const acceptRate = c.invitesSent > 0 ? Math.round((c.accepted / c.invitesSent) * 100) : 0;
     const replyRate  = c.invitesSent > 0 ? Math.round((c.replies  / c.invitesSent) * 100) : 0;
     return [
       `"${(c.name || '').replace(/"/g, '""')}"`,
-      c.status, c.totalLeads, c.invitesSent, c.accepted, `${acceptRate}%`,
-      c.messagesSent, c.replies, `${replyRate}%`,
+      c.status,
+      `"${(c.list || '').replace(/"/g, '""')}"`,
+      c.total, c.inProgress, c.pending, c.finished, c.failed, c.stopped, c.excluded,
+      `${acceptRate}%`, `${replyRate}%`,
       c.created ? new Date(c.created).toLocaleDateString() : '',
     ];
   });
@@ -482,14 +478,14 @@ export default function HeyReachCampaignsPage() {
   });
 
   const stats = {
-    total:        campaigns.length,
-    active:       campaigns.filter(c => c.status === 'ACTIVE').length,
-    paused:       campaigns.filter(c => c.status === 'PAUSED').length,
-    completed:    campaigns.filter(c => c.status === 'COMPLETED' || c.status === 'FINISHED').length,
-    totalLeads:   campaigns.reduce((s, c) => s + (c.totalLeads   || 0), 0),
-    invitesSent:  campaigns.reduce((s, c) => s + (c.invitesSent  || 0), 0),
-    accepted:     campaigns.reduce((s, c) => s + (c.accepted     || 0), 0),
-    replies:      campaigns.reduce((s, c) => s + (c.replies      || 0), 0),
+    total:      campaigns.length,
+    active:     campaigns.filter(c => c.status === 'ACTIVE').length,
+    paused:     campaigns.filter(c => c.status === 'PAUSED').length,
+    completed:  campaigns.filter(c => c.status === 'COMPLETED' || c.status === 'FINISHED').length,
+    totalLeads: campaigns.reduce((s, c) => s + (c.total      || 0), 0),
+    inProgress: campaigns.reduce((s, c) => s + (c.inProgress || 0), 0),
+    finished:   campaigns.reduce((s, c) => s + (c.finished   || 0), 0),
+    failed:     campaigns.reduce((s, c) => s + (c.failed     || 0), 0),
   };
 
   const pillCounts = {
@@ -606,16 +602,16 @@ export default function HeyReachCampaignsPage() {
               <span className="tab-pill-stat-value">{stats.totalLeads.toLocaleString()}</span>
             </span>
             <span className="tab-pill-stat">
-              <span className="tab-pill-stat-label">Invites Sent</span>
-              <span className="tab-pill-stat-value stat-val-blue">{stats.invitesSent.toLocaleString()}</span>
+              <span className="tab-pill-stat-label">In Progress</span>
+              <span className="tab-pill-stat-value stat-val-blue">{stats.inProgress.toLocaleString()}</span>
             </span>
             <span className="tab-pill-stat">
-              <span className="tab-pill-stat-label">Accepted</span>
-              <span className="tab-pill-stat-value stat-val-green">{stats.accepted.toLocaleString()}</span>
+              <span className="tab-pill-stat-label">Finished</span>
+              <span className="tab-pill-stat-value stat-val-green">{stats.finished.toLocaleString()}</span>
             </span>
             <span className="tab-pill-stat">
-              <span className="tab-pill-stat-label">Replies</span>
-              <span className="tab-pill-stat-value stat-val-green">{stats.replies.toLocaleString()}</span>
+              <span className="tab-pill-stat-label">Failed</span>
+              <span className="tab-pill-stat-value stat-val-red">{stats.failed.toLocaleString()}</span>
             </span>
             <span className="tab-pill-stat">
               <span className="tab-pill-stat-label">Last Synced</span>
@@ -647,7 +643,7 @@ export default function HeyReachCampaignsPage() {
               <div className="campaigns-charts-inner">
                 <div className="campaigns-charts-grid">
                   <div className="card" style={{ padding: '18px 20px' }}>
-                    <p className="card-title" style={{ marginBottom: 14 }}>Top 10 Campaigns by Invites Sent</p>
+                    <p className="card-title" style={{ marginBottom: 14 }}>Top 10 Campaigns by Total Leads</p>
                     <BarChart campaigns={campaigns} visible={showCharts} />
                   </div>
                   <div className="card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column' }}>
@@ -666,7 +662,7 @@ export default function HeyReachCampaignsPage() {
         {error && (
           <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red-400)', fontSize: 13 }}>
             {error.includes('HEYREACH_INVALID_KEY')
-              ? 'HeyReach API key is invalid. Please update HEYREACH_API_KEY in Vercel environment settings with the correct key from your HeyReach account (Settings → API).'
+              ? 'HeyReach API key is invalid. Please update HEYREACH_API_KEY in Vercel environment settings.'
               : error.includes('HEYREACH_API_KEY')
               ? 'HeyReach API key not configured. Add HEYREACH_API_KEY to your environment variables.'
               : `Failed to load campaign data: ${error}`}
@@ -762,19 +758,28 @@ export default function HeyReachCampaignsPage() {
                                   </div>
                                 </td>
                               );
-                              case 'status':       return <td key="status"       style={ss}><CampaignBadge status={c.status} /></td>;
-                              case 'totalLeads':   return <td key="totalLeads"   style={{ ...ra, fontVariantNumeric: 'tabular-nums', ...ss }}>{(c.totalLeads || 0).toLocaleString()}</td>;
-                              case 'invitesSent':  return <td key="invitesSent"  style={{ ...ra, ...ss }}><N v={c.invitesSent}  cls="num-blue"  /></td>;
-                              case 'accepted':     return (
-                                <td key="accepted" style={{ ...ra, ...ss }}>
-                                  <span className="num-green">{(c.accepted || 0).toLocaleString()}</span>
+                              case 'status': return <td key="status" style={ss}><CampaignBadge status={c.status} /></td>;
+                              case 'list': return (
+                                <td key="list" style={{ color: 'var(--text-muted)', fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...ss }}>
+                                  {c.list || '—'}
+                                </td>
+                              );
+                              case 'total':      return <td key="total"      style={{ ...ra, fontVariantNumeric: 'tabular-nums', ...ss }}>{(c.total || 0).toLocaleString()}</td>;
+                              case 'inProgress': return <td key="inProgress" style={{ ...ra, ...ss }}><N v={c.inProgress} cls="num-blue"   /></td>;
+                              case 'pending':    return <td key="pending"    style={{ ...ra, ...ss }}><N v={c.pending}    cls="num-yellow" /></td>;
+                              case 'finished':   return <td key="finished"   style={{ ...ra, ...ss }}><N v={c.finished}   cls="num-green"  /></td>;
+                              case 'failed':     return <td key="failed"     style={{ ...ra, ...ss }}><N v={c.failed}     cls="num-red"    /></td>;
+                              case 'stopped':    return <td key="stopped"    style={{ ...ra, ...ss }}><N v={c.stopped}    cls="num-orange" /></td>;
+                              case 'excluded':   return <td key="excluded"   style={{ ...ra, ...ss }}><N v={c.excluded}   cls="num-yellow" /></td>;
+                              case 'acceptRate': return (
+                                <td key="acceptRate" style={{ ...ra, ...ss }}>
+                                  <span className="num-green">{c.accepted.toLocaleString()}</span>
                                   <span className="col-pct"> ({acceptPct}%)</span>
                                 </td>
                               );
-                              case 'messagesSent': return <td key="messagesSent" style={{ ...ra, ...ss }}><N v={c.messagesSent} cls="num-blue"  /></td>;
-                              case 'replies':      return (
-                                <td key="replies" style={{ ...ra, ...ss }}>
-                                  <span className="num-green">{(c.replies || 0).toLocaleString()}</span>
+                              case 'replyRate': return (
+                                <td key="replyRate" style={{ ...ra, ...ss }}>
+                                  <span className="num-green">{c.replies.toLocaleString()}</span>
                                   <span className="col-pct"> ({replyPct}%)</span>
                                 </td>
                               );
