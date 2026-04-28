@@ -1150,12 +1150,6 @@ body { overflow-x: hidden; }
   font-weight: 600;
   letter-spacing: 0.6px;
 }
-/* Collapsed: thin horizontal rule between icon groups */
-.sidebar-section-divider-collapsed {
-  height: 1px;
-  background: var(--border-color);
-  margin: 6px 8px;
-}
 .main-content {
   /* transition added only after mount */
   /* min-width:0 lets this flex item shrink below its content width;

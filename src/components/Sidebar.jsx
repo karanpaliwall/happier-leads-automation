@@ -159,7 +159,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       <nav className="sidebar-nav">
         {NAV_SECTIONS.map((section, idx) => (
           <div key={section.label} className={idx > 0 ? 'sidebar-section-divided' : ''}>
-            {!isCollapsed ? (
+            {!isCollapsed && (
               <div className="sidebar-section-header">
                 {section.badge && (
                   <span className="sidebar-section-badge" style={{ background: section.badge.bg, color: section.badge.color }}>
@@ -168,9 +168,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
                 )}
                 <span className="sidebar-section-label">{section.label}</span>
               </div>
-            ) : idx > 0 ? (
-              <div className="sidebar-section-divider-collapsed" />
-            ) : null}
+            )}
             {section.items.map(item => (
               <Link
                 key={item.href}
