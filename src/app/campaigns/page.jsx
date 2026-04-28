@@ -357,13 +357,16 @@ export default function CampaignsPage() {
 
   const { hoverCol, setHoverCol, pinnedCols, togglePin, stickyStyle } = usePinnedColumns(COLS);
 
-  const calRef      = useRef(null);
-  const debRef      = useRef(null);
-  const dialogInRef = useRef(null);
+  const calRef        = useRef(null);
+  const debRef        = useRef(null);
+  const dialogInRef   = useRef(null);
+  const syncInFlight  = useRef(false);
 
   // ── Load IDs: render from localStorage cache immediately, sync with server ──
   useEffect(() => {
     async function loadIds() {
+      if (syncInFlight.current) return;
+      syncInFlight.current = true;
       // 1. Show localStorage cache right away so there's no flicker on revisit
       let localIds = [];
       try {
@@ -396,6 +399,8 @@ export default function CampaignsPage() {
         localStorage.setItem('sl-campaign-ids', JSON.stringify(serverIds));
       } catch {
         // Network failure — keep showing localStorage cache (already set above)
+      } finally {
+        syncInFlight.current = false;
       }
     }
     loadIds();

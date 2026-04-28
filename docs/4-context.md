@@ -16,8 +16,18 @@ Read this first when resuming work to get back up to speed.
   - **Campaign ID validation** — both add-campaign dialogs now verify the ID exists against the live API before saving. Shows "Campaign ID X not found" error with spinner during check.
 - Why: Security review (auth fails open), dead UI data (always-zero columns), input security (URL injection), code dedup.
 - Files affected: `src/lib/auth.js`, `src/app/api/heyreach/campaigns/route.js`, `src/app/heyreach/campaigns/page.jsx`, `src/app/campaigns/page.jsx`, `src/components/NumCell.jsx` (new), `src/hooks/usePinnedColumns.js` (new)
-- Todos resolved: #018, #019, #020, #022 (complete); #021 (partial — shared components extracted, sync logic still duplicated)
-- Todos still open: #017 (cross-device sync sequential waterfall), #021 (sync logic dedup)
+- Todos resolved: #017 (HeyReach sync was already parallel; confirmed + cross-device sync race fix applied), #018, #019, #020, #021, #022 — all complete
+
+---
+
+## 2026-04-28 — Auth hardening: middleware + login route + sync in-flight guard
+
+- What changed:
+  - **middleware.js** — removed hardcoded `SESSION_TOKEN || 'gl-auth-v1'` fallback. If `SESSION_TOKEN` env var is missing, middleware now redirects to `/login` (consistent with wrong-session behaviour) rather than silently accepting a publicly-known token value.
+  - **login/route.js** — removed hardcoded `LOGIN_PASSWORD` and `SESSION_TOKEN` fallbacks. Returns 500 if either env var is missing; no default credentials in source code.
+  - **In-flight sync guard** — added `syncInFlight` ref to both `campaigns/page.jsx` and `heyreach/campaigns/page.jsx`. `loadIds()` exits immediately if already running, preventing React StrictMode double-invoke or rapid re-mounts from firing duplicate `Promise.all` sync requests. Flag reset in `finally` so it clears on error too.
+- Why: Completing todo #020 across all three auth files (auth.js was fixed by linter; middleware + login were missed). In-flight guard closes the concurrent-mount race noted in todo #017.
+- Files affected: `src/middleware.js`, `src/app/api/auth/login/route.js`, `src/app/campaigns/page.jsx`, `src/app/heyreach/campaigns/page.jsx`
 
 ---
 

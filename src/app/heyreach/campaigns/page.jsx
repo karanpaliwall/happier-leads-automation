@@ -318,13 +318,16 @@ export default function HeyReachCampaignsPage() {
 
   const { hoverCol, setHoverCol, pinnedCols, togglePin, stickyStyle } = usePinnedColumns(COLS);
 
-  const calRef      = useRef(null);
-  const debRef      = useRef(null);
-  const dialogInRef = useRef(null);
+  const calRef        = useRef(null);
+  const debRef        = useRef(null);
+  const dialogInRef   = useRef(null);
+  const syncInFlight  = useRef(false);
 
   // ── Load IDs from server; keep localStorage as offline cache ──────────────
   useEffect(() => {
     async function loadIds() {
+      if (syncInFlight.current) return;
+      syncInFlight.current = true;
       let localIds = [];
       try {
         const raw = JSON.parse(localStorage.getItem('hr-campaign-ids') || '[]');
@@ -349,7 +352,10 @@ export default function HeyReachCampaignsPage() {
 
         setCampaignIds(serverIds);
         localStorage.setItem('hr-campaign-ids', JSON.stringify(serverIds));
-      } catch {}
+      } catch {
+      } finally {
+        syncInFlight.current = false;
+      }
     }
     loadIds();
   }, []);

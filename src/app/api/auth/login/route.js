@@ -19,14 +19,20 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Too many attempts' }, { status: 429 });
   }
 
+  const loginPassword = process.env.LOGIN_PASSWORD;
+  const sessionToken  = process.env.SESSION_TOKEN;
+  if (!loginPassword || !sessionToken) {
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+  }
+
   const { password } = await request.json();
 
-  if (password !== (process.env.LOGIN_PASSWORD || 'Growleads@admin')) {
+  if (password !== loginPassword) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set('gl_session', process.env.SESSION_TOKEN || 'gl-auth-v1', {
+  response.cookies.set('gl_session', sessionToken, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
