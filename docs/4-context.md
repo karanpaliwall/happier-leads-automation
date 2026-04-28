@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Fix login broken by missing Vercel env vars
+
+- What changed: Added `LOGIN_PASSWORD=Growleads@admin` and `SESSION_TOKEN=gl-auth-v1` to Vercel production environment variables. Redeployed.
+- Why: The auth.js security fix (todo #020) removed the hardcoded `'gl-auth-v1'` fallback and made `SESSION_TOKEN` required. `LOGIN_PASSWORD` was also required by the login route but had never been set in Vercel — only in `.env.local` locally. Both missing vars caused login to return 500 → "Incorrect password".
+- Files affected: Vercel env vars only (no code change)
+
+---
+
 ## 2026-04-28 — Full code review (ce-review): 6 todos resolved
 
 - What changed: Ran `/ce-review` across the last 5 commits (HeyReach real data + cross-device sync). 7 review agents identified 6 findings; all were fixed and merged to main in the same session.
