@@ -738,27 +738,30 @@ export default function OverviewPage() {
                   mainTo={mainBounds?.to ?? null}
                 />
                 {chartSummary && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px 10px', fontSize: 12, flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', opacity: 0.7 }}>
-                      Prev. period ({fmtShortRange(cmpBounds.dateFrom, cmpBounds.dateTo)})
-                      <InfoTooltip text="The same-length period immediately before the current range, used to compare how leads have changed" />
-                      :
-                    </span>
-                    <span style={{ color: '#4ade80' }}>{chartSummary.beforeExact} Exact</span>
-                    <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
-                    <span style={{ color: '#fb923c' }}>{chartSummary.beforeSug} Suggested</span>
-                    <span style={{ color: 'var(--text-muted)', opacity: 0.4, margin: '0 2px' }}>→</span>
-                    <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-                      Current ({fmtShortRange(mainBounds.from, mainBounds.to)}):
-                    </span>
-                    <span style={{ color: '#4ade80' }}>{chartSummary.afterExact} Exact</span>
-                    <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
-                    <span style={{ color: '#fb923c' }}>{chartSummary.afterSug} Suggested</span>
-                    {chartSummary.pct !== null && (
-                      <span style={{ fontWeight: 600, color: chartSummary.pct >= 0 ? 'var(--green-400)' : '#f87171' }}>
-                        {chartSummary.pct >= 0 ? '↑' : '↓'}{Math.abs(chartSummary.pct)}%
+                  <div style={{ padding: '6px 14px 10px', fontSize: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', opacity: 0.7, flexShrink: 0 }}>
+                        Prev. period ({fmtShortRange(cmpBounds.dateFrom, cmpBounds.dateTo)})
+                        <InfoTooltip text="The same-length period immediately before the current range, used to compare how leads have changed" />
+                        :
                       </span>
-                    )}
+                      <span style={{ color: '#4ade80' }}>{chartSummary.beforeExact} Exact</span>
+                      <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+                      <span style={{ color: '#fb923c' }}>{chartSummary.beforeSug} Suggested</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ color: 'var(--text-muted)', opacity: 0.7, flexShrink: 0 }}>
+                        Current ({fmtShortRange(mainBounds.from, mainBounds.to)}):
+                      </span>
+                      <span style={{ color: '#4ade80' }}>{chartSummary.afterExact} Exact</span>
+                      <span style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+                      <span style={{ color: '#fb923c' }}>{chartSummary.afterSug} Suggested</span>
+                      {chartSummary.pct !== null && (
+                        <span style={{ fontWeight: 600, color: chartSummary.pct >= 0 ? 'var(--green-400)' : '#f87171' }}>
+                          {chartSummary.pct >= 0 ? '↑' : '↓'}{Math.abs(chartSummary.pct)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

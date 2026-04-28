@@ -1288,6 +1288,7 @@ body { overflow-x: hidden; }
   /* Filter bar: each control stacks as its own full-width row */
   .filter-bar { flex-wrap: wrap; gap: 8px; }
   .filter-bar .tabs-pill { width: 100%; }
+  .filter-bar .tabs-pill .tab-pill-btn { flex: 1; justify-content: center; }
   .filter-bar .filter-divider { display: none; }
   .filter-bar .time-filter-group { width: 100%; flex-shrink: 1; }
   .filter-bar .time-filter-group .cal-wrap { flex: 1; min-width: 0; }
