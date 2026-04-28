@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix analytics % showing absurd values (e.g. 37700%)
+
+- What changed: `pct` (period-over-period % change) is now `null` when `beforeTotal < 5`. Previously it was only nulled when `beforeTotal === 0`, so a prior period with 1 lead would produce e.g. (378−1)/1×100 = 37700%.
+- Why: User reported "↑37700%" displayed on the analytics chart. When the comparison window has near-zero data the percentage is noise, not signal. Raw counts (e.g. "1 Exact · 0 Suggested" vs "318 Exact · 60 Suggested") still show so the comparison remains visible.
+- Files affected: `src/app/page.jsx` (line ~602, `chartSummary` useMemo)
+
+---
+
 ## 2026-04-29 — Add Accept Rate + Reply Rate columns back to HeyReach table
 
 - What changed: Re-added "Accept Rate" and "Reply Rate" columns to the HeyReach campaigns table (before "Created"). Accept Rate is computed as `finished / total` (a proxy for sequence completion rate — the closest approximation the HeyReach public API allows). Reply Rate shows "—" because the HeyReach public API has no endpoint that returns message reply counts. Both columns are also included in CSV export.
