@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix analytics chart filter popover stuck on mobile
+
+- What changed: The "Past 7 days" dropdown on the Overview analytics card was broken on mobile — the popover appeared off-screen ("stuck at the top"). Two CSS bugs combined:
+  1. A `bottom: calc(100% + 6px)` override forced the popover to open *above* the button, but the card header is near the top of the page so it disappeared off-screen.
+  2. An `left: 0; right: auto` override anchored the popover to the left edge of the button wrapper, which sits at the right side of the card — making it bleed off the right edge of the screen.
+- Fix: Removed the open-above override (popover now opens below, as normal). Kept `right: 0` so the popover's right edge stays within the card boundary. Also added `gap: 8px; flex-wrap: wrap` to `.card-header` so title and filter button don't collide on very narrow screens.
+- Files affected: `src/styles/custom.css` (640px media query, `.card-header`)
+
+---
+
 ## 2026-04-29 — Full system audit: 20 security + edge-case fixes
 
 - What changed: Comprehensive security and edge-case audit identified 1 P1, 18 P2s, 12 P3s. All code-fixable issues resolved:
