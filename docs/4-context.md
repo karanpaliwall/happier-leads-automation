@@ -5,6 +5,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Code review cleanup: auth hardening + HeyReach refactor + shared utilities
+
+- What changed:
+  - **auth.js** — removed hardcoded `'gl-auth-v1'` fallback from `SESSION_TOKEN`. Now returns 500 if env var missing (fails closed). Resolves todo #020.
+  - **HeyReach route** — `hrGet()` now throws directly on 401 (no `__authError` sentinel); uses `res.json()` with try/catch; digit-only filter on `ids` query param; removed dead `invitesSent/accepted/replies` zero fields. Resolves todos #019, #022.
+  - **HeyReach page** — removed `acceptRate`/`replyRate` columns (always 0, stats endpoint dead); imports `N` from `NumCell`, `usePinnedColumns` from hook. Resolves todo #018. Partial #021.
+  - **SmartLead page** — imports `N` from `NumCell`, `usePinnedColumns` from hook. Partial #021.
+  - **New shared files** — `src/components/NumCell.jsx` (number cell renderer), `src/hooks/usePinnedColumns.js` (column pin logic). Both pages now use these instead of duplicating inline.
+  - **Campaign ID validation** — both add-campaign dialogs now verify the ID exists against the live API before saving. Shows "Campaign ID X not found" error with spinner during check.
+- Why: Security review (auth fails open), dead UI data (always-zero columns), input security (URL injection), code dedup.
+- Files affected: `src/lib/auth.js`, `src/app/api/heyreach/campaigns/route.js`, `src/app/heyreach/campaigns/page.jsx`, `src/app/campaigns/page.jsx`, `src/components/NumCell.jsx` (new), `src/hooks/usePinnedColumns.js` (new)
+- Todos resolved: #018, #019, #020, #022 (complete); #021 (partial — shared components extracted, sync logic still duplicated)
+- Todos still open: #017 (cross-device sync sequential waterfall), #021 (sync logic dedup)
+
+---
+
 ## 2026-04-28 — Full system audit: 6 bugs fixed
 
 - What changed:

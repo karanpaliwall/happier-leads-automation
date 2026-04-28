@@ -15,12 +15,11 @@ async function hrGet(path, apiKey) {
       cache: 'no-store',
       signal: ctrl.signal,
     });
-    if (res.status === 401) return { __authError: true };
+    if (res.status === 401) throw new Error('HEYREACH_INVALID_KEY');
     if (!res.ok) return null;
-    const text = await res.text();
-    if (!text) return null;
-    return JSON.parse(text);
-  } catch {
+    try { return await res.json(); } catch { return null; }
+  } catch (e) {
+    if (e.message === 'HEYREACH_INVALID_KEY') throw e;
     return null;
   } finally {
     clearTimeout(timer);
@@ -29,8 +28,6 @@ async function hrGet(path, apiKey) {
 
 async function fetchOneCampaign(id, apiKey) {
   const info = await hrGet(`/Campaign/GetById?campaignId=${id}`, apiKey);
-
-  if (info?.__authError) throw new Error('HEYREACH_INVALID_KEY');
   if (!info?.id) return null;
 
   const p = info.progressStats ?? {};
@@ -50,10 +47,6 @@ async function fetchOneCampaign(id, apiKey) {
     failed:     Number(p.totalUsersFailed            ?? 0),
     stopped:    Number(p.totalUsersManuallyStopped   ?? 0),
     excluded:   Number(p.totalUsersExcluded          ?? 0),
-    // Accept/reply stats require GetCampaignStatsByCampaignId which is currently unavailable
-    invitesSent: 0,
-    accepted:    0,
-    replies:     0,
   };
 }
 
@@ -65,7 +58,7 @@ export async function GET(request) {
   if (!apiKey) return NextResponse.json({ error: 'HEYREACH_API_KEY not configured' }, { status: 500 });
 
   const ids = (new URL(request.url).searchParams.get('ids') ?? '')
-    .split(',').map(s => s.trim()).filter(Boolean).slice(0, 20);
+    .split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s)).slice(0, 20);
 
   if (!ids.length) return NextResponse.json({ campaigns: [], fetchedAt: new Date().toISOString() });
 

@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
+import { N } from '@/components/NumCell';
+import { usePinnedColumns } from '@/hooks/usePinnedColumns';
 
 const STATUS_PILLS = [
   { label: 'All',       value: 'all',       color: 'var(--blue-400)', bg: 'rgba(59,130,246,0.13)'  },
@@ -21,8 +23,6 @@ const COLS = [
   { key: 'failed',     label: 'Failed',        align: 'right', w: 70  },
   { key: 'stopped',    label: 'Stopped',       align: 'right', w: 85  },
   { key: 'excluded',   label: 'Excluded',      align: 'right', w: 85  },
-  { key: 'acceptRate', label: 'Accept Rate',   align: 'right', w: 105 },
-  { key: 'replyRate',  label: 'Reply Rate',    align: 'right', w: 95  },
   { key: 'created',    label: 'Created',       align: 'left',  w: 110 },
 ];
 
@@ -273,25 +273,15 @@ function CampaignBadge({ status }) {
   return <span className={cls}>{label}</span>;
 }
 
-function N({ v, cls }) {
-  if (!v) return <span className="num-zero">0</span>;
-  return <span className={cls}>{v.toLocaleString()}</span>;
-}
-
 function exportCSV(campaigns) {
-  const headers = ['Campaign Name', 'Status', 'List', 'Total', 'In Progress', 'Pending', 'Finished', 'Failed', 'Stopped', 'Excluded', 'Accept Rate', 'Reply Rate', 'Created'];
-  const rows = campaigns.map(c => {
-    const acceptRate = c.invitesSent > 0 ? Math.round((c.accepted / c.invitesSent) * 100) : 0;
-    const replyRate  = c.invitesSent > 0 ? Math.round((c.replies  / c.invitesSent) * 100) : 0;
-    return [
-      `"${(c.name || '').replace(/"/g, '""')}"`,
-      c.status,
-      `"${(c.list || '').replace(/"/g, '""')}"`,
-      c.total, c.inProgress, c.pending, c.finished, c.failed, c.stopped, c.excluded,
-      `${acceptRate}%`, `${replyRate}%`,
-      c.created ? new Date(c.created).toLocaleDateString() : '',
-    ];
-  });
+  const headers = ['Campaign Name', 'Status', 'List', 'Total', 'In Progress', 'Pending', 'Finished', 'Failed', 'Stopped', 'Excluded', 'Created'];
+  const rows = campaigns.map(c => [
+    `"${(c.name || '').replace(/"/g, '""')}"`,
+    c.status,
+    `"${(c.list || '').replace(/"/g, '""')}"`,
+    c.total, c.inProgress, c.pending, c.finished, c.failed, c.stopped, c.excluded,
+    c.created ? new Date(c.created).toLocaleDateString() : '',
+  ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -325,22 +315,8 @@ export default function HeyReachCampaignsPage() {
   const [editField,    setEF]           = useState(null);
 
   const [hoverRow,    setHoverRow]      = useState(null);
-  const [hoverCol,   setHoverCol]       = useState(null);
-  const [pinnedCols, setPinnedCols]     = useState(new Set());
 
-  function togglePin(key) {
-    setPinnedCols(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  }
-
-  function stickyStyle(key) {
-    if (!pinnedCols.has(key)) return {};
-    let left = 0;
-    for (const col of COLS) {
-      if (col.key === key) break;
-      if (pinnedCols.has(col.key)) left += col.w;
-    }
-    return { position: 'sticky', left, zIndex: 2, background: 'var(--bg-card)' };
-  }
+  const { hoverCol, setHoverCol, pinnedCols, togglePin, stickyStyle } = usePinnedColumns(COLS);
 
   const calRef      = useRef(null);
   const debRef      = useRef(null);
@@ -751,8 +727,6 @@ export default function HeyReachCampaignsPage() {
                     </tr>
                   ) : (
                     filtered.map(c => {
-                      const acceptPct = c.invitesSent > 0 ? Math.round((c.accepted  / c.invitesSent) * 100) : 0;
-                      const replyPct  = c.invitesSent > 0 ? Math.round((c.replies   / c.invitesSent) * 100) : 0;
                       return (
                         <tr key={c.id} className="lead-row campaign-data-row"
                           onMouseEnter={() => setHoverRow(c.id)}
@@ -788,18 +762,6 @@ export default function HeyReachCampaignsPage() {
                               case 'failed':     return <td key="failed"     style={{ ...ra, ...ss }}><N v={c.failed}     cls="num-red"    /></td>;
                               case 'stopped':    return <td key="stopped"    style={{ ...ra, ...ss }}><N v={c.stopped}    cls="num-orange" /></td>;
                               case 'excluded':   return <td key="excluded"   style={{ ...ra, ...ss }}><N v={c.excluded}   cls="num-yellow" /></td>;
-                              case 'acceptRate': return (
-                                <td key="acceptRate" style={{ ...ra, ...ss }}>
-                                  <span className="num-green">{c.accepted.toLocaleString()}</span>
-                                  <span className="col-pct"> ({acceptPct}%)</span>
-                                </td>
-                              );
-                              case 'replyRate': return (
-                                <td key="replyRate" style={{ ...ra, ...ss }}>
-                                  <span className="num-green">{c.replies.toLocaleString()}</span>
-                                  <span className="col-pct"> ({replyPct}%)</span>
-                                </td>
-                              );
                               case 'created': return (
                                 <td key="created" style={{ color: 'var(--text-muted)', fontSize: 12, whiteSpace: 'nowrap', ...ss }}>
                                   {c.created ? new Date(c.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}

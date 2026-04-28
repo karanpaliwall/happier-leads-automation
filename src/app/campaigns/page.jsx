@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
+import { N } from '@/components/NumCell';
+import { usePinnedColumns } from '@/hooks/usePinnedColumns';
 
 const STATUS_PILLS = [
   { label: 'All',      value: 'all',      color: 'var(--blue-400)', bg: 'rgba(59,130,246,0.13)'  },
@@ -307,11 +309,6 @@ function CampaignBadge({ status }) {
   return <span className={cls}>{label}</span>;
 }
 
-function N({ v, cls }) {
-  if (!v) return <span className="num-zero">0</span>;
-  return <span className={cls}>{v.toLocaleString()}</span>;
-}
-
 function exportCSV(campaigns) {
   const headers = ['Campaign Name','Status','Total Leads','Completed','In Progress','Yet to Start','Blocked','Send Pending','Opens','Replies','Bounces','Clicks','Created'];
   const rows = campaigns.map(c => [
@@ -358,23 +355,7 @@ export default function CampaignsPage() {
   // Hover row (for remove button)
   const [hoverRow,    setHoverRow]      = useState(null);
 
-  // Column pin
-  const [hoverCol,   setHoverCol]       = useState(null);
-  const [pinnedCols, setPinnedCols]     = useState(new Set());
-
-  function togglePin(key) {
-    setPinnedCols(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  }
-
-  function stickyStyle(key) {
-    if (!pinnedCols.has(key)) return {};
-    let left = 0;
-    for (const col of COLS) {
-      if (col.key === key) break;
-      if (pinnedCols.has(col.key)) left += col.w;
-    }
-    return { position: 'sticky', left, zIndex: 2, background: 'var(--bg-card)' };
-  }
+  const { hoverCol, setHoverCol, pinnedCols, togglePin, stickyStyle } = usePinnedColumns(COLS);
 
   const calRef      = useRef(null);
   const debRef      = useRef(null);
