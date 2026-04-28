@@ -5,6 +5,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Full code review (ce-review): 6 todos resolved
+
+- What changed: Ran `/ce-review` across the last 5 commits (HeyReach real data + cross-device sync). 7 review agents identified 6 findings; all were fixed and merged to main in the same session.
+- Findings and resolutions:
+  - **#017 P1** — cross-device sync was sequential `for...await` (regression); fixed to `Promise.all` + added `syncInFlight` ref to both campaign pages to prevent concurrent-mount double-fire
+  - **#018 P1** — `acceptRate`/`replyRate` table columns always showed "0 (0%)" because `GetCampaignStatsByCampaignId` is unavailable; removed columns, dead fields, and CSV headers until the endpoint works
+  - **#019 P2** — HeyReach campaign IDs from `?ids=` not validated; added digit-only filter before interpolation into upstream URL
+  - **#020 P2** — `SESSION_TOKEN` had hardcoded `'gl-auth-v1'` fallback in auth.js, middleware, and login route; all three now fail closed (500) if env var missing
+  - **#021 P2** — `N` number cell helper and column-pin logic duplicated in both campaign pages; extracted to `src/components/NumCell.jsx` and `src/hooks/usePinnedColumns.js`
+  - **#022 P3** — `hrGet` used `__authError` sentinel + `res.text()/JSON.parse()`; simplified to throw directly on 401 + `res.json()` with try/catch
+- Why: Routine review pass after HeyReach real-data integration went live.
+- Files affected: `src/lib/auth.js`, `src/middleware.js`, `src/app/api/auth/login/route.js`, `src/app/api/heyreach/campaigns/route.js`, `src/app/heyreach/campaigns/page.jsx`, `src/app/campaigns/page.jsx`, `src/components/NumCell.jsx` (new), `src/hooks/usePinnedColumns.js` (new)
+- Todos: #017–#022 all complete
+
+---
+
 ## 2026-04-28 — Code review cleanup: auth hardening + HeyReach refactor + shared utilities
 
 - What changed:
