@@ -5,6 +5,16 @@ import { usePathname } from 'next/navigation';
 const NAV_SECTIONS = [
   {
     label: 'Pipeline',
+    badge: {
+      color: '#3b82f6',
+      bg: 'rgba(59,130,246,0.18)',
+      icon: (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+      ),
+    },
     items: [
       {
         href: '/',
@@ -34,6 +44,15 @@ const NAV_SECTIONS = [
   },
   {
     label: 'HeyReach',
+    badge: {
+      color: '#a78bfa',
+      bg: 'rgba(139,92,246,0.18)',
+      icon: (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+      ),
+    },
     items: [
       {
         href: '/heyreach/campaigns',
@@ -49,7 +68,17 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Smart Lead',
+    label: 'SmartLead',
+    badge: {
+      color: '#34d399',
+      bg: 'rgba(16,185,129,0.18)',
+      icon: (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,13 2,6" />
+        </svg>
+      ),
+    },
     items: [
       {
         href: '/campaigns',
@@ -128,9 +157,20 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_SECTIONS.map(section => (
-          <div key={section.label}>
-            {!isCollapsed && !section.hideLabel && <p className="sidebar-section-label">{section.label}</p>}
+        {NAV_SECTIONS.map((section, idx) => (
+          <div key={section.label} className={idx > 0 ? 'sidebar-section-divided' : ''}>
+            {!isCollapsed ? (
+              <div className="sidebar-section-header">
+                {section.badge && (
+                  <span className="sidebar-section-badge" style={{ background: section.badge.bg, color: section.badge.color }}>
+                    {section.badge.icon}
+                  </span>
+                )}
+                <span className="sidebar-section-label">{section.label}</span>
+              </div>
+            ) : idx > 0 ? (
+              <div className="sidebar-section-divider-collapsed" />
+            ) : null}
             {section.items.map(item => (
               <Link
                 key={item.href}

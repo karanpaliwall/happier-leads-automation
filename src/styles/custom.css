@@ -1120,6 +1120,42 @@ body { overflow-x: hidden; }
   width: 20px;
   height: 20px;
 }
+
+/* ── Sidebar section headers with badge + divider ── */
+.sidebar-section-divided {
+  border-top: 1px solid var(--border-color);
+  margin-top: 6px;
+  padding-top: 4px;
+}
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 8px 4px;
+}
+.sidebar-section-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+/* Override the <p> default margin from reference.css for inline use */
+.sidebar-section-header .sidebar-section-label {
+  padding: 0;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+/* Collapsed: thin horizontal rule between icon groups */
+.sidebar-section-divider-collapsed {
+  height: 1px;
+  background: var(--border-color);
+  margin: 6px 8px;
+}
 .main-content {
   /* transition added only after mount */
   /* min-width:0 lets this flex item shrink below its content width;
