@@ -339,9 +339,10 @@ export default function CampaignsPage() {
   const [lastSynced,   setLastSynced]   = useState(null);
 
   // Add Campaign dialog
-  const [showDialog,  setShowDialog]    = useState(false);
-  const [dialogInput, setDialogInput]   = useState('');
-  const [dialogErr,   setDialogErr]     = useState('');
+  const [showDialog,     setShowDialog]    = useState(false);
+  const [dialogInput,    setDialogInput]   = useState('');
+  const [dialogErr,      setDialogErr]     = useState('');
+  const [dialogChecking, setDialogChecking] = useState(false);
 
   // Charts
   const [showCharts,  setShowCharts]    = useState(false);
@@ -459,7 +460,7 @@ export default function CampaignsPage() {
 
   // ── Add / remove campaigns ────────────────────────────────────────────────
   function openDialog()  { setDialogInput(''); setDialogErr(''); setShowDialog(true); }
-  function closeDialog() { setShowDialog(false); setDialogInput(''); setDialogErr(''); }
+  function closeDialog() { setShowDialog(false); setDialogInput(''); setDialogErr(''); setDialogChecking(false); }
 
   async function handleConfirmAdd() {
     const id = dialogInput.trim();
@@ -467,7 +468,18 @@ export default function CampaignsPage() {
     if (!/^\d+$/.test(id))        { setDialogErr('Campaign ID must be a number.'); return; }
     if (campaignIds.includes(id)) { setDialogErr('This campaign is already added.'); return; }
     if (campaignIds.length >= 20) { setDialogErr('Maximum 20 campaigns allowed.'); return; }
+
+    setDialogChecking(true);
+    setDialogErr('');
     try {
+      // Verify campaign exists before saving
+      const verifyRes = await fetch(`/api/smartlead/campaigns?ids=${id}&_t=${Date.now()}`, { cache: 'no-store' });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.campaigns?.length) {
+        setDialogErr(`Campaign ID ${id} not found in SmartLead. Please double-check the ID.`);
+        return;
+      }
+
       const res = await fetch('/api/campaigns/ids', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -481,6 +493,8 @@ export default function CampaignsPage() {
       closeDialog();
     } catch {
       setDialogErr('Network error. Please try again.');
+    } finally {
+      setDialogChecking(false);
     }
   }
 
@@ -862,9 +876,11 @@ export default function CampaignsPage() {
               {dialogErr && <p className="campaign-dialog-err">{dialogErr}</p>}
             </div>
             <div className="campaign-dialog-actions">
-              <button className="campaign-dialog-cancel" onClick={closeDialog}>Cancel</button>
-              <button className="btn-primary campaign-dialog-confirm" onClick={handleConfirmAdd} disabled={!dialogInput.trim()}>
-                Confirm
+              <button className="campaign-dialog-cancel" onClick={closeDialog} disabled={dialogChecking}>Cancel</button>
+              <button className="btn-primary campaign-dialog-confirm" onClick={handleConfirmAdd} disabled={!dialogInput.trim() || dialogChecking}>
+                {dialogChecking
+                  ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg> Checking…</>
+                  : 'Confirm'}
               </button>
             </div>
           </div>
