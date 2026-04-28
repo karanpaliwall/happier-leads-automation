@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Cross-device sync fix + HeyReach invalid key error surfacing
+
+- What changed:
+  - **SmartLead cross-device sync** — removed the `sl-ids-migrated` one-shot flag. IDs present in localStorage but missing on the server are now pushed on every page load, so any device that has the campaigns in localStorage will sync them to the server regardless of visit order. `ON CONFLICT DO NOTHING` prevents duplicates.
+  - **HeyReach same fix** — removed `hr-ids-migrated` flag for the same reason (consistency and future-proofing).
+  - **HeyReach API 401 detection** — `hrGet()` now returns `{ __authError: true }` on a 401 response; `fetchOneCampaign` throws `HEYREACH_INVALID_KEY`; the route handler surfaces it as a 401 JSON response. The UI now shows "API key is invalid — check Vercel settings" instead of silently showing 0 campaigns.
+  - **HeyReach API key** — key provided (`e8R3zOgSLfkT9lKUjTwQpQVFal9OntxjoBj4cUZ7Dvo=`) was rejected by HeyReach as invalid. Correct key pending — user to provide from HeyReach Settings → API. Once received, update `HEYREACH_API_KEY` in Vercel env and redeploy.
+- Why: Campaign IDs were invisible on secondary devices because migration only ran once; wrong API key was silently failing with 0 results instead of a clear error.
+- Files affected: `src/app/campaigns/page.jsx`, `src/app/heyreach/campaigns/page.jsx`, `src/app/api/heyreach/campaigns/route.js`
+
+---
+
 ## 2026-04-28 — Sidebar polish: dividers, badges, active bar + HeyReach API key
 
 - What changed:
