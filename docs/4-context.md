@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix mobile layout: analytics two-row + leads tabs fill width
+
+- What changed: Two mobile UI fixes:
+  1. Overview analytics period comparison row restructured from a single flat `flexWrap:'wrap'` flex row into two separate labeled rows ("Prev. period" row and "Current" row). The flat row caused Prev values and Current labels to intermix on narrow screens.
+  2. Leads filter tab buttons now have `flex: 1; justify-content: center` on mobile (≤640px) so All Leads / Exact / Suggested spread evenly across the full-width pill container instead of bunching to the left.
+- Why: User reported "overview analytics period comparison is way too off" and "leads filter tab all leads exactly listed is way off" on mobile.
+- Files affected: `src/app/page.jsx` (lines ~741-762), `src/styles/custom.css` (640px media query)
+
+---
+
 ## 2026-04-28 — Fix login broken by missing Vercel env vars
 
 - What changed: Added `LOGIN_PASSWORD=Growleads@admin` and `SESSION_TOKEN=gl-auth-v1` to Vercel production environment variables. Redeployed.
