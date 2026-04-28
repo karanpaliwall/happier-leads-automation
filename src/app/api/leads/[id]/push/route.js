@@ -56,7 +56,7 @@ export async function POST(request, { params }) {
 
   // Mark as pushed in DB
   await withRetry(() => sql`
-    UPDATE leads SET pushed_to_smart_lead = true, pushed_at = now() WHERE id = ${id}
+    UPDATE leads SET pushed_to_smart_lead = true, pushed_at = now() WHERE id = ${id}::uuid
   `);
 
   return NextResponse.json({ ok: true });

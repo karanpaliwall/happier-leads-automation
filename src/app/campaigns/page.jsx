@@ -399,16 +399,15 @@ export default function CampaignsPage() {
         // 3. Push any IDs present locally but missing on server — runs every load
         //    so any device that still has localStorage data can sync to server,
         //    regardless of which device visits first.
-        for (const id of localIds) {
-          if (!serverIds.includes(id)) {
-            await fetch('/api/campaigns/ids', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id }),
-            }).catch(() => {});
-            serverIds.push(id);
-          }
-        }
+        const missing = localIds.filter(id => !serverIds.includes(id));
+        await Promise.all(missing.map(id =>
+          fetch('/api/campaigns/ids', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          }).catch(() => {})
+        ));
+        serverIds.push(...missing);
 
         // 4. Server is authoritative; keep localStorage as offline cache
         setCampaignIds(serverIds);

@@ -51,11 +51,15 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
     }
   }
 
-  // Position: below button, flip up if near viewport bottom
+  // Flip above the button if there's not enough space below (~280px estimated height)
+  const DROPDOWN_H = 280;
+  const flipUp = coords.bottom + DROPDOWN_H + 8 > window.innerHeight;
   const style = {
     position: 'fixed',
-    top: coords.bottom + 4,
-    left: coords.left,
+    ...(flipUp
+      ? { bottom: window.innerHeight - coords.top + 4 }
+      : { top: coords.bottom + 4 }),
+    left: Math.min(coords.left, window.innerWidth - 240),
     zIndex: 1000,
   };
 
@@ -220,6 +224,17 @@ function LeadDetailPanel({ rawPayload }) {
       <tr className="detail-row">
         <td colSpan={7} className="detail-row-cell">
           <div className="detail-panel" style={{ padding: '24px', color: 'var(--text-muted)', textAlign: 'center', fontSize: 13 }}>Loading…</div>
+        </td>
+      </tr>
+    );
+  }
+  if (rawPayload === '__error') {
+    return (
+      <tr className="detail-row">
+        <td colSpan={7} className="detail-row-cell">
+          <div className="detail-panel" style={{ padding: '24px', color: 'var(--red-400)', textAlign: 'center', fontSize: 13 }}>
+            Failed to load lead details. Try clicking the row again.
+          </div>
         </td>
       </tr>
     );
@@ -548,14 +563,18 @@ export default function FilteredPage() {
   async function handleToggleExpand(id) {
     if (expandedId === id) { setExpandedId(null); return; }
     setExpandedId(id);
-    if (!detailCache[id]) {
+    if (!detailCache[id] || detailCache[id] === '__error') {
       try {
         const res = await fetch(`/api/leads/${id}`);
         if (res.ok) {
           const data = await res.json();
           setDetailCache(c => ({ ...c, [id]: data.raw_payload }));
+        } else {
+          setDetailCache(c => ({ ...c, [id]: '__error' }));
         }
-      } catch { /* leave panel in loading state */ }
+      } catch {
+        setDetailCache(c => ({ ...c, [id]: '__error' }));
+      }
     }
   }
 

@@ -5,6 +5,42 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Full system audit: 6 bugs fixed
+
+- What changed:
+  - **CSV export geo location** — `export/route.js` was reading `rp.geo` (top-level) which doesn't exist in real Happier Leads payloads. Location in exported CSVs was always blank. Fixed to `(rp.contact || {}).geo || rp.geo || rp.location || {}`.
+  - **LIKE metacharacter escape** — search inputs containing `%` or `_` were treated as SQL wildcards. Both `leads/route.js` and `export/route.js` now escape `\`, `%`, `_` before building the ILIKE pattern and add `ESCAPE '\'` to the query.
+  - **PushDropdown viewport overflow** — dropdown was always positioned below the trigger button with no viewport check. Leads near the bottom of the list would open a dropdown that goes off-screen. Now flips above the button when `coords.bottom + 280 > window.innerHeight`, and clamps `left` so it never overflows the right edge.
+  - **Detail panel stuck in loading** — when `/api/leads/[id]` returned an error or the request threw, the catch block was empty, leaving the expand panel in "Loading…" forever. Now stores `'__error'` sentinel in detailCache, shows "Failed to load lead details. Try clicking the row again." and clears the sentinel on re-click so it retries.
+  - **Push UPDATE missing ::uuid cast** — `UPDATE leads … WHERE id = ${id}` was missing `::uuid`, inconsistent with the SELECT in the same handler. Now `WHERE id = ${id}::uuid`.
+  - **Sequential ID sync on campaign load** — loading campaign IDs from localStorage to server was done with a serial `for...await` loop (up to 20 sequential API calls). Replaced with `Promise.all` on both SmartLead and HeyReach campaign pages.
+- Why: Full system audit requested; all confirmed bugs fixed.
+- Files affected: `src/app/api/leads/export/route.js`, `src/app/api/leads/route.js`, `src/app/filtered/page.jsx`, `src/app/api/leads/[id]/push/route.js`, `src/app/campaigns/page.jsx`, `src/app/heyreach/campaigns/page.jsx`
+
+---
+
+## 2026-04-28 — HeyReach real data + SmartLead-style columns
+
+- What changed:
+  - **Zero data bug fixed** — route was reading `info.statistics ?? info.stats` but the HeyReach `GetById` endpoint returns data in `info.progressStats`. All totals now show real numbers.
+  - **Dead endpoint removed** — `GetCampaignStatsByCampaignId` returns 404 for all campaigns; removed entirely.
+  - **New columns** — table now matches SmartLead layout: Campaign Name, Status, List (linkedInUserListName), Total, In Progress, Pending, Finished, Failed, Stopped, Excluded, Accept Rate, Reply Rate, Created
+  - **Pills row updated** — shows Total Leads, In Progress, Finished, Failed aggregate stats
+  - **Bar chart** now uses Total Leads as the primary metric (was Invites Sent which had no data)
+  - Accept Rate / Reply Rate columns present but show 0% until HeyReach stats endpoint becomes available
+- Why: `progressStats` is the correct field; the old invites/accepted/replies stats endpoint is dead.
+- Files affected: `src/app/api/heyreach/campaigns/route.js`, `src/app/heyreach/campaigns/page.jsx`
+
+---
+
+## 2026-04-28 — HeyReach API key replaced (valid key confirmed)
+
+- What changed: Updated `HEYREACH_API_KEY` in `.env.local` and Vercel production env to `ZK+4uxRPewwZoaVziCgcr9POLmcY4U9aG9iDqEdgQ40=`. Redeployed to production.
+- Why: Previous key was invalid (rejected by HeyReach). New key confirmed working — `POST /Campaign/GetAll` returned 200 with 90 campaigns.
+- Files affected: `.env.local`, Vercel env vars (via CLI)
+
+---
+
 ## 2026-04-28 — Cross-device sync fix + HeyReach invalid key error surfacing
 
 - What changed:

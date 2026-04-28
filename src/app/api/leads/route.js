@@ -14,7 +14,8 @@ export async function GET(req) {
   const dateFrom = searchParams.get('dateFrom') || null;
   const dateTo   = searchParams.get('dateTo')   || null;
   const offset = (page - 1) * limit;
-  const searchPattern = search ? `%${search}%` : '%';
+  const escapedSearch = search ? search.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_') : null;
+  const searchPattern = escapedSearch ? `%${escapedSearch}%` : '%';
 
   try {
     // Two queries instead of three — window function gives filtered total alongside the rows
@@ -29,9 +30,9 @@ export async function GET(req) {
         FROM leads
         WHERE (${type}::text IS NULL OR lead_type = ${type})
           AND (${search}::text IS NULL
-            OR company_name ILIKE ${searchPattern}
-            OR full_name    ILIKE ${searchPattern}
-            OR email        ILIKE ${searchPattern})
+            OR company_name ILIKE ${searchPattern} ESCAPE '\'
+            OR full_name    ILIKE ${searchPattern} ESCAPE '\'
+            OR email        ILIKE ${searchPattern} ESCAPE '\')
           AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
           AND (${dateFrom}::date IS NULL OR received_at >= ${dateFrom}::date)
           AND (${dateTo}::date IS NULL OR received_at < ${dateTo}::date + INTERVAL '1 day')

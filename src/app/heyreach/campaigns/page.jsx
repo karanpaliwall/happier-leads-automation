@@ -360,16 +360,15 @@ export default function HeyReachCampaignsPage() {
         if (!res.ok) return;
         const { ids: serverIds = [] } = await res.json();
 
-        for (const id of localIds) {
-          if (!serverIds.includes(id)) {
-            await fetch('/api/heyreach/campaign-ids', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id }),
-            }).catch(() => {});
-            serverIds.push(id);
-          }
-        }
+        const missing = localIds.filter(id => !serverIds.includes(id));
+        await Promise.all(missing.map(id =>
+          fetch('/api/heyreach/campaign-ids', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          }).catch(() => {})
+        ));
+        serverIds.push(...missing);
 
         setCampaignIds(serverIds);
         localStorage.setItem('hr-campaign-ids', JSON.stringify(serverIds));

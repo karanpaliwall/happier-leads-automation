@@ -22,7 +22,8 @@ export async function GET(req) {
   const since    = searchParams.get('since')    || null;
   const dateFrom = searchParams.get('dateFrom') || null;
   const dateTo   = searchParams.get('dateTo')   || null;
-  const searchPattern = search ? `%${search}%` : '%';
+  const escapedSearch = search ? search.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_') : null;
+  const searchPattern = escapedSearch ? `%${escapedSearch}%` : '%';
 
   try {
     const leads = await withRetry(() => sql`
@@ -30,9 +31,9 @@ export async function GET(req) {
       FROM leads
       WHERE (${type}::text IS NULL OR lead_type = ${type})
         AND (${search}::text IS NULL
-          OR company_name ILIKE ${searchPattern}
-          OR full_name    ILIKE ${searchPattern}
-          OR email        ILIKE ${searchPattern})
+          OR company_name ILIKE ${searchPattern} ESCAPE '\'
+          OR full_name    ILIKE ${searchPattern} ESCAPE '\'
+          OR email        ILIKE ${searchPattern} ESCAPE '\')
         AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
         AND (${dateFrom}::date IS NULL OR received_at >= ${dateFrom}::date)
         AND (${dateTo}::date IS NULL OR received_at < ${dateTo}::date + INTERVAL '1 day')
@@ -55,7 +56,7 @@ export async function GET(req) {
       const company = rp.company || {};
       const summary = rp.summary || {};
       const utm     = rp.utm || {};
-      const geo     = rp.geo || rp.location || {};
+      const geo     = (rp.contact || {}).geo || rp.geo || rp.location || {};
       const location = [geo.city, geo.state, geo.country].filter(Boolean).join(', ');
       const pages = Array.isArray(rp.pageVisits)
         ? rp.pageVisits.map(p => p.url || p.page || p).filter(Boolean).join('; ')
