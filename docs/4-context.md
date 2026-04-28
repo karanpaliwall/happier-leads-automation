@@ -5,6 +5,19 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — Sidebar polish: dividers, badges, active bar + HeyReach API key
+
+- What changed:
+  - **Sidebar section headers** now show a colored icon badge (blue for Pipeline, purple for HeyReach, green for SmartLead) before each section label, matching the reference design
+  - **Section dividers** — horizontal `border-top` line between sections (not before Pipeline); works in both expanded and collapsed states
+  - **Double divider bug fixed** — collapsed sidebar was rendering both the outer `border-top` from `.sidebar-section-divided` AND an inner divider div simultaneously; removed the redundant inner div
+  - **Active item left bar** — `box-shadow: inset 3px 0 0 var(--blue-400)` added to `.sidebar-item.active`; shows a blue vertical bar on the left edge of the active nav item in both expanded and collapsed states
+  - **HeyReach API key** configured in `.env.local` (gitignored); must also be set in Vercel environment variables as `HEYREACH_API_KEY`
+- Why: Visual polish to match reference design; fix collapsed sidebar regression; enable HeyReach API calls in production.
+- Files affected: `src/components/Sidebar.jsx`, `src/styles/custom.css`, `.env.local`
+
+---
+
 ## 2026-04-28 — HeyReach Campaigns page (LinkedIn analytics)
 
 - What changed:
