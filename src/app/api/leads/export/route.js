@@ -9,7 +9,8 @@ function formatDuration(ms) {
 }
 
 function esc(v) {
-  return `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // Strip carriage returns and newlines so embedded line breaks don't split CSV rows
+  return `"${String(v ?? '').replace(/\r?\n|\r/g, ' ').replace(/"/g, '""')}"`;
 }
 
 export async function GET(req) {
@@ -27,7 +28,10 @@ export async function GET(req) {
 
   try {
     const leads = await withRetry(() => sql`
-      SELECT *
+      SELECT
+        id, received_at, full_name, first_name, last_name, email, linkedin_url,
+        company_name, company_domain, lead_type, fit_score, engagement_score,
+        activity_at, raw_payload
       FROM leads
       WHERE (${type}::text IS NULL OR lead_type = ${type})
         AND (${search}::text IS NULL

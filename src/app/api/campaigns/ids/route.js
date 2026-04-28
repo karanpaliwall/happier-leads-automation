@@ -48,7 +48,7 @@ export async function DELETE(request) {
 
   const body = await request.json().catch(() => ({}));
   const id = String(body.id ?? '').trim();
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+  if (!id || !/^\d+$/.test(id)) return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
 
   await ensureTable();
   await sql`DELETE FROM campaign_ids WHERE id = ${id}`;

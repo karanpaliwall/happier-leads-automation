@@ -278,13 +278,13 @@ function CampaignBadge({ status }) {
 function exportCSV(campaigns) {
   const headers = ['Campaign Name', 'Status', 'List', 'Total', 'In Progress', 'Pending', 'Finished', 'Failed', 'Stopped', 'Excluded', 'Accept Rate', 'Reply Rate', 'Created'];
   const rows = campaigns.map(c => [
-    `"${(c.name || '').replace(/"/g, '""')}"`,
-    c.status,
-    `"${(c.list || '').replace(/"/g, '""')}"`,
+    `"${(c.name   || '').replace(/"/g, '""')}"`,
+    `"${(c.status || '').replace(/"/g, '""')}"`,
+    `"${(c.list   || '').replace(/"/g, '""')}"`,
     c.total, c.inProgress, c.pending, c.finished, c.failed, c.stopped, c.excluded,
     c.total > 0 ? `${Math.round((c.finished / c.total) * 100)}%` : '',
     '',
-    c.created ? new Date(c.created).toLocaleDateString() : '',
+    c.created ? `"${new Date(c.created).toLocaleDateString()}"` : '',
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -344,18 +344,20 @@ export default function HeyReachCampaignsPage() {
         if (!res.ok) return;
         const { ids: serverIds = [] } = await res.json();
 
-        const missing = localIds.filter(id => !serverIds.includes(id));
-        await Promise.all(missing.map(id =>
+        // Only merge IDs the server actually accepts to avoid local→server pollution
+        const missing = localIds.filter(id => /^\d+$/.test(id) && !serverIds.includes(id));
+        const pushResults = await Promise.all(missing.map(id =>
           fetch('/api/heyreach/campaign-ids', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id }),
-          }).catch(() => {})
+          }).then(r => r.ok ? id : null).catch(() => null)
         ));
-        serverIds.push(...missing);
+        const accepted = pushResults.filter(Boolean);
+        const merged = [...serverIds, ...accepted];
 
-        setCampaignIds(serverIds);
-        localStorage.setItem('hr-campaign-ids', JSON.stringify(serverIds));
+        setCampaignIds(merged);
+        localStorage.setItem('hr-campaign-ids', JSON.stringify(merged));
       } catch {
       } finally {
         syncInFlight.current = false;
@@ -475,8 +477,13 @@ export default function HeyReachCampaignsPage() {
   const filtered = campaigns.filter(c => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
     if (dSearch && !c.name.toLowerCase().includes(dSearch.toLowerCase())) return false;
-    if (calFrom && c.created && new Date(c.created) < new Date(calFrom + 'T00:00:00Z')) return false;
-    if (calTo   && c.created && new Date(c.created) > new Date(calTo   + 'T23:59:59Z')) return false;
+    if (calFrom || calTo) {
+      const d = c.created ? new Date(c.created) : null;
+      const valid = d && !isNaN(d.getTime());
+      if (!valid) return false; // exclude campaigns with unparseable dates when filtering
+      if (calFrom && d < new Date(calFrom + 'T00:00:00Z')) return false;
+      if (calTo   && d > new Date(calTo   + 'T23:59:59Z')) return false;
+    }
     return true;
   });
 

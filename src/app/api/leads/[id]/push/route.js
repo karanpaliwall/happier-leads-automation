@@ -18,14 +18,23 @@ export async function POST(request, { params }) {
   const apiKey = process.env.SMARTLEAD_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'SMARTLEAD_API_KEY not configured' }, { status: 500 });
 
-  // Fetch lead from DB
+  // UUID format guard — prevents PostgreSQL 22P02 error surfacing as misleading 500
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return NextResponse.json({ error: 'Invalid lead ID' }, { status: 400 });
+  }
+
+  // Atomic read + idempotency check — rejects if already pushed to prevent SmartLead duplicates
   const rows = await withRetry(() => sql`
-    SELECT id, first_name, last_name, full_name, email, company_name, company_domain, linkedin_url
+    SELECT id, first_name, last_name, full_name, email, company_name, company_domain, linkedin_url,
+           pushed_to_smart_lead
     FROM leads WHERE id = ${id}::uuid
   `);
   if (!rows.length) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
 
   const lead = rows[0];
+  if (lead.pushed_to_smart_lead) {
+    return NextResponse.json({ error: 'Already pushed to SmartLead' }, { status: 409 });
+  }
 
   // Push to SmartLead campaign
   const slRes = await fetch(
@@ -48,8 +57,9 @@ export async function POST(request, { params }) {
 
   if (!slRes.ok) {
     const errText = await slRes.text().catch(() => '');
+    console.error('[push] SmartLead rejected:', slRes.status, errText);
     return NextResponse.json(
-      { error: `SmartLead rejected the request (HTTP ${slRes.status})`, detail: errText },
+      { error: `SmartLead rejected the request (HTTP ${slRes.status})` },
       { status: 502 }
     );
   }

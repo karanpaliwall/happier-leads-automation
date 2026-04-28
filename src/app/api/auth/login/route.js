@@ -5,7 +5,14 @@ const LIMIT = 10;
 const WINDOW_MS = 60_000;
 
 function clientIp(req) {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  // Use the LAST entry in X-Forwarded-For — that's the one added by Vercel's infrastructure
+  // and cannot be spoofed by the client (the first entry can be freely injected).
+  const xff = req.headers.get('x-forwarded-for');
+  if (xff) {
+    const parts = xff.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  return 'unknown';
 }
 
 export async function POST(request) {
@@ -34,10 +41,10 @@ export async function POST(request) {
   const response = NextResponse.json({ ok: true });
   response.cookies.set('gl_session', sessionToken, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   });
   return response;
 }

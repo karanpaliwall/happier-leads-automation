@@ -6,6 +6,9 @@ export async function GET(req, { params }) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return Response.json({ error: 'Invalid lead ID' }, { status: 400 });
+  }
   try {
     const rows = await withRetry(() => sql`
       SELECT * FROM leads WHERE id = ${id}::uuid LIMIT 1

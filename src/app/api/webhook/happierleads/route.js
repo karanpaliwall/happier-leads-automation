@@ -1,15 +1,22 @@
 import sql, { withRetry } from '@/lib/db';
 
+const MAX_BODY_BYTES = 64 * 1024; // 64 KB — generous for any real HL payload
+
 export async function POST(req) {
   const secret = process.env.WEBHOOK_SECRET;
   if (!secret) {
-    console.warn('[webhook] WEBHOOK_SECRET is not set — endpoint is open to unauthenticated requests');
+    return Response.json({ ok: false, error: 'Server misconfiguration' }, { status: 500 });
   }
-  if (secret) {
-    const provided = req.headers.get('x-hl-secret') || req.headers.get('authorization');
-    if (provided !== secret) {
-      return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-    }
+
+  const provided = req.headers.get('x-hl-secret') || req.headers.get('authorization');
+  if (provided !== secret) {
+    return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Reject oversized payloads before reading the body into memory
+  const contentLength = parseInt(req.headers.get('content-length') || '0', 10);
+  if (contentLength > MAX_BODY_BYTES) {
+    return Response.json({ ok: false, error: 'Payload too large' }, { status: 413 });
   }
 
   let body;
@@ -17,6 +24,11 @@ export async function POST(req) {
     body = await req.json();
   } catch {
     return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  // Guard against absurdly large JSON bodies (no Content-Length header path)
+  if (JSON.stringify(body).length > MAX_BODY_BYTES) {
+    return Response.json({ ok: false, error: 'Payload too large' }, { status: 413 });
   }
 
   // Field extraction — confirmed against real Happier Leads test payload (2026-04-22)
@@ -79,7 +91,8 @@ export async function POST(req) {
     `);
   } catch (err) {
     console.error('[webhook] DB error during dedup check:', err);
-    return Response.json({ ok: false, error: 'DB error' }, { status: 500 });
+    // Return 200 to prevent Happier Leads from retrying — a 500 triggers retry storms
+    return Response.json({ ok: false, error: 'DB error' });
   }
 
   if (existing.length > 0) {

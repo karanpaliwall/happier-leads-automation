@@ -65,9 +65,9 @@ export async function GET(request) {
   const apiKey = process.env.SMARTLEAD_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'SMARTLEAD_API_KEY not configured' }, { status: 500 });
 
-  // Only user-added IDs are sent from the frontend; max 20
+  // Only user-added IDs are sent from the frontend; max 20; digit-only to prevent path injection
   const ids = (new URL(request.url).searchParams.get('ids') ?? '')
-    .split(',').map(s => s.trim()).filter(Boolean).slice(0, 20);
+    .split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s)).slice(0, 20);
 
   if (!ids.length) return NextResponse.json({ campaigns: [], fetchedAt: new Date().toISOString() });
 

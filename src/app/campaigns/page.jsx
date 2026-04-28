@@ -312,10 +312,11 @@ function CampaignBadge({ status }) {
 function exportCSV(campaigns) {
   const headers = ['Campaign Name','Status','Total Leads','Completed','In Progress','Yet to Start','Blocked','Send Pending','Opens','Replies','Bounces','Clicks','Created'];
   const rows = campaigns.map(c => [
-    `"${(c.name || '').replace(/"/g, '""')}"`,
-    c.status, c.totalLeads, c.completed, c.inProgress, c.yetToStart,
+    `"${(c.name   || '').replace(/"/g, '""')}"`,
+    `"${(c.status || '').replace(/"/g, '""')}"`,
+    c.totalLeads, c.completed, c.inProgress, c.yetToStart,
     c.blocked, c.sendPending, c.opens, c.replies, c.bounces, c.clicks,
-    c.created ? new Date(c.created).toLocaleDateString() : '',
+    c.created ? `"${new Date(c.created).toLocaleDateString()}"` : '',
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -378,25 +379,26 @@ export default function CampaignsPage() {
       // 2. Fetch authoritative list from server
       try {
         const res = await fetch('/api/campaigns/ids');
-        if (!res.ok) return; // Keep localStorage cache on auth/network error
+        if (!res.ok) return; // finally below still runs, resetting syncInFlight
+
         const { ids: serverIds = [] } = await res.json();
 
         // 3. Push any IDs present locally but missing on server — runs every load
-        //    so any device that still has localStorage data can sync to server,
-        //    regardless of which device visits first.
-        const missing = localIds.filter(id => !serverIds.includes(id));
-        await Promise.all(missing.map(id =>
+        //    Only merge IDs that the server actually accepts (in case it rejects duplicates or limit)
+        const missing = localIds.filter(id => /^\d+$/.test(id) && !serverIds.includes(id));
+        const pushResults = await Promise.all(missing.map(id =>
           fetch('/api/campaigns/ids', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id }),
-          }).catch(() => {})
+          }).then(r => r.ok ? id : null).catch(() => null)
         ));
-        serverIds.push(...missing);
+        const accepted = pushResults.filter(Boolean);
+        const merged = [...serverIds, ...accepted];
 
         // 4. Server is authoritative; keep localStorage as offline cache
-        setCampaignIds(serverIds);
-        localStorage.setItem('sl-campaign-ids', JSON.stringify(serverIds));
+        setCampaignIds(merged);
+        localStorage.setItem('sl-campaign-ids', JSON.stringify(merged));
       } catch {
         // Network failure — keep showing localStorage cache (already set above)
       } finally {
@@ -517,8 +519,13 @@ export default function CampaignsPage() {
   const filtered = campaigns.filter(c => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
     if (dSearch && !c.name.toLowerCase().includes(dSearch.toLowerCase())) return false;
-    if (calFrom && c.created && new Date(c.created) < new Date(calFrom + 'T00:00:00Z')) return false;
-    if (calTo   && c.created && new Date(c.created) > new Date(calTo   + 'T23:59:59Z')) return false;
+    if (calFrom || calTo) {
+      const d = c.created ? new Date(c.created) : null;
+      const valid = d && !isNaN(d.getTime());
+      if (!valid) return false;
+      if (calFrom && d < new Date(calFrom + 'T00:00:00Z')) return false;
+      if (calTo   && d > new Date(calTo   + 'T23:59:59Z')) return false;
+    }
     return true;
   });
 

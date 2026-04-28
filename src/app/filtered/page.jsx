@@ -19,7 +19,12 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
   useEffect(() => {
     async function load() {
       try {
-        const res  = await fetch('/api/smartlead/campaigns');
+        // Fetch saved campaign IDs first, then pass them to the campaigns proxy
+        const idsRes  = await fetch('/api/campaigns/ids');
+        const idsData = await idsRes.json();
+        const ids     = (idsData.ids ?? []).join(',');
+        if (!ids) { setCampaigns([]); return; }
+        const res  = await fetch(`/api/smartlead/campaigns?ids=${ids}`);
         const data = await res.json();
         setCampaigns(data.campaigns ?? []);
       } catch { setCampaigns([]); }
@@ -520,6 +525,7 @@ export default function FilteredPage() {
   const [calTo, setCalTo] = useState('');
   const [editField, setEditField] = useState(null);
   const [exporting, setExporting]     = useState(false);
+  const [pollError, setPollError]     = useState(false);
   const [pushTarget, setPushTarget]   = useState(null); // { leadId, bottom, left }
   const [pushedIds, setPushedIds]     = useState(new Set());
   const debounceRef = useRef(null);
@@ -593,8 +599,14 @@ export default function FilteredPage() {
       setLeads(_cache.leads);
       setTotal(_cache.total);
       setStats(_cache.stats);
+      setPollError(false);
+      // If filters shrank results below current page, reset to page 1
+      if ((data.leads ?? []).length === 0 && page > 1) {
+        setPage(1);
+      }
     } catch (err) {
-      console.error('Failed to fetch:', err);
+      console.error('Failed to fetch leads:', err);
+      setPollError(true);
     } finally {
       setLoading(false);
     }
@@ -622,6 +634,7 @@ export default function FilteredPage() {
       if (calFrom) params.set('dateFrom', calFrom);
       if (calTo) params.set('dateTo', calTo);
       const res = await fetch(`/api/leads/export?${params}`);
+      if (!res.ok) throw new Error(`Export failed (HTTP ${res.status})`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -629,6 +642,9 @@ export default function FilteredPage() {
       a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[export]', err);
+      alert('Export failed — please try again.');
     } finally {
       setExporting(false);
     }
@@ -656,6 +672,11 @@ export default function FilteredPage() {
       </div>
 
       <div className="page-body">
+        {pollError && (
+          <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: 'var(--red-400)', fontSize: 13, marginBottom: 4 }}>
+            Unable to refresh leads — check your connection. Data shown may be stale.
+          </div>
+        )}
         <div className="filter-bar">
           <div className="tabs-pill">
             {TABS.map(tab => (

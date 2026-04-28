@@ -5,6 +5,28 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Full system audit: 20 security + edge-case fixes
+
+- What changed: Comprehensive security and edge-case audit identified 1 P1, 18 P2s, 12 P3s. All code-fixable issues resolved:
+  - **P1**: PushDropdown in filtered/page.jsx was calling `/api/smartlead/campaigns` with no `ids` param — always returned empty, breaking "Push to SmartLead" entirely. Fixed to first fetch `/api/campaigns/ids` then pass them.
+  - **Security — auth**: `requireAuth` now uses `crypto.timingSafeEqual` (timing-safe comparison) instead of `!==`. Session cookie upgraded to `SameSite: strict` (CSRF mitigation). Login rate limiter now uses the last IP in `X-Forwarded-For` (infrastructure-added, non-spoofable) instead of the first (client-injectable).
+  - **Security — webhook**: `WEBHOOK_SECRET` now fails closed (500) when not set, instead of silently allowing all requests. Added 64 KB payload size limit (Content-Length check + post-parse guard) to prevent storage exhaustion. DB error during dedup check now returns 200 (was 500) to prevent Happier Leads retry storms.
+  - **Security — push route**: Added idempotency check (`pushed_to_smart_lead = true` → 409 before calling SmartLead) to prevent duplicate SmartLead leads on double-click. Raw SmartLead error body no longer forwarded to browser (was leaking internal API error detail).
+  - **Security — SmartLead route**: Added `/^\d+$/` numeric validation for campaign IDs (was only `.filter(Boolean)`), preventing path injection into SmartLead API URL.
+  - **Security — DELETE routes**: Both campaign-ids DELETE handlers now validate IDs are numeric (matching POST validation).
+  - **Security — lead [id] routes**: UUID format validated before DB query — returns 400 instead of misleading 500 on invalid IDs. Applied to both GET and push routes.
+  - **Security — headers**: Added `Strict-Transport-Security` (HSTS, 1-year) and `Content-Security-Policy` to `next.config.js`.
+  - **Edge case — sync waterfall**: `serverIds.push(...missing)` mutation replaced — now only merges IDs that the server actually accepted (was permanently writing rejected IDs into localStorage). Applied to both SmartLead and HeyReach pages.
+  - **Edge case — background poll**: `filtered/page.jsx` background poll failures now surface a "data may be stale" error banner (was silently swallowed).
+  - **Edge case — export**: Export fetch failure now has a `catch` block with `alert()` (was unhandled promise rejection).
+  - **Edge case — page reset**: `fetchLeads` now resets to page 1 when results shrink below current page (was showing empty "No leads" on valid data).
+  - **Edge case — CSV**: `esc()` in export route now strips `\r\n` before quoting (embedded newlines would split rows in some spreadsheet apps). Campaign CSV `status` field now quoted in both pages.
+  - **Edge case — date filter**: Both campaign pages now validate `c.created` is a parseable date before filtering; excludes campaigns with unparseable dates from date-filtered views (was treating Invalid Date as "in range").
+- Why: User requested full system audit. Two agents (security-sentinel + data-integrity-guardian) performed independent analysis; all actionable findings fixed.
+- Files affected: `src/app/api/webhook/happierleads/route.js`, `src/lib/auth.js`, `src/app/api/auth/login/route.js`, `src/app/api/smartlead/campaigns/route.js`, `src/app/api/leads/[id]/push/route.js`, `src/app/api/leads/[id]/route.js`, `src/app/api/campaigns/ids/route.js`, `src/app/api/heyreach/campaign-ids/route.js`, `src/app/api/leads/export/route.js`, `next.config.js`, `src/app/filtered/page.jsx`, `src/app/campaigns/page.jsx`, `src/app/heyreach/campaigns/page.jsx`
+
+---
+
 ## 2026-04-29 — Fix analytics % showing absurd values (e.g. 37700%)
 
 - What changed: `pct` (period-over-period % change) is now `null` when `beforeTotal < 5`. Previously it was only nulled when `beforeTotal === 0`, so a prior period with 1 lead would produce e.g. (378−1)/1×100 = 37700%.
