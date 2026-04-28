@@ -23,6 +23,8 @@ const COLS = [
   { key: 'failed',     label: 'Failed',        align: 'right', w: 70  },
   { key: 'stopped',    label: 'Stopped',       align: 'right', w: 85  },
   { key: 'excluded',   label: 'Excluded',      align: 'right', w: 85  },
+  { key: 'acceptRate', label: 'Accept Rate',   align: 'right', w: 105 },
+  { key: 'replyRate',  label: 'Reply Rate',    align: 'right', w: 95  },
   { key: 'created',    label: 'Created',       align: 'left',  w: 110 },
 ];
 
@@ -274,12 +276,14 @@ function CampaignBadge({ status }) {
 }
 
 function exportCSV(campaigns) {
-  const headers = ['Campaign Name', 'Status', 'List', 'Total', 'In Progress', 'Pending', 'Finished', 'Failed', 'Stopped', 'Excluded', 'Created'];
+  const headers = ['Campaign Name', 'Status', 'List', 'Total', 'In Progress', 'Pending', 'Finished', 'Failed', 'Stopped', 'Excluded', 'Accept Rate', 'Reply Rate', 'Created'];
   const rows = campaigns.map(c => [
     `"${(c.name || '').replace(/"/g, '""')}"`,
     c.status,
     `"${(c.list || '').replace(/"/g, '""')}"`,
     c.total, c.inProgress, c.pending, c.finished, c.failed, c.stopped, c.excluded,
+    c.total > 0 ? `${Math.round((c.finished / c.total) * 100)}%` : '',
+    '',
     c.created ? new Date(c.created).toLocaleDateString() : '',
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -768,6 +772,14 @@ export default function HeyReachCampaignsPage() {
                               case 'failed':     return <td key="failed"     style={{ ...ra, ...ss }}><N v={c.failed}     cls="num-red"    /></td>;
                               case 'stopped':    return <td key="stopped"    style={{ ...ra, ...ss }}><N v={c.stopped}    cls="num-orange" /></td>;
                               case 'excluded':   return <td key="excluded"   style={{ ...ra, ...ss }}><N v={c.excluded}   cls="num-yellow" /></td>;
+                              case 'acceptRate': return (
+                                <td key="acceptRate" style={{ ...ra, color: 'var(--text-muted)', fontSize: 12, ...ss }}>
+                                  {c.total > 0 ? `${Math.round((c.finished / c.total) * 100)}%` : '—'}
+                                </td>
+                              );
+                              case 'replyRate': return (
+                                <td key="replyRate" style={{ ...ra, color: 'var(--text-muted)', fontSize: 12, ...ss }}>—</td>
+                              );
                               case 'created': return (
                                 <td key="created" style={{ color: 'var(--text-muted)', fontSize: 12, whiteSpace: 'nowrap', ...ss }}>
                                   {c.created ? new Date(c.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}

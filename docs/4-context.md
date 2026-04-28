@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Add Accept Rate + Reply Rate columns back to HeyReach table
+
+- What changed: Re-added "Accept Rate" and "Reply Rate" columns to the HeyReach campaigns table (before "Created"). Accept Rate is computed as `finished / total` (a proxy for sequence completion rate — the closest approximation the HeyReach public API allows). Reply Rate shows "—" because the HeyReach public API has no endpoint that returns message reply counts. Both columns are also included in CSV export.
+- Why: User requested the columns be visible. ~60 API endpoints were probed to find accept/reply stats (including `GetCampaignStatsByCampaignId`, all Analytics/Statistics/CampaignAccount/LinkedInUser/Sender paths) — none exist in the HeyReach public API. The only stats available are `progressStats` user-count fields.
+- Files affected: `src/app/heyreach/campaigns/page.jsx` (COLS array, cell renderers, exportCSV)
+
+---
+
 ## 2026-04-29 — Fix mobile layout: analytics two-row + leads tabs fill width
 
 - What changed: Two mobile UI fixes:
