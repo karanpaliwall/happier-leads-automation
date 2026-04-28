@@ -177,6 +177,8 @@ body { overflow-x: hidden; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 16px;
 }
 .card-title {
@@ -1399,15 +1401,9 @@ body { overflow-x: hidden; }
   .page-btn { min-width: 44px; height: 44px; font-size: 14px; }
   .cal-nav-btn { min-width: 36px; min-height: 36px; justify-content: center; }
 
-  /* Chart filter: open popover and calendar above the button so they don't
-     push content down and require scrolling on small screens */
-  .overview-chart-card .chart-filter-popover,
-  .overview-chart-card .cal-popover {
-    top: auto;
-    bottom: calc(100% + 6px);
-  }
-  /* Chart filter popover: anchor left on mobile to prevent right-edge overflow */
-  .overview-chart-card .chart-filter-popover { left: 0; right: auto; }
+  /* Chart filter popover: open below the button, anchor to its right edge
+     so it stays within the card/viewport and doesn't bleed off-screen */
+  .overview-chart-card .chart-filter-popover { right: 0; left: auto; }
   /* Calendar popovers: prevent overflow beyond viewport on narrow screens */
   .cal-popover { max-width: calc(100vw - 32px); }
 }
