@@ -5,6 +5,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-28 — HeyReach Campaigns page (LinkedIn analytics)
+
+- What changed:
+  - **New page** `/heyreach/campaigns` — identical UX to SmartLead campaigns page but for LinkedIn outreach metrics (Invites Sent, Accepted %, Messages Sent, Replies %)
+  - **New API route** `GET /api/heyreach/campaigns?ids=...` — calls HeyReach API (`/Campaign/GetById` + `/Campaign/GetCampaignStatsByCampaignId`) with `X-API-KEY` auth header; normalizes `IN_PROGRESS` → `ACTIVE`
+  - **New API route** `GET/POST/DELETE /api/heyreach/campaign-ids` — persists HeyReach campaign IDs in new `heyreach_campaign_ids` DB table (auto-created)
+  - **Sidebar** — added `HEYREACH` section above `Smart Lead`; both sections now show their labels; Smart Lead `hideLabel` removed
+  - **Bar chart** shows "Top 10 Campaigns by Invites Sent" instead of emails
+  - **Stats bar** shows Total Leads · Invites Sent · Accepted · Replies
+  - **localStorage key** `hr-campaign-ids` (separate from SmartLead's `sl-campaign-ids`)
+  - **New env var** `HEYREACH_API_KEY` — add to `.env.local` and Vercel settings
+- Why: User requested HeyReach (LinkedIn outreach) campaign tracking alongside SmartLead (email).
+- Files affected: `src/app/heyreach/campaigns/page.jsx` (new), `src/app/api/heyreach/campaigns/route.js` (new), `src/app/api/heyreach/campaign-ids/route.js` (new), `src/components/Sidebar.jsx`, `.env.local`, `docs/3-single-source-of-truth.md`
+
+---
+
 ## 2026-04-28 — Campaign ID sync: robust cross-device strategy
 
 - What changed:

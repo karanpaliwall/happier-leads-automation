@@ -40,8 +40,14 @@ CREATE INDEX leads_type_idx        ON leads(lead_type);
 CREATE INDEX leads_email_idx       ON leads(email)        WHERE email IS NOT NULL;
 CREATE INDEX leads_linkedin_idx    ON leads(linkedin_url) WHERE linkedin_url IS NOT NULL;
 
--- Campaign IDs tracked on the Campaigns page (auto-created on first API request)
+-- Campaign IDs tracked on the SmartLead Campaigns page (auto-created on first API request)
 CREATE TABLE IF NOT EXISTS campaign_ids (
+  id       TEXT        PRIMARY KEY,
+  added_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Campaign IDs tracked on the HeyReach Campaigns page (auto-created on first API request)
+CREATE TABLE IF NOT EXISTS heyreach_campaign_ids (
   id       TEXT        PRIMARY KEY,
   added_at TIMESTAMPTZ DEFAULT now()
 );
@@ -231,6 +237,44 @@ Fetches `GET /campaigns/{id}` and `GET /campaigns/{id}/analytics` in parallel pe
 
 ---
 
+### GET /api/heyreach/campaigns
+Returns normalized LinkedIn campaign data for a list of HeyReach campaign IDs. **Auth required.**
+
+**Query params:**
+- `ids` — comma-separated HeyReach campaign IDs (max 20), e.g. `?ids=123,456`
+
+Calls `GET /Campaign/GetById?campaignId={id}` and `GET /Campaign/GetCampaignStatsByCampaignId?campaignId={id}` in parallel per ID.
+Auth: `X-API-KEY: {HEYREACH_API_KEY}` header on all HeyReach requests.
+
+**Response:**
+```json
+{
+  "campaigns": [
+    {
+      "id": "123",
+      "name": "My LinkedIn Campaign",
+      "status": "ACTIVE",
+      "created": "2024-01-01T00:00:00.000Z",
+      "totalLeads": 300,
+      "invitesSent": 250,
+      "accepted": 80,
+      "messagesSent": 60,
+      "replies": 15
+    }
+  ],
+  "fetchedAt": "2026-04-28T10:00:00.000Z"
+}
+```
+
+Note: HeyReach status `IN_PROGRESS` is normalized to `ACTIVE` for display consistency.
+
+---
+
+### GET/POST/DELETE /api/heyreach/campaign-ids
+Stores HeyReach campaign IDs in the `heyreach_campaign_ids` table. Same contract as `/api/campaigns/ids` but for HeyReach.
+
+---
+
 ### POST /api/leads/[id]/push
 Pushes a single lead to a SmartLead campaign and marks it as pushed in the DB. **Auth required.**
 
@@ -270,6 +314,7 @@ Campaign IDs added on the Campaigns page are stored in **browser `localStorage`*
 | `SESSION_TOKEN`      | `'gl-auth-v1'`          | Value stored in and checked against the `gl_session` cookie              |
 | `WEBHOOK_SECRET`     | *(optional)*            | If set, webhook requires matching `x-hl-secret` header                  |
 | `SMARTLEAD_API_KEY`  | *(required for SL)*     | SmartLead API key — used by `/api/smartlead/campaigns` and `/api/leads/[id]/push` |
+| `HEYREACH_API_KEY`   | *(required for HR)*     | HeyReach API key — used by `/api/heyreach/campaigns` (passed as `X-API-KEY` header) |
 
 Set all in `.env.local` for local dev, and in Vercel environment settings for production. The fallback values keep the app working with zero config; set the env vars in production to harden.
 
