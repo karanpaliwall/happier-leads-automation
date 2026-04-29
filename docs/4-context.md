@@ -5,6 +5,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix webhook broken by hard-required WEBHOOK_SECRET
+
+- What changed: The security audit (same day) changed `WEBHOOK_SECRET` from optional-with-warning to hard-required (returns 500 if unset, 401 if set but header missing). Happier Leads has no way to send custom request headers, so every webhook call started failing immediately after deploy — 0 new leads received since then.
+- Fix: Reverted to optional behaviour: if `WEBHOOK_SECRET` is not set, requests pass through with a console warning. If set, the secret can now be provided as a `?secret=xxx` URL query parameter (compatible with Happier Leads webhook URL config) in addition to the existing header options. This ensures a missing env var never silently kills ingestion.
+- Why: The hard-required check was not coordinated with configuring Happier Leads to send the header. URL-based secret is the correct pattern for webhook senders that don't support custom headers (e.g. configure the HL webhook URL as `...happierleads?secret=abc123`).
+- Files affected: `src/app/api/webhook/happierleads/route.js`, `docs/3-single-source-of-truth.md`
+
+---
+
 ## 2026-04-29 — Fix analytics chart filter popover stuck on mobile
 
 - What changed: The "Past 7 days" dropdown on the Overview analytics card was broken on mobile — the popover appeared off-screen ("stuck at the top"). Two CSS bugs combined:

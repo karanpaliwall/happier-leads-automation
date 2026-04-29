@@ -4,13 +4,16 @@ const MAX_BODY_BYTES = 64 * 1024; // 64 KB — generous for any real HL payload
 
 export async function POST(req) {
   const secret = process.env.WEBHOOK_SECRET;
-  if (!secret) {
-    return Response.json({ ok: false, error: 'Server misconfiguration' }, { status: 500 });
-  }
-
-  const provided = req.headers.get('x-hl-secret') || req.headers.get('authorization');
-  if (provided !== secret) {
-    return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  if (secret) {
+    // Accept secret via URL query param (?secret=xxx) — compatible with Happier Leads webhook URL config
+    // Also accept via x-hl-secret or Authorization header for programmatic callers
+    const { searchParams } = new URL(req.url);
+    const provided = searchParams.get('secret') || req.headers.get('x-hl-secret') || req.headers.get('authorization');
+    if (provided !== secret) {
+      return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+    }
+  } else {
+    console.warn('[webhook] WEBHOOK_SECRET not set — endpoint is open to unauthenticated requests');
   }
 
   // Reject oversized payloads before reading the body into memory

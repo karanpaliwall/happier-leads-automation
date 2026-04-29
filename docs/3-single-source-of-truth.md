@@ -78,9 +78,12 @@ The Next.js middleware (`src/middleware.js`) also protects all page routes by re
 ### POST /api/webhook/happierleads
 Receives webhook from Happier Leads automation. No session auth required (public endpoint).
 
-**Optional secret validation:** If `WEBHOOK_SECRET` env var is set, the request must include either:
+**Optional secret validation:** If `WEBHOOK_SECRET` env var is set, the request must include the secret via one of:
+- `?secret=<secret>` URL query param (recommended — works with Happier Leads webhook URL config), or
 - `x-hl-secret: <secret>` header, or
 - `Authorization: <secret>` header
+
+If `WEBHOOK_SECRET` is not set, all requests are accepted (logs a warning). This means missing the env var never silently breaks webhook ingestion.
 
 **Request:** JSON body (Happier Leads payload — see Webhook Payload section below)
 
@@ -312,7 +315,7 @@ Campaign IDs added on the Campaigns page are stored in **browser `localStorage`*
 | `DATABASE_URL`       | *(required)*            | Neon PostgreSQL connection string (`src/lib/db.js`)                      |
 | `LOGIN_PASSWORD`     | `'Growleads@admin'`     | Password for the `/login` page gate                                      |
 | `SESSION_TOKEN`      | `'gl-auth-v1'`          | Value stored in and checked against the `gl_session` cookie              |
-| `WEBHOOK_SECRET`     | *(optional)*            | If set, webhook requires matching `x-hl-secret` header                  |
+| `WEBHOOK_SECRET`     | *(optional)*            | If set, webhook requires matching `?secret=` URL param or `x-hl-secret` header. If unset, all requests accepted (logs warning). |
 | `SMARTLEAD_API_KEY`  | *(required for SL)*     | SmartLead API key — used by `/api/smartlead/campaigns` and `/api/leads/[id]/push` |
 | `HEYREACH_API_KEY`   | *(required for HR)*     | HeyReach API key — used by `/api/heyreach/campaigns` (passed as `X-API-KEY` header) |
 
