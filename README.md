@@ -2,7 +2,7 @@
 
 **Live:** [https://happier-leads-automation.vercel.app](https://happier-leads-automation.vercel.app)
 
-A self-hosted pipeline that captures identified website visitors from [Happier Leads](https://happierleads.com) via webhook, stores them in Neon PostgreSQL, and displays them in a real-time dashboard with full lead detail, fit score breakdown, engagement scoring, and SmartLead campaign tracking.
+A self-hosted pipeline that captures identified website visitors from [Happier Leads](https://happierleads.com) via webhook, stores them in Neon PostgreSQL, and displays them in a real-time dashboard with lead detail, fit/engagement scoring, SmartLead push, and campaign analytics.
 
 ## What it does
 
@@ -17,17 +17,16 @@ Website visitor → Happier Leads identifies them
 
 ## Features
 
-- **Password protected** — Login gate on all app routes; session cookie expires on browser close; webhook stays public
-- **Overview dashboard** — Stat cards (total leads, new today with Exact/Suggested breakdown, avg fit score, avg engagement), pipeline status, and an analytics chart with 24h / 7d / custom date-range filters
-- **Full lead details** — Click any row to expand contact info, company details, fit score breakdown, visit intelligence, and UTM attribution — instant, no extra fetch
-- **Fit Score & Engagement** — Fit score summed from Happier Leads' ICP criteria; engagement derived from visit count and time on site (0–20 scale)
-- **Time-based filters** — 24h and 7d quick toggles + a custom calendar date-range picker on the Leads page
-- **Export CSV** — Exports all leads matching the active filters (not just current page) with 30 columns including contact, company, visit, and UTM data
-- **Campaigns page** — SmartLead campaign pipeline view (Phase 2 — live data sync coming)
-- **Layered deduplication** — checks HL ID → email → LinkedIn → name+company before inserting; retries on Neon cold starts
-- **Collapsible sidebar** — collapses to icon-only rail; auto-collapses below 1100px; hamburger drawer on mobile
-- **Mobile responsive** — safe-area insets, touch-action optimisations, iOS font inflation fixes, Android tap-delay removed
-- **First-time onboarding** — step-by-step setup guide shown when no leads exist yet
+- **Password protected** — login gate on all app routes; `gl_session` cookie (30-day); webhook stays public
+- **Overview dashboard** — stat cards (total, new today, exact, suggested), pipeline status, analytics chart with period-over-period comparison, 24h / 7d / custom date-range filters
+- **Leads page** — full table with tabs, search, time filters, click-to-expand detail panel, Export CSV (30 columns)
+- **Push to SmartLead** — push any lead to a SmartLead campaign directly from the dashboard; idempotent (won't double-push)
+- **SmartLead Campaigns** — live campaign analytics (leads, completed, in-progress, opens, replies, bounces) pulled from the SmartLead API
+- **HeyReach Campaigns** — live LinkedIn campaign analytics (invites sent, accepted, messages sent, replies) pulled from the HeyReach API
+- **Fit Score & Engagement** — fit score summed from Happier Leads ICP criteria; engagement derived from visit count and time on site (0–20 scale)
+- **Layered deduplication** — HL ID → email → LinkedIn → name+company; retries on Neon cold starts; race-condition safe (23505 handler)
+- **Collapsible sidebar** — icon-only rail; auto-collapses below 1100px; hamburger drawer on mobile
+- **Mobile responsive** — safe-area insets, iOS font inflation fixes, Android tap-delay removed
 
 ## Stack
 
@@ -38,6 +37,19 @@ Website visitor → Happier Leads identifies them
 | Styling | Growleads design system (dark theme, CSS custom properties) |
 | Deployment | Vercel + Neon (production) |
 
+## Environment variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
+| `LOGIN_PASSWORD` | No (default: `Growleads@admin`) | Dashboard login password |
+| `SESSION_TOKEN` | No (default: `gl-auth-v1`) | Session cookie value |
+| `WEBHOOK_SECRET` | No | If set, webhook requires `?secret=<value>` in URL or `x-hl-secret` header |
+| `SMARTLEAD_API_KEY` | For SmartLead features | SmartLead API key |
+| `HEYREACH_API_KEY` | For HeyReach features | HeyReach API key (`X-API-KEY` header) |
+
+Set all in `.env.local` for local dev, and in Vercel environment settings for production.
+
 ## Setup
 
 ### 1. Install dependencies
@@ -46,17 +58,15 @@ Website visitor → Happier Leads identifies them
 npm install
 ```
 
-### 2. Environment variables
-
-Create `.env.local` in the project root:
+### 2. Create `.env.local`
 
 ```
 DATABASE_URL=your_neon_connection_string
+LOGIN_PASSWORD=Growleads@admin
+SESSION_TOKEN=gl-auth-v1
+SMARTLEAD_API_KEY=your_smartlead_key
+HEYREACH_API_KEY=your_heyreach_key
 ```
-
-Get your connection string from [console.neon.tech](https://console.neon.tech).
-
-> **Password:** The dashboard password is `Growleads@admin`. To change it, update the constant in `src/app/api/auth/login/route.js`.
 
 ### 3. Create the database schema
 
@@ -76,6 +86,14 @@ CREATE TABLE leads (
 CREATE INDEX leads_received_at_idx ON leads(received_at DESC);
 CREATE INDEX leads_email_idx ON leads(email) WHERE email IS NOT NULL;
 CREATE INDEX leads_linkedin_idx ON leads(linkedin_url) WHERE linkedin_url IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS campaign_ids (
+  id TEXT PRIMARY KEY, added_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS heyreach_campaign_ids (
+  id TEXT PRIMARY KEY, added_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
 ### 4. Run locally
@@ -84,22 +102,18 @@ CREATE INDEX leads_linkedin_idx ON leads(linkedin_url) WHERE linkedin_url IS NOT
 npm run dev
 ```
 
-For local webhook testing, open a public tunnel:
-
-```bash
-ngrok http 3000
-# Webhook endpoint: https://<your-ngrok-url>/api/webhook/happierleads
-```
-
 ### 5. Connect Happier Leads
 
 1. Go to `admin.happierleads.com` → Automations
 2. Open your automation → edit the Webhook action
-3. Paste your webhook URL as the endpoint (Vercel URL for production, ngrok for local dev)
+3. Set the endpoint to your Vercel URL:
+   `https://happier-leads-automation.vercel.app/api/webhook/happierleads`
 4. Set segment to **All Leads** to capture both Exact and Suggested visitors
 5. **Activate** the automation
 
-Leads will appear in the dashboard within seconds of a visitor being identified.
+Leads appear in the dashboard within seconds of a visitor being identified.
+
+> **Webhook security:** If you set `WEBHOOK_SECRET` in Vercel, you must also add `?secret=<value>` to the webhook URL in Happier Leads at the same time. Setting one without the other will silently break ingestion.
 
 ## Routes
 
@@ -107,13 +121,18 @@ Leads will appear in the dashboard within seconds of a visitor being identified.
 |---|---|---|
 | `/login` | public | Password login page |
 | `/` | required | Overview — stat cards, analytics chart, pipeline status |
-| `/filtered` | required | Leads — tabs, time filters, expandable rows, Export CSV |
-| `/campaigns` | required | Campaigns — SmartLead pipeline view (Phase 2) |
+| `/filtered` | required | Leads — search, filters, expandable rows, Export CSV |
+| `/campaigns` | required | SmartLead campaign analytics |
+| `/heyreach/campaigns` | required | HeyReach LinkedIn campaign analytics |
 | `POST /api/auth/login` | public | Validate password, set session cookie |
 | `POST /api/webhook/happierleads` | public | Inbound webhook from Happier Leads |
-| `GET /api/leads` | required | Paginated leads list (`page`, `limit`, `type`, `search`, `since`, `dateFrom`, `dateTo`) |
-| `GET /api/leads/[id]` | required | Single lead with full raw\_payload |
+| `GET /api/leads` | required | Paginated leads (`page`, `limit`, `type`, `search`, `since`, `dateFrom`, `dateTo`) |
+| `GET /api/leads/[id]` | required | Single lead with full `raw_payload` |
 | `GET /api/leads/chart` | required | Daily/hourly lead counts for analytics chart |
+| `GET /api/leads/export` | required | CSV export matching active filters (up to 10,000 rows) |
+| `POST /api/leads/[id]/push` | required | Push lead to SmartLead campaign |
+| `GET /api/smartlead/campaigns` | required | SmartLead campaign analytics |
+| `GET /api/heyreach/campaigns` | required | HeyReach campaign analytics |
 
 ## Deploying to Vercel
 
@@ -123,19 +142,6 @@ To deploy your own instance:
 
 1. Push this repo to GitHub
 2. Connect the repo in [vercel.com](https://vercel.com)
-3. Add `DATABASE_URL` as an environment variable in Vercel's project settings
-4. Deploy — your app gets a permanent URL
-5. Update the webhook URL in Happier Leads to your Vercel URL
-
-Or via the Vercel CLI:
-
-```bash
-npm i -g vercel
-vercel deploy --prod --yes
-vercel env add DATABASE_URL production
-vercel deploy --prod --yes   # redeploy to pick up the env var
-```
-
-## Phase 2 — SmartLead integration
-
-The `pushed_to_smart_lead` / `pushed_at` columns and the disabled "Push to SmartLead" button in the Leads table are placeholders. When ready, add a `PATCH /api/leads/[id]/push` route that calls SmartLead's API and marks the lead as pushed. The Campaigns page will also pull live data from SmartLead's campaign API.
+3. Add all required environment variables in Vercel project settings
+4. Deploy — Vercel assigns a permanent URL
+5. Set that URL as the webhook endpoint in Happier Leads
