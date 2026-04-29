@@ -36,24 +36,35 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: 'Already pushed to SmartLead' }, { status: 409 });
   }
 
-  // Push to SmartLead campaign
-  const slRes = await fetch(
-    `${SL_BASE}/campaigns/${campaignId}/leads?api_key=${encodeURIComponent(apiKey)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        lead_list: [{
-          email:            lead.email           ?? '',
-          first_name:       lead.first_name      ?? '',
-          last_name:        lead.last_name        ?? '',
-          company_name:     lead.company_name     ?? '',
-          website:          lead.company_domain   ?? '',
-          linkedin_profile: lead.linkedin_url     ?? '',
-        }],
-      }),
-    }
-  );
+  // Push to SmartLead campaign — 10s timeout to prevent hanging on Vercel
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  let slRes;
+  try {
+    slRes = await fetch(
+      `${SL_BASE}/campaigns/${campaignId}/leads?api_key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_list: [{
+            email:            lead.email           ?? '',
+            first_name:       lead.first_name      ?? '',
+            last_name:        lead.last_name        ?? '',
+            company_name:     lead.company_name     ?? '',
+            website:          lead.company_domain   ?? '',
+            linkedin_profile: lead.linkedin_url     ?? '',
+          }],
+        }),
+        signal: ctrl.signal,
+      }
+    );
+  } catch (e) {
+    console.error('[push] SmartLead fetch failed:', e);
+    return NextResponse.json({ error: 'Failed to reach SmartLead' }, { status: 502 });
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!slRes.ok) {
     const errText = await slRes.text().catch(() => '');
@@ -64,10 +75,15 @@ export async function POST(request, { params }) {
     );
   }
 
-  // Mark as pushed in DB
-  await withRetry(() => sql`
-    UPDATE leads SET pushed_to_smart_lead = true, pushed_at = now() WHERE id = ${id}::uuid
-  `);
+  // Mark as pushed in DB — if this fails, return ok:true anyway (SmartLead already received
+  // the lead; a retry would create a duplicate). The DB will be updated on next sync.
+  try {
+    await withRetry(() => sql`
+      UPDATE leads SET pushed_to_smart_lead = true, pushed_at = now() WHERE id = ${id}::uuid
+    `);
+  } catch (err) {
+    console.error('[push] DB update failed after successful SmartLead push — lead may appear un-pushed:', err);
+  }
 
   return NextResponse.json({ ok: true });
 }

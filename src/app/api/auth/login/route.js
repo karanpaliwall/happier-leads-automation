@@ -32,7 +32,9 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
   }
 
-  const { password } = await request.json();
+  let body;
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
+  const { password } = body ?? {};
 
   if (password !== loginPassword) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });

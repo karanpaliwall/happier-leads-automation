@@ -5,6 +5,17 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Full system audit + bug fixes
+
+- What changed:
+  1. Full audit of every file: webhook, DB, auth, API routes, frontend pages, CSS responsiveness.
+  2. Fixed `src/app/api/leads/[id]/push/route.js`: added try/catch + 10s AbortController timeout around SmartLead fetch (previously an unhandled network error would crash with a generic 500); added try/catch around final DB UPDATE so a DB failure after a successful SmartLead push still returns `ok:true` (prevents duplicate push on retry).
+  3. Fixed `src/app/api/auth/login/route.js`: added try/catch around `request.json()` (previously a malformed/empty body crashed with an unhandled 500 instead of returning 400).
+- Why: Production safety audit before go-live.
+- Files affected: `src/app/api/leads/[id]/push/route.js`, `src/app/api/auth/login/route.js`
+
+---
+
 ## 2026-04-29 — Full pipeline audit + webhook live check + DELETE endpoint
 
 - What changed:
