@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Switch push integration from SmartLead to HeyReach
+
+- What changed: "Push to Smart Lead" button renamed to "Push to HeyReach". Campaign picker now loads from `/api/heyreach/campaign-ids` and `/api/heyreach/campaigns` instead of SmartLead endpoints. Push route (`/api/leads/[id]/push`) rewired to call HeyReach API (`POST /Campaign/AddLeadsToActiveCampaign`) using `HEYREACH_API_KEY`. DB column `pushed_to_smart_lead` kept as-is (renaming requires a migration; it's internal only).
+- Why: User is using HeyReach for LinkedIn outreach, not SmartLead.
+- Files affected: `src/app/leads/page.jsx`, `src/app/api/leads/[id]/push/route.js`, `docs/3-single-source-of-truth.md`, `CLAUDE.md`
+
+---
+
 ## 2026-04-29 — Fix stale activity timestamps on repeat visits
 
 - What changed: Webhook handler now UPDATEs `activity_at`, `engagement_score`, `fit_score`, and `raw_payload` when a duplicate lead arrives with a newer `activity_at`. Previously, repeat-visit webhooks were silently dropped after the dedup check, leaving the original (older) activity timestamp frozen.

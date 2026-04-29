@@ -19,12 +19,11 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
   useEffect(() => {
     async function load() {
       try {
-        // Fetch saved campaign IDs first, then pass them to the campaigns proxy
-        const idsRes  = await fetch('/api/campaigns/ids');
+        const idsRes  = await fetch('/api/heyreach/campaign-ids');
         const idsData = await idsRes.json();
         const ids     = (idsData.ids ?? []).join(',');
         if (!ids) { setCampaigns([]); return; }
-        const res  = await fetch(`/api/smartlead/campaigns?ids=${ids}`);
+        const res  = await fetch(`/api/heyreach/campaigns?ids=${ids}`);
         const data = await res.json();
         setCampaigns(data.campaigns ?? []);
       } catch { setCampaigns([]); }
@@ -70,7 +69,7 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
 
   return (
     <div ref={ref} className="push-dropdown" style={style}>
-      <div className="push-dropdown-header">Push to campaign</div>
+      <div className="push-dropdown-header">Push to HeyReach campaign</div>
       {campaigns === null ? (
         <div className="push-dropdown-state">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -482,7 +481,7 @@ function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick }) 
               </span>
             ) : (
               <button ref={pushBtnRef} className="push-btn-live" onClick={handlePushClick}>
-                Push to Smart Lead
+                Push to HeyReach
               </button>
             )}
             <span className={`expand-chevron${expanded ? ' expanded' : ''}`}>

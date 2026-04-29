@@ -285,7 +285,7 @@ Stores HeyReach campaign IDs in the `heyreach_campaign_ids` table. Same contract
 ---
 
 ### POST /api/leads/[id]/push
-Pushes a single lead to a SmartLead campaign and marks it as pushed in the DB. **Auth required.**
+Pushes a single lead to a HeyReach campaign and marks it as pushed in the DB. **Auth required.**
 
 **Request:**
 ```json
@@ -293,16 +293,16 @@ Pushes a single lead to a SmartLead campaign and marks it as pushed in the DB. *
 ```
 
 **What it does:**
-1. Fetches lead from DB (name, email, company, LinkedIn)
-2. Calls `POST https://server.smartlead.ai/api/v1/campaigns/{campaignId}/leads` with the lead's contact data
-3. Updates the lead row: `pushed_to_smart_lead = true`, `pushed_at = now()`
+1. Fetches lead from DB (name, email, company, LinkedIn URL)
+2. Calls `POST https://api.heyreach.io/api/public/Campaign/AddLeadsToActiveCampaign` with `X-API-KEY` header and lead contact data
+3. Updates the lead row: `pushed_to_smart_lead = true`, `pushed_at = now()` (column name is legacy — functionally means "pushed to HeyReach")
 
 **Response:**
 ```json
 { "ok": true }
 ```
 
-**Error responses:** `400` (missing campaignId or invalid ID), `404` (lead not found), `409` (already pushed), `500` (API key missing), `502` (SmartLead rejected the request or network/timeout failure).
+**Error responses:** `400` (missing campaignId or invalid ID), `404` (lead not found), `409` (already pushed), `500` (API key missing), `502` (HeyReach rejected the request or network/timeout failure).
 
 ---
 
@@ -312,7 +312,7 @@ Campaign IDs are stored in the **database** (`campaign_ids` / `heyreach_campaign
 
 The frontend also caches them in `localStorage` (`sl-campaign-ids` / `hr-campaign-ids`) for immediate render on page revisit — but the **DB is authoritative**. On load: show cache instantly → sync with server → reconcile differences. Network failures fall back to the cache.
 
-The SmartLead campaign list also powers the "Push to SmartLead" campaign picker on the Leads page.
+The HeyReach campaign list (`heyreach_campaign_ids`) powers the "Push to HeyReach" campaign picker on the Leads page.
 
 ---
 
@@ -324,7 +324,7 @@ The SmartLead campaign list also powers the "Push to SmartLead" campaign picker 
 | `LOGIN_PASSWORD`     | **Required**            | Password for the `/login` page gate. Missing = login returns 500.        |
 | `SESSION_TOKEN`      | **Required**            | Value stored in and checked against the `gl_session` cookie. Missing = login returns 500, all auth fails. |
 | `WEBHOOK_SECRET`     | Optional                | If set, webhook requires matching `?secret=` URL param or `x-hl-secret` header. If unset, all requests accepted (logs warning). |
-| `SMARTLEAD_API_KEY`  | Required for SmartLead  | SmartLead API key — used by `/api/smartlead/campaigns` and `/api/leads/[id]/push`. Missing = 500 on those routes. |
+| `SMARTLEAD_API_KEY`  | Required for SmartLead  | SmartLead API key — used by `/api/smartlead/campaigns` (SmartLead Campaigns page). Not used by the push route (now HeyReach). |
 | `HEYREACH_API_KEY`   | Required for HeyReach   | HeyReach API key — passed as `X-API-KEY` header. Missing = 500 on `/api/heyreach/campaigns`. |
 
 Set all in `.env.local` for local dev, and in Vercel environment settings for production. `DATABASE_URL`, `LOGIN_PASSWORD`, and `SESSION_TOKEN` must always be set — the app will not function without them.

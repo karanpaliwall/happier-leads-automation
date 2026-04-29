@@ -98,6 +98,10 @@ CREATE INDEX leads_linkedin_idx ON leads(linkedin_url) WHERE linkedin_url IS NOT
 ```
 Also update `docs/3-single-source-of-truth.md` if schema or API contracts change.
 
-## Smart Lead Integration (Phase 2 — not yet built)
+## HeyReach Integration (Push — live)
 
-The `pushed_to_smart_lead` / `pushed_at` columns and the disabled "Push to Smart Lead" button in `leads/page.jsx` are placeholders. When ready, add a `PATCH /api/leads/[id]/push` route that calls Smart Lead's API and updates those columns.
+The "Push to HeyReach" button on the Leads page calls `POST /api/leads/[id]/push`, which pushes the lead to a HeyReach campaign via `POST https://api.heyreach.io/api/public/Campaign/AddLeadsToActiveCampaign`. Auth uses `HEYREACH_API_KEY` env var (`X-API-KEY` header).
+
+The DB columns are `pushed_to_smart_lead` / `pushed_at` (legacy names — functionally mean "pushed to HeyReach"). The campaign picker loads IDs from `/api/heyreach/campaign-ids` and campaign details from `/api/heyreach/campaigns`.
+
+**Auto-push (not yet built):** When adding auto-push on new lead arrival, place the push call inside the INSERT success block in the webhook route, never in the duplicate/update path. Guard with `pushed_to_smart_lead = false` to prevent double-pushes on repeat visits.
