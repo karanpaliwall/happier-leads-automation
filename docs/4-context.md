@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Open push endpoint for re-engagement campaigns
+
+- What changed: Removed the 409 "Already pushed" guard from `POST /api/leads/[id]/push` so the same lead can be pushed multiple times. Updated the UI button: previously a lead that was already pushed showed a dead "Pushed" badge with no click action; now it shows a "Re-push" button (with checkmark icon) that opens the campaign picker the same as the first push.
+- Why: User wants to run re-engagement campaigns. Blocking re-push at the API level would prevent pushing the same lead to a different or future campaign, and forcing a workaround (delete + re-import) is impractical.
+- Files affected: `src/app/api/leads/[id]/push/route.js`, `src/app/leads/page.jsx`
+
+---
+
 ## 2026-04-29 — Fix HeyReach push endpoint (404 → working)
 
 - What changed: Push route was calling `/Campaign/AddLeadsToActiveCampaign` which doesn't exist (404). Correct endpoint is `/campaign/AddLeadsToCampaignV2` (lowercase `campaign`, different name). Body shape also wrong — HeyReach uses `accountLeadPairs[].lead` with `profileUrl` and `emailAddress` fields, not a flat `leads[]` array. Also added `Accept: text/plain` header and `resumePausedCampaign: true` per API docs.

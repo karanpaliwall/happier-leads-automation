@@ -32,9 +32,6 @@ export async function POST(request, { params }) {
   if (!rows.length) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
 
   const lead = rows[0];
-  if (lead.pushed_to_smart_lead) {
-    return NextResponse.json({ error: 'Already pushed to HeyReach' }, { status: 409 });
-  }
 
   // Extract enriched fields from raw_payload
   const contact  = lead.raw_payload?.contact ?? {};
