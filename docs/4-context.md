@@ -5,6 +5,26 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Data audit: random records investigation + New Today behaviour confirmed
+
+- What changed: No code change. Investigation only.
+- Findings:
+  - **"Random" records (e.g. Nicolas Rossi at map.ch)**: appeared at top of dashboard (8h ago) but not visible in HL's activity-sorted list where he should appear (#2, between Farhana at 3h and the 9h group). Root cause: likely created by clicking "Test Webhook (POST Request)" in the HL automation panel. Test webhooks fire real-looking sample data, hit our endpoint, pass dedup, and get stored as real leads. Action: delete suspected test entries via the checkbox bulk-delete feature.
+  - **Order discrepancy between dashboard and HL**: expected. Farhana shows 3h in HL (she revisited) but 11h in our dashboard (we're back on "Only on first visit" — revisit webhooks don't fire, so `activity_at` is still from her first visit). Our sort is by `activity_at`, HL sorts by most-recent-visit.
+  - **Count gap (396 ours vs 445 HL last 7 days)**: ~49 leads HL identified that we never received webhooks for. Likely from the WEBHOOK_SECRET downtime (2026-04-29) and the period before the automation was fully set up.
+  - **"New Today" counter**: already resets at midnight UTC daily (`received_at >= CURRENT_DATE` in SQL). Shows 0 at start of each day, counts up throughout the day. Timezone note: resets at midnight UTC, not local midnight.
+- Files affected: None
+
+---
+
+## 2026-04-30 — Replace individual delete button with checkbox bulk-select delete
+
+- What changed: Removed per-row trash icon. Added checkbox to each row + select-all in header (indeterminate state supported). When 1+ rows selected, "Delete (N)" button appears in filter bar. Two-click confirm ("Delete (N)" → "Delete N leads? Yes / Cancel"). Bulk DELETE runs in parallel via `Promise.allSettled`, only removes rows that actually returned `ok:true`, total decrements by actual deleted count.
+- Why: Cleaner UX for removing multiple test/junk entries at once.
+- Files affected: `src/app/leads/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-30 — Add delete lead button to dashboard
 
 - What changed: Each lead row now has a trash icon button in the action column. Clicking it shows an inline "Delete? Yes / No" confirmation (no browser alert). Confirming calls `DELETE /api/leads/[id]`, removes the row from the local state immediately, and decrements the total count. The backend endpoint already existed.
