@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix analytics % showing absurd values (e.g. ↑3282%)
+
+- What changed: `pct` is now `null` when `Math.abs(pct) > 999`. The previous fix (null when `beforeTotal < 5`) wasn't enough — a previous period with 11 leads vs current 372 still produced 3282%. When the % would be >999, the raw counts already tell the story; the giant number just looks broken.
+- Why: User reported "↑3282%" on the analytics chart comparison row.
+- Files affected: `src/app/page.jsx` (line ~602, `chartSummary` useMemo)
+
+---
+
 ## 2026-04-29 — Fix webhook broken by hard-required WEBHOOK_SECRET
 
 - What changed: The security audit (same day) changed `WEBHOOK_SECRET` from optional-with-warning to hard-required (returns 500 if unset, 401 if set but header missing). Happier Leads has no way to send custom request headers, so every webhook call started failing immediately after deploy — 0 new leads received since then.
