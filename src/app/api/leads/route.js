@@ -36,7 +36,7 @@ export async function GET(req) {
           AND (${since}::timestamptz IS NULL OR received_at >= ${since}::timestamptz)
           AND (${dateFrom}::date IS NULL OR received_at >= ${dateFrom}::date)
           AND (${dateTo}::date IS NULL OR received_at < ${dateTo}::date + INTERVAL '1 day')
-        ORDER BY received_at DESC
+        ORDER BY COALESCE(activity_at, received_at) DESC
         LIMIT ${limit} OFFSET ${offset}
       `,
       sql`

@@ -470,7 +470,7 @@ function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick }) 
         </td>
         <td><ScoreBar value={lead.fit_score} max={30} color="var(--blue-500)" /></td>
         <td><ScoreBar value={lead.engagement_score} max={20} color="var(--violet-400)" /></td>
-        <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{timeAgo(lead.received_at)}</td>
+        <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{timeAgo(lead.activity_at || lead.received_at)}</td>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isPushed ? (
@@ -792,7 +792,7 @@ export default function FilteredPage() {
                           tip="How actively this visitor engaged with your website. Calculated from number of visits (up to 10 pts) and time spent on site (up to 10 pts). Max 20 pts. Higher = more interested."
                         />
                       </th>
-                      <th>Received</th>
+                      <th>Activity</th>
                       <th>Action</th>
                     </tr>
                   </thead>
