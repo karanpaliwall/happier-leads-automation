@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Full pipeline audit + webhook live check + DELETE endpoint
+
+- What changed:
+  1. Full end-to-end pipeline audit — confirmed every layer is healthy and real-time (webhook → Neon DB → 10s poll → frontend).
+  2. Fired a live test webhook to `websitevisitors.growleads.io/api/webhook/happierleads` — returned `200 {"ok":true}`, lead landed in DB with all fields correct, then cleaned up.
+  3. Added `DELETE /api/leads/[id]` endpoint (auth-required) for removing leads (e.g. test entries).
+  4. Root cause of 394 vs 436 gap confirmed: historical — leads before webhook activation (pre Apr 22) + ~42 missed during the Apr 29 WEBHOOK_SECRET outage. No ongoing data loss.
+- Why: User wanted confidence that every new HL lead is captured in real-time with no edge cases.
+- Files affected: `src/app/api/leads/[id]/route.js`
+
+---
+
 ## 2026-04-29 — Rename /filtered route to /leads + add custom domain
 
 - What changed:
