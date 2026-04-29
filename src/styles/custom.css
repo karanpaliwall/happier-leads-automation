@@ -2474,57 +2474,61 @@ body { overflow-x: hidden; }
   color: #93c5fd;
 }
 
-/* ── Delete lead button ── */
-.del-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
+/* ── Lead row checkbox ── */
+.lead-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--blue-400, #60a5fa);
   cursor: pointer;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-  flex-shrink: 0;
+  display: block;
+  margin: 0 auto;
 }
-.del-btn:hover {
+.lead-row-selected td {
+  background: rgba(59,130,246,0.06) !important;
+}
+
+/* ── Bulk delete button (filter bar) ── */
+.bulk-del-btn {
+  padding: 5px 12px;
+  background: rgba(239,68,68,0.1);
   color: var(--red-400, #f87171);
-  background: rgba(239,68,68,0.08);
-  border-color: rgba(239,68,68,0.18);
-}
-.del-confirm {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-}
-.del-confirm-yes {
-  padding: 2px 7px;
-  background: rgba(239,68,68,0.12);
-  color: var(--red-400, #f87171);
-  border: 1px solid rgba(239,68,68,0.25);
+  border: 1px solid rgba(239,68,68,0.22);
   border-radius: var(--radius);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.bulk-del-btn:hover {
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.4);
+}
+.bulk-del-confirm-btn {
+  padding: 4px 10px;
+  background: rgba(239,68,68,0.15);
+  color: var(--red-400, #f87171);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius);
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s;
 }
-.del-confirm-yes:hover { background: rgba(239,68,68,0.22); }
-.del-confirm-no {
-  padding: 2px 7px;
+.bulk-del-confirm-btn:hover { background: rgba(239,68,68,0.25); }
+.bulk-del-cancel-btn {
+  padding: 4px 10px;
   background: transparent;
   color: var(--text-muted);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius);
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s;
 }
-.del-confirm-no:hover { background: rgba(255,255,255,0.06); }
+.bulk-del-cancel-btn:hover { background: rgba(255,255,255,0.06); }
 
 /* ── Push to Smart Lead — done (green) ── */
 .push-btn-done {

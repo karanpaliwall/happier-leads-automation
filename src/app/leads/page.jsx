@@ -226,7 +226,7 @@ function LeadDetailPanel({ rawPayload }) {
   if (!rawPayload) {
     return (
       <tr className="detail-row">
-        <td colSpan={7} className="detail-row-cell">
+        <td colSpan={8} className="detail-row-cell">
           <div className="detail-panel" style={{ padding: '24px', color: 'var(--text-muted)', textAlign: 'center', fontSize: 13 }}>Loading…</div>
         </td>
       </tr>
@@ -235,7 +235,7 @@ function LeadDetailPanel({ rawPayload }) {
   if (rawPayload === '__error') {
     return (
       <tr className="detail-row">
-        <td colSpan={7} className="detail-row-cell">
+        <td colSpan={8} className="detail-row-cell">
           <div className="detail-panel" style={{ padding: '24px', color: 'var(--red-400)', textAlign: 'center', fontSize: 13 }}>
             Failed to load lead details. Try clicking the row again.
           </div>
@@ -259,7 +259,7 @@ function LeadDetailPanel({ rawPayload }) {
 
   return (
     <tr className="detail-row">
-      <td colSpan={7} className="detail-row-cell">
+      <td colSpan={8} className="detail-row-cell">
         <div className="detail-panel">
 
           {hasContactDetail && (
@@ -421,9 +421,8 @@ function LeadDetailPanel({ rawPayload }) {
   );
 }
 
-function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, onDelete }) {
+function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, selected, onSelect }) {
   const pushBtnRef = useRef(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   function handlePushClick(e) {
     e.stopPropagation();
@@ -431,31 +430,23 @@ function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, on
     onPushClick(lead.id, rect);
   }
 
-  function handleDeleteClick(e) {
-    e.stopPropagation();
-    setDeleteConfirm(true);
-  }
-
-  function handleDeleteConfirm(e) {
-    e.stopPropagation();
-    setDeleteConfirm(false);
-    onDelete(lead.id);
-  }
-
-  function handleDeleteCancel(e) {
-    e.stopPropagation();
-    setDeleteConfirm(false);
-  }
-
   const isPushed = pushed || lead.pushed_to_smart_lead;
 
   return (
     <>
       <tr
-        className={`lead-row${expanded ? ' lead-row-expanded' : ''}`}
+        className={`lead-row${expanded ? ' lead-row-expanded' : ''}${selected ? ' lead-row-selected' : ''}`}
         onClick={onToggle}
         style={{ cursor: 'pointer' }}
       >
+        <td onClick={e => e.stopPropagation()} style={{ width: 36 }}>
+          <input
+            type="checkbox"
+            className="lead-checkbox"
+            checked={selected}
+            onChange={e => onSelect(lead.id, e.target.checked)}
+          />
+        </td>
         <td>
           <div className="person-cell">
             <div className="avatar-initials">{getInitials(lead.full_name)}</div>
@@ -495,22 +486,6 @@ function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, on
                 : 'Push to HeyReach'
               }
             </button>
-            {deleteConfirm ? (
-              <div className="del-confirm" onClick={e => e.stopPropagation()}>
-                <span style={{ color: 'var(--red-400, #f87171)', fontSize: 11 }}>Delete?</span>
-                <button className="del-confirm-yes" onClick={handleDeleteConfirm}>Yes</button>
-                <button className="del-confirm-no" onClick={handleDeleteCancel}>No</button>
-              </div>
-            ) : (
-              <button className="del-btn" onClick={handleDeleteClick} title="Delete lead">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6M14 11v6"/>
-                  <path d="M9 6V4h6v2"/>
-                </svg>
-              </button>
-            )}
             <span className={`expand-chevron${expanded ? ' expanded' : ''}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
@@ -552,8 +527,10 @@ export default function FilteredPage() {
   const [editField, setEditField] = useState(null);
   const [exporting, setExporting]     = useState(false);
   const [pollError, setPollError]     = useState(false);
-  const [pushTarget, setPushTarget]   = useState(null); // { leadId, bottom, left }
-  const [pushedIds, setPushedIds]     = useState(new Set());
+  const [pushTarget, setPushTarget]       = useState(null); // { leadId, bottom, left }
+  const [pushedIds, setPushedIds]         = useState(new Set());
+  const [selectedIds, setSelectedIds]     = useState(new Set());
+  const [bulkDelConfirm, setBulkDelConfirm] = useState(false);
   const debounceRef = useRef(null);
   const calRef = useRef(null);
 
@@ -649,16 +626,26 @@ export default function FilteredPage() {
 
   const totalPages = Math.ceil(total / 25);
 
-  async function handleDeleteLead(id) {
-    try {
-      const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
-      if (!res.ok) return;
-      setLeads(prev => prev.filter(l => l.id !== id));
-      setTotal(prev => prev - 1);
-      if (expandedId === id) setExpandedId(null);
-    } catch (err) {
-      console.error('[delete]', err);
-    }
+  function handleSelectLead(id, checked) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      checked ? next.add(id) : next.delete(id);
+      return next;
+    });
+  }
+
+  function handleSelectAll(checked) {
+    setSelectedIds(checked ? new Set(leads.map(l => l.id)) : new Set());
+  }
+
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    await Promise.all(ids.map(id => fetch(`/api/leads/${id}`, { method: 'DELETE' })));
+    setLeads(prev => prev.filter(l => !selectedIds.has(l.id)));
+    setTotal(prev => prev - ids.length);
+    if (selectedIds.has(expandedId)) setExpandedId(null);
+    setSelectedIds(new Set());
+    setBulkDelConfirm(false);
   }
 
   async function handleExportCSV() {
@@ -794,6 +781,19 @@ export default function FilteredPage() {
               Clear
             </button>
           )}
+          {selectedIds.size > 0 && (
+            bulkDelConfirm ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, color: 'var(--red-400, #f87171)', whiteSpace: 'nowrap' }}>Delete {selectedIds.size} lead{selectedIds.size > 1 ? 's' : ''}?</span>
+                <button className="bulk-del-confirm-btn" onClick={handleBulkDelete}>Yes</button>
+                <button className="bulk-del-cancel-btn" onClick={() => setBulkDelConfirm(false)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="bulk-del-btn" onClick={() => setBulkDelConfirm(true)}>
+                Delete ({selectedIds.size})
+              </button>
+            )
+          )}
         </div>
 
         {loading ? (
@@ -815,6 +815,15 @@ export default function FilteredPage() {
                 <table>
                   <thead>
                     <tr>
+                      <th style={{ width: 36 }}>
+                        <input
+                          type="checkbox"
+                          className="lead-checkbox"
+                          checked={leads.length > 0 && leads.every(l => selectedIds.has(l.id))}
+                          ref={el => { if (el) el.indeterminate = leads.some(l => selectedIds.has(l.id)) && !leads.every(l => selectedIds.has(l.id)); }}
+                          onChange={e => handleSelectAll(e.target.checked)}
+                        />
+                      </th>
                       <th>Person</th>
                       <th>Company</th>
                       <th>Type</th>
@@ -844,7 +853,8 @@ export default function FilteredPage() {
                         onToggle={() => handleToggleExpand(lead.id)}
                         pushed={pushedIds.has(lead.id)}
                         onPushClick={(leadId, rect) => setPushTarget({ leadId, bottom: rect.bottom, left: rect.left })}
-                        onDelete={handleDeleteLead}
+                        selected={selectedIds.has(lead.id)}
+                        onSelect={handleSelectLead}
                       />
                     ))}
                   </tbody>
