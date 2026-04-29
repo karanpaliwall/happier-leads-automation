@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix HeyReach push endpoint (404 → working)
+
+- What changed: Push route was calling `/Campaign/AddLeadsToActiveCampaign` which doesn't exist (404). Correct endpoint is `/campaign/AddLeadsToCampaignV2` (lowercase `campaign`, different name). Body shape also wrong — HeyReach uses `accountLeadPairs[].lead` with `profileUrl` and `emailAddress` fields, not a flat `leads[]` array. Also added `Accept: text/plain` header and `resumePausedCampaign: true` per API docs.
+- Why: User got "HeyReach rejected the request (HTTP 404)" when clicking Push to HeyReach. API docs confirmed at documenter.getpostman.com/view/23808049/2sA2xb5F75.
+- Files affected: `src/app/api/leads/[id]/push/route.js`, `docs/3-single-source-of-truth.md`
+
+---
+
 ## 2026-04-29 — Switch push integration from SmartLead to HeyReach
 
 - What changed: "Push to Smart Lead" button renamed to "Push to HeyReach". Campaign picker now loads from `/api/heyreach/campaign-ids` and `/api/heyreach/campaigns` instead of SmartLead endpoints. Push route (`/api/leads/[id]/push`) rewired to call HeyReach API (`POST /Campaign/AddLeadsToActiveCampaign`) using `HEYREACH_API_KEY`. DB column `pushed_to_smart_lead` kept as-is (renaming requires a migration; it's internal only).

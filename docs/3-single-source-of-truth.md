@@ -294,8 +294,26 @@ Pushes a single lead to a HeyReach campaign and marks it as pushed in the DB. **
 
 **What it does:**
 1. Fetches lead from DB (name, email, company, LinkedIn URL)
-2. Calls `POST https://api.heyreach.io/api/public/Campaign/AddLeadsToActiveCampaign` with `X-API-KEY` header and lead contact data
+2. Calls `POST https://api.heyreach.io/api/public/campaign/AddLeadsToCampaignV2` with `X-API-KEY` + `Accept: text/plain` headers
 3. Updates the lead row: `pushed_to_smart_lead = true`, `pushed_at = now()` (column name is legacy — functionally means "pushed to HeyReach")
+
+**HeyReach request body:**
+```json
+{
+  "campaignId": 235,
+  "accountLeadPairs": [{
+    "lead": {
+      "firstName": "...",
+      "lastName": "...",
+      "companyName": "...",
+      "emailAddress": "...",
+      "profileUrl": "https://linkedin.com/in/..."
+    }
+  }],
+  "resumeFinishedCampaign": false,
+  "resumePausedCampaign": true
+}
+```
 
 **Response:**
 ```json
