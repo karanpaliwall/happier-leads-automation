@@ -306,8 +306,11 @@ Pushes a single lead to a HeyReach campaign and marks it as pushed in the DB. **
       "firstName": "...",
       "lastName": "...",
       "companyName": "...",
+      "position": "...",
       "emailAddress": "...",
-      "profileUrl": "https://linkedin.com/in/..."
+      "profileUrl": "https://linkedin.com/in/...",
+      "location": "City, State, Country",
+      "summary": "LinkedIn headline"
     }
   }],
   "resumeFinishedCampaign": false,
@@ -315,12 +318,16 @@ Pushes a single lead to a HeyReach campaign and marks it as pushed in the DB. **
 }
 ```
 
+`position`, `location`, and `summary` (LinkedIn headline) are extracted from `raw_payload.contact`. `location` is assembled from `geo.city`, `geo.state`, `geo.country`.
+
 **Response:**
 ```json
 { "ok": true }
 ```
 
-**Error responses:** `400` (missing campaignId or invalid ID), `404` (lead not found), `409` (already pushed), `500` (API key missing), `502` (HeyReach rejected the request or network/timeout failure).
+**Error responses:** `400` (missing campaignId or invalid ID), `404` (lead not found), `500` (API key missing), `502` (HeyReach rejected the request or network/timeout failure).
+
+Note: There is no `409` — the same lead can be pushed multiple times (for re-engagement campaigns). The UI shows "Re-push" instead of "Push to HeyReach" for already-pushed leads.
 
 ---
 

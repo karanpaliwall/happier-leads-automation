@@ -100,8 +100,12 @@ Also update `docs/3-single-source-of-truth.md` if schema or API contracts change
 
 ## HeyReach Integration (Push — live)
 
-The "Push to HeyReach" button on the Leads page calls `POST /api/leads/[id]/push`, which pushes the lead to a HeyReach campaign via `POST https://api.heyreach.io/api/public/Campaign/AddLeadsToActiveCampaign`. Auth uses `HEYREACH_API_KEY` env var (`X-API-KEY` header).
+The "Push to HeyReach" button on the Leads page calls `POST /api/leads/[id]/push`, which pushes the lead to a HeyReach campaign via `POST https://api.heyreach.io/api/public/campaign/AddLeadsToCampaignV2`. Auth uses `HEYREACH_API_KEY` env var (`X-API-KEY` header). Also requires `Accept: text/plain` header.
 
 The DB columns are `pushed_to_smart_lead` / `pushed_at` (legacy names — functionally mean "pushed to HeyReach"). The campaign picker loads IDs from `/api/heyreach/campaign-ids` and campaign details from `/api/heyreach/campaigns`.
 
-**Auto-push (not yet built):** When adding auto-push on new lead arrival, place the push call inside the INSERT success block in the webhook route, never in the duplicate/update path. Guard with `pushed_to_smart_lead = false` to prevent double-pushes on repeat visits.
+**Re-push:** There is no 409 block — the same lead can be pushed to HeyReach multiple times (supports re-engagement campaigns). The UI shows "✓ Re-push" for already-pushed leads; clicking it opens the campaign picker again.
+
+**Fields sent to HeyReach:** `firstName`, `lastName`, `companyName`, `position`, `emailAddress`, `profileUrl` (LinkedIn), `location` (city/state/country from `raw_payload.contact.geo`), `summary` (LinkedIn headline from `raw_payload.contact.headline`).
+
+**Auto-push (not yet built):** When adding auto-push on new lead arrival, place the push call inside the INSERT success block in the webhook route, never in the duplicate/update path.
