@@ -5,6 +5,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Rename /filtered route to /leads + add custom domain
+
+- What changed:
+  1. Renamed `src/app/filtered/` → `src/app/leads/` so the Leads page is at `/leads` instead of `/filtered`.
+  2. Updated `Sidebar.jsx` href from `/filtered` to `/leads`.
+  3. Updated all references in `CLAUDE.md` and `docs/3-single-source-of-truth.md`.
+  4. Documented custom domain `websitevisitors.growleads.io` as the primary production URL.
+- Why: URL `/filtered` was an implementation artifact; `/leads` matches the page label and is user-facing. Custom domain was configured in Vercel by the user.
+- Files affected: `src/app/leads/page.jsx` (renamed), `src/components/Sidebar.jsx`, `CLAUDE.md`, `docs/3-single-source-of-truth.md`, `docs/4-context.md`
+
+---
+
 ## 2026-04-29 — Webhook reliability audit + preventive hardening
 
 - What changed: Full audit of the webhook pipeline after the WEBHOOK_SECRET breakage. No additional code bugs found. Two preventive changes made:

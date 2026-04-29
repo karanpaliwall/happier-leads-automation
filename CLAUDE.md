@@ -27,14 +27,14 @@ Single Next.js 16 App Router project — backend API routes and frontend live in
 
 **Routes:**
 - `app/page.jsx` — Overview (stat cards, pipeline status, recent 5 leads)
-- `app/filtered/page.jsx` — Leads page (full table, tabs/search/filter, click-to-expand rows, Export CSV)
+- `app/leads/page.jsx` — Leads page (full table, tabs/search/filter, click-to-expand rows, Export CSV)
 - `app/login/page.jsx` — password gate (password: `Growleads@admin`, sets `gl_session` cookie)
 
 **Component model:**
 - `layout.jsx` — server component; imports all CSS; renders `<ClientLayout>`
 - `ClientLayout.jsx` — client wrapper; manages sidebar collapsed/open state, `app-mounted` class to prevent hydration flash
 - `Sidebar.jsx` — collapsible nav; defaults collapsed; auto-collapses below 1100px; hamburger drawer on mobile (≤640px)
-- `filtered/page.jsx` — owns `expandedId` state; detail panel renders outside the `<table>` in `.lead-detail-outer` so it never scrolls with the table
+- `leads/page.jsx` — owns `expandedId` state; detail panel renders outside the `<table>` in `.lead-detail-outer` so it never scrolls with the table
 
 ## Webhook Reliability Rules
 
@@ -58,7 +58,7 @@ Rules that must never be violated when touching `src/app/api/webhook/happierlead
 
 **Dedup is layered** — the webhook handler checks for duplicates in order: Happier Leads ID → email → LinkedIn URL → full\_name+company\_name. Always returns `200` even for duplicates (prevents Happier Leads from retrying).
 
-**Webhook URL is permanent** — webhook is configured to the Vercel production URL (`https://happier-leads-automation.vercel.app/api/webhook/happierleads`). ngrok is no longer needed.
+**Production URL** — custom domain `https://websitevisitors.growleads.io` (Vercel alias `https://happier-leads-automation.vercel.app` still works). Webhook is configured to the custom domain URL: `https://websitevisitors.growleads.io/api/webhook/happierleads`. ngrok is no longer needed.
 
 **Password gate** — all app routes (except `/login` and `/api/*`) require a `gl_session` cookie set by `POST /api/auth/login`. Password: `Growleads@admin`. Cookie is session-scoped (expires when browser closes).
 
@@ -100,4 +100,4 @@ Also update `docs/3-single-source-of-truth.md` if schema or API contracts change
 
 ## Smart Lead Integration (Phase 2 — not yet built)
 
-The `pushed_to_smart_lead` / `pushed_at` columns and the disabled "Push to Smart Lead" button in `filtered/page.jsx` are placeholders. When ready, add a `PATCH /api/leads/[id]/push` route that calls Smart Lead's API and updates those columns.
+The `pushed_to_smart_lead` / `pushed_at` columns and the disabled "Push to Smart Lead" button in `leads/page.jsx` are placeholders. When ready, add a `PATCH /api/leads/[id]/push` route that calls Smart Lead's API and updates those columns.

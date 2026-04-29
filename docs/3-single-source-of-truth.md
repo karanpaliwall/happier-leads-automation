@@ -392,7 +392,7 @@ Happier Leads sends a POST with this structure:
 - **Automation:** "automation" card — **Active** (permanent Vercel URL, no ngrok needed)
 - **Trigger:** A new lead is identified — Only on first visit
 - **Filter:** All Leads (catches both Exact and Suggested)
-- **Action:** Webhook → POST to `https://happier-leads-automation.vercel.app/api/webhook/happierleads`
+- **Action:** Webhook → POST to `https://websitevisitors.growleads.io/api/webhook/happierleads` (custom domain; Vercel alias `happier-leads-automation.vercel.app` also works)
 - **Confirmed working:** test webhook + real webhooks both received successfully
 
 ## Engagement Score Calculation
