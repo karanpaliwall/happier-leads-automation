@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix stale activity timestamps on repeat visits
+
+- What changed: Webhook handler now UPDATEs `activity_at`, `engagement_score`, `fit_score`, and `raw_payload` when a duplicate lead arrives with a newer `activity_at`. Previously, repeat-visit webhooks were silently dropped after the dedup check, leaving the original (older) activity timestamp frozen.
+- Why: Farhana Toma showed "9h ago" in our dashboard while HL showed "1h ago" — she had visited again but the update was discarded.
+- Files affected: `src/app/api/webhook/happierleads/route.js`
+
+---
+
 ## 2026-04-29 — Fix timestamp display to match Happier Leads Activity column
 
 - What changed: Leads page now shows `activity_at` (visitor's last active time from HL payload) instead of `received_at` (when our webhook received the lead). Column renamed from "Received" to "Activity". Sort order also switched to `COALESCE(activity_at, received_at) DESC`.
