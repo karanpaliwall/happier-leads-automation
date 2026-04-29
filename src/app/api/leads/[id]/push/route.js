@@ -26,7 +26,7 @@ export async function POST(request, { params }) {
   // Atomic read + idempotency check — rejects if already pushed to prevent HeyReach duplicates
   const rows = await withRetry(() => sql`
     SELECT id, first_name, last_name, full_name, email, company_name, company_domain, linkedin_url,
-           pushed_to_smart_lead
+           pushed_to_smart_lead, raw_payload
     FROM leads WHERE id = ${id}::uuid
   `);
   if (!rows.length) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
@@ -35,6 +35,13 @@ export async function POST(request, { params }) {
   if (lead.pushed_to_smart_lead) {
     return NextResponse.json({ error: 'Already pushed to HeyReach' }, { status: 409 });
   }
+
+  // Extract enriched fields from raw_payload
+  const contact  = lead.raw_payload?.contact ?? {};
+  const geo      = contact.geo ?? {};
+  const position = contact.position ?? '';
+  const headline = contact.headline ?? '';
+  const location = [geo.city, geo.state, geo.country].filter(Boolean).join(', ');
 
   // Push to HeyReach campaign — 10s timeout to prevent hanging on Vercel
   const ctrl  = new AbortController();
@@ -52,12 +59,14 @@ export async function POST(request, { params }) {
         campaignId: Number(campaignId),
         accountLeadPairs: [{
           lead: {
-            firstName:    lead.first_name    ?? '',
-            lastName:     lead.last_name     ?? '',
-            companyName:  lead.company_name  ?? '',
-            position:     '',
-            emailAddress: lead.email         ?? '',
-            profileUrl:   lead.linkedin_url  ?? '',
+            firstName:    lead.first_name   ?? '',
+            lastName:     lead.last_name    ?? '',
+            companyName:  lead.company_name ?? '',
+            position,
+            emailAddress: lead.email        ?? '',
+            profileUrl:   lead.linkedin_url ?? '',
+            location,
+            summary:      headline,
           },
         }],
         resumeFinishedCampaign: false,
