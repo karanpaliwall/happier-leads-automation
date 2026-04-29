@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Fix timestamp display to match Happier Leads Activity column
+
+- What changed: Leads page now shows `activity_at` (visitor's last active time from HL payload) instead of `received_at` (when our webhook received the lead). Column renamed from "Received" to "Activity". Sort order also switched to `COALESCE(activity_at, received_at) DESC`.
+- Why: `received_at` diverged from HL's "Activity" column by 10–60+ minutes when HL delayed webhook delivery (e.g. Gro Myking appeared as "34m ago" in our dashboard but "9h ago" in HL). User reported this as a "hallucination". The fix makes our timestamps and ordering consistent with HL.
+- Files affected: `src/app/leads/page.jsx`, `src/app/api/leads/route.js`
+
+---
+
 ## 2026-04-29 — Full system audit + bug fixes
 
 - What changed:
