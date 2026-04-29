@@ -41,22 +41,27 @@ export async function POST(request, { params }) {
   const timer = setTimeout(() => ctrl.abort(), 10000);
   let hrRes;
   try {
-    hrRes = await fetch(`${HR_BASE}/Campaign/AddLeadsToActiveCampaign`, {
+    hrRes = await fetch(`${HR_BASE}/campaign/AddLeadsToCampaignV2`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'text/plain',
         'X-API-KEY': apiKey,
       },
       body: JSON.stringify({
         campaignId: Number(campaignId),
-        leads: [{
-          linkedInProfileUrl: lead.linkedin_url     ?? '',
-          firstName:          lead.first_name        ?? '',
-          lastName:           lead.last_name          ?? '',
-          companyName:        lead.company_name       ?? '',
-          companyDomain:      lead.company_domain     ?? '',
-          email:              lead.email              ?? '',
+        accountLeadPairs: [{
+          lead: {
+            firstName:    lead.first_name    ?? '',
+            lastName:     lead.last_name     ?? '',
+            companyName:  lead.company_name  ?? '',
+            position:     '',
+            emailAddress: lead.email         ?? '',
+            profileUrl:   lead.linkedin_url  ?? '',
+          },
         }],
+        resumeFinishedCampaign: false,
+        resumePausedCampaign:   true,
       }),
       signal: ctrl.signal,
     });
