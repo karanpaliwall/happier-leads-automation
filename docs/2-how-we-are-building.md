@@ -36,7 +36,7 @@ Neon PostgreSQL (leads table)
 Frontend Dashboard (src/app/page.jsx + src/app/leads/page.jsx):
   - Polls GET /api/leads every 10 seconds (skips when tab is hidden)
   - Overview shows stat cards, analytics chart, pipeline status
-  - Leads page shows full table with filters, detail expand, CSV export, SmartLead push
+  - Leads page shows full table with filters, detail expand, CSV export, HeyReach push
 ```
 
 ## Project Structure
@@ -52,7 +52,7 @@ src/
 │   │   │   ├── export/route.js               ← GET (CSV download)
 │   │   │   └── [id]/
 │   │   │       ├── route.js                  ← GET (full lead), DELETE
-│   │   │       └── push/route.js             ← POST (push to SmartLead)
+│   │   │       └── push/route.js             ← POST (push to HeyReach)
 │   │   ├── auth/login/route.js               ← POST (password gate, sets cookie)
 │   │   ├── smartlead/campaigns/route.js       ← GET (SmartLead campaign analytics)
 │   │   ├── campaigns/ids/route.js             ← GET/POST/DELETE (persisted campaign IDs)

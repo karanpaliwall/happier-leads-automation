@@ -13,10 +13,18 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
-## 2026-04-29 — Fix stale activity timestamps on repeat visits
+## 2026-04-29 — Fix stale activity timestamps on repeat visits (v2: GREATEST + NOW fallback)
 
-- What changed: Webhook handler now UPDATEs `activity_at`, `engagement_score`, `fit_score`, and `raw_payload` when a duplicate lead arrives with a newer `activity_at`. Previously, repeat-visit webhooks were silently dropped after the dedup check, leaving the original (older) activity timestamp frozen.
-- Why: Farhana Toma showed "9h ago" in our dashboard while HL showed "1h ago" — she had visited again but the update was discarded.
+- What changed: Improved the repeat-visit UPDATE to use `GREATEST(existing, incoming_or_now)` instead of a `WHERE activity_at < new_activity_at` guard. The guard was silently skipping updates when HL's revisit webhook payload still carried the original `lastSession.date` (same value as stored), making the comparison `9h < 9h = false`. Now falls back to `NOW()` (webhook receipt time) when payload has no newer session date, and `GREATEST()` ensures the timestamp can never go backwards on out-of-order delivery.
+- Why: Webhook fired at 9:42 PM confirmed in HL logs, but dashboard still showed "9h ago" — the first fix's WHERE clause was failing silently.
+- Files affected: `src/app/api/webhook/happierleads/route.js`
+
+---
+
+## 2026-04-29 — Fix stale activity timestamps on repeat visits (v1)
+
+- What changed: Webhook handler now UPDATEs `activity_at`, `engagement_score`, `fit_score`, and `raw_payload` on duplicate webhooks instead of silently discarding them. Previously, repeat-visit webhooks were dropped after the dedup check, leaving the original timestamp frozen.
+- Why: Farhana Toma showed "9h ago" in dashboard while HL showed "1h ago" — revisit webhook was being discarded.
 - Files affected: `src/app/api/webhook/happierleads/route.js`
 
 ---

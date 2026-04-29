@@ -12,8 +12,8 @@ A custom pipeline that captures every new website visitor lead and puts it into 
 2. **Deduplicate** — We check if we've seen this person before; if yes, skip. If no, save.
 3. **Store** — New leads go into our own database (Neon PostgreSQL)
 4. **Display** — A custom dashboard lets you view all leads with scores and filters
-5. **Push** — A button sends selected leads directly to a SmartLead campaign for email outreach
-6. **LinkedIn outreach** — HeyReach campaigns are tracked on a dedicated page with live stats
+5. **Push** — A button sends selected leads directly to a HeyReach campaign for LinkedIn outreach
+6. **Campaign analytics** — Both HeyReach and SmartLead campaigns are tracked on dedicated pages with live stats
 
 ## Live Production URL
 
@@ -24,8 +24,8 @@ Vercel alias also works: `https://happier-leads-automation.vercel.app`
 ## Dashboard Pages
 
 - **Overview** (`/`) — Live stat cards (Total, New Today, Exact, Suggested), analytics chart with date-range filter and period comparison, pipeline status
-- **Leads** (`/leads`) — Full leads table with search, type tabs, date filters, click-to-expand detail rows, Export CSV, Push to SmartLead per-lead
-- **SmartLead Campaigns** (`/campaigns`) — Live campaign analytics pulled from SmartLead API (DB-persisted campaign IDs)
+- **Leads** (`/leads`) — Full leads table with search, type tabs, date filters, click-to-expand detail rows, Export CSV, Push to HeyReach per-lead
+- **SmartLead Campaigns** (`/campaigns`) — Live email campaign analytics pulled from SmartLead API (DB-persisted campaign IDs)
 - **HeyReach Campaigns** (`/heyreach/campaigns`) — Live LinkedIn campaign stats pulled from HeyReach API (DB-persisted campaign IDs)
 - **Login** (`/login`) — Password gate
 
