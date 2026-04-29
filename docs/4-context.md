@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Happier Leads automation set back to "Only on first visit"
+
+- What changed: HL automation trigger reverted from "On every visit" back to "Only on first visit". No code changes — this is a Happier Leads config change.
+- Why: Goal is a clean list of unique new visitors only. "On every visit" was temporarily set to investigate activity timestamp sync, but adds unnecessary repeat-visit webhook noise. The webhook handler's UPDATE path remains as a passive safety net (handles accidental HL resends) but is no longer an active code path.
+- Files affected: None (Happier Leads automation config only)
+
+---
+
 ## 2026-04-29 — Open push endpoint for re-engagement campaigns
 
 - What changed: Removed the 409 "Already pushed" guard from `POST /api/leads/[id]/push` so the same lead can be pushed multiple times. Updated the UI button: previously a lead that was already pushed showed a dead "Pushed" badge with no click action; now it shows a "Re-push" button (with checkmark icon) that opens the campaign picker the same as the first push.
