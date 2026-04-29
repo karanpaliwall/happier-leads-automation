@@ -36,7 +36,9 @@ export async function POST(request) {
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
   const { password } = body ?? {};
 
-  if (password !== loginPassword) {
+  const { timingSafeEqual } = await import('crypto');
+  const passwordMatch = password && timingSafeEqual(Buffer.from(password), Buffer.from(loginPassword));
+  if (!passwordMatch) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 

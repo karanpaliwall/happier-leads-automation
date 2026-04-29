@@ -13,6 +13,22 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Full system audit: 11 hardening fixes
+
+- What changed: Full audit of all routes, middleware, and frontend. Fixes applied:
+  1. **Bulk delete** — switched `Promise.all` to `Promise.allSettled`, only removes leads whose DELETE actually returned `ok:true`; total count decrements by actual deleted count, not selected count
+  2. **CSV formula injection** — `esc()` now prefixes values starting with `=`, `+`, `-`, `@`, `\t` with a tab character to prevent Excel/Sheets formula execution
+  3. **Push route DB SELECT** — wrapped in `try/catch`; DB outage now returns clean `{ error: 'Database error' }` JSON instead of unstructured 500
+  4. **campaign-ids routes** — all DB calls in `GET/POST/DELETE` for both `/api/campaigns/ids` and `/api/heyreach/campaign-ids` wrapped in try/catch with JSON error responses
+  5. **`GET /api/leads` limit param** — added `Math.max(1, ...)` lower bound and `|| 25` NaN fallback; `limit=0` or `limit=abc` no longer reaches the DB
+  6. **Login timing safety** — password comparison switched to `crypto.timingSafeEqual` (was `!==` string compare)
+  7. **Middleware timing safety** — added `safeEqual()` constant-time comparison helper (Edge runtime has no Node.js crypto)
+  8. **Campaign picker copy** — "No campaigns found in SmartLead." → "No campaigns found in HeyReach."
+- Why: Full audit pass to close edge cases before adding auto-push
+- Files affected: `src/app/leads/page.jsx`, `src/app/api/leads/export/route.js`, `src/app/api/leads/route.js`, `src/app/api/leads/[id]/push/route.js`, `src/app/api/campaigns/ids/route.js`, `src/app/api/heyreach/campaign-ids/route.js`, `src/app/api/auth/login/route.js`, `src/middleware.js`
+
+---
+
 ## 2026-04-30 — Happier Leads automation set back to "Only on first visit"
 
 - What changed: HL automation trigger reverted from "On every visit" back to "Only on first visit". No code changes — this is a Happier Leads config change.

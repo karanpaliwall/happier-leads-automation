@@ -17,9 +17,14 @@ export async function GET() {
   const authErr = await requireAuth();
   if (authErr) return authErr;
 
-  await ensureTable();
-  const rows = await sql`SELECT id FROM heyreach_campaign_ids ORDER BY added_at ASC`;
-  return NextResponse.json({ ids: rows.map(r => r.id) });
+  try {
+    await ensureTable();
+    const rows = await sql`SELECT id FROM heyreach_campaign_ids ORDER BY added_at ASC`;
+    return NextResponse.json({ ids: rows.map(r => r.id) });
+  } catch (err) {
+    console.error('[heyreach-campaign-ids] GET error:', err);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
@@ -32,14 +37,18 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
   }
 
-  await ensureTable();
-  const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM heyreach_campaign_ids`;
-  if (count >= 20) {
-    return NextResponse.json({ error: 'Maximum 20 campaigns allowed' }, { status: 400 });
+  try {
+    await ensureTable();
+    const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM heyreach_campaign_ids`;
+    if (count >= 20) {
+      return NextResponse.json({ error: 'Maximum 20 campaigns allowed' }, { status: 400 });
+    }
+    await sql`INSERT INTO heyreach_campaign_ids (id) VALUES (${id}) ON CONFLICT DO NOTHING`;
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[heyreach-campaign-ids] POST error:', err);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
-
-  await sql`INSERT INTO heyreach_campaign_ids (id) VALUES (${id}) ON CONFLICT DO NOTHING`;
-  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request) {
@@ -50,7 +59,12 @@ export async function DELETE(request) {
   const id = String(body.id ?? '').trim();
   if (!id || !/^\d+$/.test(id)) return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
 
-  await ensureTable();
-  await sql`DELETE FROM heyreach_campaign_ids WHERE id = ${id}`;
-  return NextResponse.json({ ok: true });
+  try {
+    await ensureTable();
+    await sql`DELETE FROM heyreach_campaign_ids WHERE id = ${id}`;
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[heyreach-campaign-ids] DELETE error:', err);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  }
 }

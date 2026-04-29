@@ -23,12 +23,17 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: 'Invalid lead ID' }, { status: 400 });
   }
 
-  // Atomic read + idempotency check — rejects if already pushed to prevent HeyReach duplicates
-  const rows = await withRetry(() => sql`
-    SELECT id, first_name, last_name, full_name, email, company_name, company_domain, linkedin_url,
-           pushed_to_smart_lead, raw_payload
-    FROM leads WHERE id = ${id}::uuid
-  `);
+  let rows;
+  try {
+    rows = await withRetry(() => sql`
+      SELECT id, first_name, last_name, full_name, email, company_name, company_domain, linkedin_url,
+             pushed_to_smart_lead, raw_payload
+      FROM leads WHERE id = ${id}::uuid
+    `);
+  } catch (err) {
+    console.error('[push] DB fetch failed:', err);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  }
   if (!rows.length) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
 
   const lead = rows[0];

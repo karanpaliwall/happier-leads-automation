@@ -80,7 +80,7 @@ function PushDropdown({ leadId, coords, onPushed, onClose }) {
         </div>
       ) : campaigns.length === 0 ? (
         <div className="push-dropdown-state">
-          No campaigns found in SmartLead.
+          No campaigns found in HeyReach.
         </div>
       ) : (
         campaigns.map(c => (
@@ -640,10 +640,11 @@ export default function FilteredPage() {
 
   async function handleBulkDelete() {
     const ids = [...selectedIds];
-    await Promise.all(ids.map(id => fetch(`/api/leads/${id}`, { method: 'DELETE' })));
-    setLeads(prev => prev.filter(l => !selectedIds.has(l.id)));
-    setTotal(prev => prev - ids.length);
-    if (selectedIds.has(expandedId)) setExpandedId(null);
+    const results = await Promise.allSettled(ids.map(id => fetch(`/api/leads/${id}`, { method: 'DELETE' })));
+    const deleted = new Set(ids.filter((_, i) => results[i].status === 'fulfilled' && results[i].value.ok));
+    setLeads(prev => prev.filter(l => !deleted.has(l.id)));
+    setTotal(prev => prev - deleted.size);
+    if (expandedId && deleted.has(expandedId)) setExpandedId(null);
     setSelectedIds(new Set());
     setBulkDelConfirm(false);
   }

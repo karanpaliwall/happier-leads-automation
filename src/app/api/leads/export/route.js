@@ -9,8 +9,10 @@ function formatDuration(ms) {
 }
 
 function esc(v) {
-  // Strip carriage returns and newlines so embedded line breaks don't split CSV rows
-  return `"${String(v ?? '').replace(/\r?\n|\r/g, ' ').replace(/"/g, '""')}"`;
+  let s = String(v ?? '').replace(/\r?\n|\r/g, ' ').replace(/"/g, '""');
+  // Prefix formula-injection characters so Excel/Sheets don't execute them as formulas
+  if (/^[=+\-@\t]/.test(s)) s = '\t' + s;
+  return `"${s}"`;
 }
 
 export async function GET(req) {
