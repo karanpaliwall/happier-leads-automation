@@ -4,12 +4,13 @@
 
 | Layer       | Tool                          | Reason                                                              |
 |-------------|-------------------------------|---------------------------------------------------------------------|
-| Framework   | Next.js 14 (App Router)       | Backend API routes + frontend in one codebase, one Vercel deploy    |
+| Framework   | Next.js 16 (App Router)       | Backend API routes + frontend in one codebase, one Vercel deploy    |
 | Database    | Neon PostgreSQL               | Serverless Postgres, free tier, works perfectly with Next.js/Vercel |
 | DB client   | @neondatabase/serverless      | Official Neon client for serverless/edge environments               |
-| Styling     | CSS tokens (growleads design) | Brand design system from signal-tracker repo — dark theme, Inter    |
-| Local tunnel| ngrok                         | Exposes localhost:3000 to internet so Happier Leads can call it     |
-| Deployment  | Vercel (later)                | Zero-config Next.js deploy, free hobby tier                         |
+| Styling     | CSS tokens (growleads design) | Brand design system — dark theme, Inter, `reference.css` + `custom.css` |
+| Deployment  | Vercel                        | Zero-config Next.js deploy, custom domain `websitevisitors.growleads.io` |
+
+ngrok is **not needed** — the app is permanently deployed to Vercel with a custom domain.
 
 ## Data Flow
 
@@ -19,21 +20,23 @@ Website visitor arrives
 Happier Leads identifies them
       ↓
 Happier Leads Automation fires:
-  POST https://<your-ngrok-url>/api/webhook/happierleads
+  POST https://websitevisitors.growleads.io/api/webhook/happierleads
   Body: JSON with visitor data
       ↓
 Webhook route (src/app/api/webhook/happierleads/route.js):
-  1. Parse JSON body
-  2. Extract known fields (name, company, scores, etc.)
-  3. Run duplicate check (HL ID → email → LinkedIn → name+company)
-  4. If duplicate: return 200 { ok: true, duplicate: true }
-  5. If new: INSERT into leads table, return 200 { ok: true }
+  1. Optional secret check (?secret= URL param)
+  2. Parse JSON body (max 64 KB)
+  3. Extract fields: name, email, LinkedIn, company, scores, engagement, activity_at
+  4. Run layered duplicate check (HL ID → email → LinkedIn → name+company)
+  5. If duplicate: return 200 { ok: true, duplicate: true }
+  6. If new: INSERT into leads table, return 200 { ok: true }
       ↓
 Neon PostgreSQL (leads table)
       ↓
-Frontend Dashboard (src/app/page.jsx):
-  - Fetches GET /api/leads every 30 seconds
-  - Renders StatsBar + LeadsTable
+Frontend Dashboard (src/app/page.jsx + src/app/leads/page.jsx):
+  - Polls GET /api/leads every 10 seconds (skips when tab is hidden)
+  - Overview shows stat cards, analytics chart, pipeline status
+  - Leads page shows full table with filters, detail expand, CSV export, SmartLead push
 ```
 
 ## Project Structure
@@ -42,20 +45,40 @@ Frontend Dashboard (src/app/page.jsx):
 src/
 ├── app/
 │   ├── api/
-│   │   ├── webhook/happierleads/route.js  ← webhook receiver
-│   │   └── leads/route.js                 ← GET API for frontend
-│   ├── page.jsx                           ← dashboard page (client)
-│   ├── layout.jsx                         ← sidebar shell (server)
-│   └── globals.css
+│   │   ├── webhook/happierleads/route.js     ← webhook receiver
+│   │   ├── leads/
+│   │   │   ├── route.js                      ← GET (paginated list + stats)
+│   │   │   ├── chart/route.js                ← GET (chart points, day/hour)
+│   │   │   ├── export/route.js               ← GET (CSV download)
+│   │   │   └── [id]/
+│   │   │       ├── route.js                  ← GET (full lead), DELETE
+│   │   │       └── push/route.js             ← POST (push to SmartLead)
+│   │   ├── auth/login/route.js               ← POST (password gate, sets cookie)
+│   │   ├── smartlead/campaigns/route.js       ← GET (SmartLead campaign analytics)
+│   │   ├── campaigns/ids/route.js             ← GET/POST/DELETE (persisted campaign IDs)
+│   │   ├── heyreach/campaigns/route.js        ← GET (HeyReach campaign analytics)
+│   │   └── heyreach/campaign-ids/route.js     ← GET/POST/DELETE (persisted campaign IDs)
+│   ├── page.jsx                              ← Overview (stat cards, chart)
+│   ├── leads/page.jsx                        ← Leads table (filters, expand, push)
+│   ├── campaigns/page.jsx                    ← SmartLead campaigns analytics
+│   ├── heyreach/campaigns/page.jsx           ← HeyReach campaigns analytics
+│   ├── login/page.jsx                        ← Password gate
+│   ├── layout.jsx                            ← Server layout (imports CSS, renders ClientLayout)
+│   └── globals.css                           ← Minimal global CSS (overflow, text-size-adjust)
 ├── components/
-│   ├── Sidebar.jsx                        ← left nav (client)
-│   ├── StatsBar.jsx                       ← stat cards (server)
-│   └── LeadsTable.jsx                     ← data table (client)
+│   ├── ClientLayout.jsx                      ← Client wrapper (sidebar state, scroll-to-top)
+│   ├── Sidebar.jsx                           ← Collapsible nav (desktop + mobile drawer)
+│   ├── CalendarPicker.jsx                    ← Reusable date range picker
+│   ├── EmptyState.jsx                        ← First-time onboarding panel
+│   └── NumCell.jsx                           ← Numeric table cell with formatting
+├── hooks/
+│   └── usePinnedColumns.js                   ← Column visibility hook for campaign tables
 ├── styles/
-│   ├── reference.css                      ← full design system
-│   └── custom.css                         ← app-specific styles
+│   ├── reference.css                         ← Full design system (tokens, components)
+│   └── custom.css                            ← App-specific overrides + responsive rules
 └── lib/
-    └── db.js                              ← Neon SQL client
+    ├── db.js                                 ← Neon SQL client + withRetry helper
+    └── auth.js                               ← requireAuth() (cookie + bearer token)
 ```
 
 ## Duplicate Detection (Layered)
@@ -65,9 +88,12 @@ src/
 3. `linkedin_url` — if no email, check LinkedIn URL
 4. `full_name + company_name` — last resort fallback
 
-Returns `200 { ok: true, duplicate: true }` so Happier Leads never retries.
+Always returns `200 { ok: true, duplicate: true }` so Happier Leads never retries.
 
-## Important Notes
+## Campaign ID Persistence
 
-- **Webhook payload is unknown** — Happier Leads docs are behind auth. We store `raw_payload` as JSONB to capture everything. After the first real webhook, read `raw_payload` in Neon and update field extraction keys in `src/app/api/webhook/happierleads/route.js`.
-- **ngrok URL changes on restart** — each time you run `ngrok http 3000` you get a new URL. Update it in Happier Leads automation each time (or use ngrok's paid persistent subdomain).
+Both SmartLead and HeyReach campaign IDs are stored in the DB (`campaign_ids` / `heyreach_campaign_ids` tables, auto-created on first request). The frontend also caches them in `localStorage` (`sl-campaign-ids` / `hr-campaign-ids`) for immediate render on revisit — but the DB is authoritative. On load, the page shows the cached list instantly, then syncs with the server and reconciles any differences.
+
+## Webhook Payload (Confirmed 2026-04-22)
+
+The Happier Leads payload structure is confirmed. See `docs/3-single-source-of-truth.md` for the full JSON shape and field mapping.

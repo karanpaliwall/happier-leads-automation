@@ -110,7 +110,7 @@ Password gate. Sets the session cookie on success.
 ```json
 { "ok": true }
 ```
-Sets `gl_session` cookie (httpOnly, sameSite: lax, secure in production, maxAge: 30 days).
+Sets `gl_session` cookie (httpOnly, sameSite: strict, secure in production, maxAge: 30 days).
 
 ---
 
@@ -167,6 +167,9 @@ Returns paginated leads for the dashboard. **Auth required.**
 
 ### GET /api/leads/[id]
 Returns a single lead including `raw_payload`. **Auth required.** Used by the detail panel on first expand; subsequent expands use the client-side cache.
+
+### DELETE /api/leads/[id]
+Permanently deletes a lead. **Auth required.** Returns `{ "ok": true }` or `404` if not found. Used to remove test entries.
 
 **Response:** Full lead row including `raw_payload` JSONB.
 
@@ -257,19 +260,22 @@ Auth: `X-API-KEY: {HEYREACH_API_KEY}` header on all HeyReach requests.
       "id": "123",
       "name": "My LinkedIn Campaign",
       "status": "ACTIVE",
+      "list": "Target List Name",
       "created": "2024-01-01T00:00:00.000Z",
-      "totalLeads": 300,
-      "invitesSent": 250,
-      "accepted": 80,
-      "messagesSent": 60,
-      "replies": 15
+      "total": 300,
+      "inProgress": 50,
+      "pending": 100,
+      "finished": 120,
+      "failed": 10,
+      "stopped": 5,
+      "excluded": 15
     }
   ],
   "fetchedAt": "2026-04-28T10:00:00.000Z"
 }
 ```
 
-Note: HeyReach status `IN_PROGRESS` is normalized to `ACTIVE` for display consistency.
+Note: HeyReach status `IN_PROGRESS` is normalized to `ACTIVE` for display consistency. `list` is the LinkedIn user list name. `acceptRate` and `replyRate` are computed on the frontend from the raw counts.
 
 ---
 
@@ -296,30 +302,32 @@ Pushes a single lead to a SmartLead campaign and marks it as pushed in the DB. *
 { "ok": true }
 ```
 
-**Error responses:** `400` (missing campaignId), `404` (lead not found), `500` (API key missing), `502` (SmartLead rejected the request).
+**Error responses:** `400` (missing campaignId or invalid ID), `404` (lead not found), `409` (already pushed), `500` (API key missing), `502` (SmartLead rejected the request or network/timeout failure).
 
 ---
 
-## SmartLead Campaign Persistence
+## Campaign ID Persistence
 
-Campaign IDs added on the Campaigns page are stored in **browser `localStorage`** under the key `sl-campaign-ids` (JSON array of strings, max 20). This is per-browser — not synced to the DB. The same list powers:
-- The Campaigns page analytics table
-- The "Push to Smart Lead" campaign picker on the Leads page
+Campaign IDs are stored in the **database** (`campaign_ids` / `heyreach_campaign_ids` tables) via `/api/campaigns/ids` and `/api/heyreach/campaign-ids`. Max 20 IDs per integration.
+
+The frontend also caches them in `localStorage` (`sl-campaign-ids` / `hr-campaign-ids`) for immediate render on page revisit — but the **DB is authoritative**. On load: show cache instantly → sync with server → reconcile differences. Network failures fall back to the cache.
+
+The SmartLead campaign list also powers the "Push to SmartLead" campaign picker on the Leads page.
 
 ---
 
 ## Environment Variables
 
-| Variable             | Default / fallback      | Purpose                                                                  |
+| Variable             | Required?               | Purpose                                                                  |
 |----------------------|-------------------------|--------------------------------------------------------------------------|
-| `DATABASE_URL`       | *(required)*            | Neon PostgreSQL connection string (`src/lib/db.js`)                      |
-| `LOGIN_PASSWORD`     | `'Growleads@admin'`     | Password for the `/login` page gate                                      |
-| `SESSION_TOKEN`      | `'gl-auth-v1'`          | Value stored in and checked against the `gl_session` cookie              |
-| `WEBHOOK_SECRET`     | *(optional)*            | If set, webhook requires matching `?secret=` URL param or `x-hl-secret` header. If unset, all requests accepted (logs warning). |
-| `SMARTLEAD_API_KEY`  | *(required for SL)*     | SmartLead API key — used by `/api/smartlead/campaigns` and `/api/leads/[id]/push` |
-| `HEYREACH_API_KEY`   | *(required for HR)*     | HeyReach API key — used by `/api/heyreach/campaigns` (passed as `X-API-KEY` header) |
+| `DATABASE_URL`       | **Required**            | Neon PostgreSQL connection string (`src/lib/db.js`). Missing = every request 500s at module load. |
+| `LOGIN_PASSWORD`     | **Required**            | Password for the `/login` page gate. Missing = login returns 500.        |
+| `SESSION_TOKEN`      | **Required**            | Value stored in and checked against the `gl_session` cookie. Missing = login returns 500, all auth fails. |
+| `WEBHOOK_SECRET`     | Optional                | If set, webhook requires matching `?secret=` URL param or `x-hl-secret` header. If unset, all requests accepted (logs warning). |
+| `SMARTLEAD_API_KEY`  | Required for SmartLead  | SmartLead API key — used by `/api/smartlead/campaigns` and `/api/leads/[id]/push`. Missing = 500 on those routes. |
+| `HEYREACH_API_KEY`   | Required for HeyReach   | HeyReach API key — passed as `X-API-KEY` header. Missing = 500 on `/api/heyreach/campaigns`. |
 
-Set all in `.env.local` for local dev, and in Vercel environment settings for production. The fallback values keep the app working with zero config; set the env vars in production to harden.
+Set all in `.env.local` for local dev, and in Vercel environment settings for production. `DATABASE_URL`, `LOGIN_PASSWORD`, and `SESSION_TOKEN` must always be set — the app will not function without them.
 
 ---
 

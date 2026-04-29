@@ -12,19 +12,25 @@ A custom pipeline that captures every new website visitor lead and puts it into 
 2. **Deduplicate** — We check if we've seen this person before; if yes, skip. If no, save.
 3. **Store** — New leads go into our own database (Neon PostgreSQL)
 4. **Display** — A custom dashboard lets you view all leads with scores and filters
-5. **Push** *(Phase 2)* — A button sends leads to Smart Lead for outreach automation
+5. **Push** — A button sends selected leads directly to a SmartLead campaign for email outreach
+6. **LinkedIn outreach** — HeyReach campaigns are tracked on a dedicated page with live stats
 
-## End State
+## Live Production URL
 
-A dashboard at `localhost:3000` (later `yourapp.vercel.app`) that shows:
-- All new website visitors captured in real-time
-- Their name, company, lead type (Exact or Suggested), Fit Score, Engagement Score
-- Filters by type and search by name/company
-- Stat cards: Total leads, New today, Exact, Suggested
-- A "Push to Smart Lead" button per lead (Phase 2)
+**`https://websitevisitors.growleads.io`** (custom domain, deployed on Vercel)
+
+Vercel alias also works: `https://happier-leads-automation.vercel.app`
+
+## Dashboard Pages
+
+- **Overview** (`/`) — Live stat cards (Total, New Today, Exact, Suggested), analytics chart with date-range filter and period comparison, pipeline status
+- **Leads** (`/leads`) — Full leads table with search, type tabs, date filters, click-to-expand detail rows, Export CSV, Push to SmartLead per-lead
+- **SmartLead Campaigns** (`/campaigns`) — Live campaign analytics pulled from SmartLead API (DB-persisted campaign IDs)
+- **HeyReach Campaigns** (`/heyreach/campaigns`) — Live LinkedIn campaign stats pulled from HeyReach API (DB-persisted campaign IDs)
+- **Login** (`/login`) — Password gate
 
 ## What This Is NOT
 
 - Not a replacement for Happier Leads' identification engine — we still use them to identify visitors
-- Not an email sender — we capture leads, Smart Lead handles outreach
-- Not a CRM — it's a pipeline between Happier Leads and Smart Lead
+- Not an email sender — we capture leads, SmartLead handles email outreach, HeyReach handles LinkedIn
+- Not a CRM — it's a pipeline between Happier Leads, SmartLead, and HeyReach

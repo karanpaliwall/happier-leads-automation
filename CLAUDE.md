@@ -60,7 +60,7 @@ Rules that must never be violated when touching `src/app/api/webhook/happierlead
 
 **Production URL** — custom domain `https://websitevisitors.growleads.io` (Vercel alias `https://happier-leads-automation.vercel.app` still works). Webhook is configured to the custom domain URL: `https://websitevisitors.growleads.io/api/webhook/happierleads`. ngrok is no longer needed.
 
-**Password gate** — all app routes (except `/login` and `/api/*`) require a `gl_session` cookie set by `POST /api/auth/login`. Password: `Growleads@admin`. Cookie is session-scoped (expires when browser closes).
+**Password gate** — all app routes (except `/login` and `/api/*`) require a `gl_session` cookie set by `POST /api/auth/login`. Password: `Growleads@admin`. Cookie is persistent (httpOnly, SameSite: strict, maxAge: 30 days).
 
 ## Database Setup
 
