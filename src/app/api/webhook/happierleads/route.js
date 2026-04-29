@@ -100,22 +100,23 @@ export async function POST(req) {
   }
 
   if (existing.length > 0) {
-    // Repeat visit — update activity_at, scores, and raw payload if this webhook is newer
-    if (activityAt) {
-      try {
-        await withRetry(() => sql`
-          UPDATE leads
-          SET
-            activity_at      = ${new Date(activityAt).toISOString()},
-            engagement_score = ${engagementScore},
-            fit_score        = ${fitScore},
-            raw_payload      = ${JSON.stringify(body)}
-          WHERE id = ${existing[0].id}
-            AND (activity_at IS NULL OR activity_at < ${new Date(activityAt).toISOString()}::timestamptz)
-        `);
-      } catch (err) {
-        console.error('[webhook] DB error during activity update:', err);
-      }
+    // Repeat visit — always update to the most recent activity time.
+    // Use activityAt from payload if present; fall back to NOW() since HL firing
+    // the webhook means the lead was active at this moment regardless of lastSession.date.
+    // GREATEST(...) ensures the timestamp never moves backwards on out-of-order delivery.
+    const freshAt = activityAt ? new Date(activityAt).toISOString() : new Date().toISOString();
+    try {
+      await withRetry(() => sql`
+        UPDATE leads
+        SET
+          activity_at      = GREATEST(COALESCE(activity_at, ${freshAt}::timestamptz), ${freshAt}::timestamptz),
+          engagement_score = ${engagementScore},
+          fit_score        = ${fitScore},
+          raw_payload      = ${JSON.stringify(body)}
+        WHERE id = ${existing[0].id}
+      `);
+    } catch (err) {
+      console.error('[webhook] DB error during activity update:', err);
     }
     return Response.json({ ok: true, duplicate: true });
   }
