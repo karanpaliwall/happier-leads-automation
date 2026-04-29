@@ -100,6 +100,23 @@ export async function POST(req) {
   }
 
   if (existing.length > 0) {
+    // Repeat visit — update activity_at, scores, and raw payload if this webhook is newer
+    if (activityAt) {
+      try {
+        await withRetry(() => sql`
+          UPDATE leads
+          SET
+            activity_at      = ${new Date(activityAt).toISOString()},
+            engagement_score = ${engagementScore},
+            fit_score        = ${fitScore},
+            raw_payload      = ${JSON.stringify(body)}
+          WHERE id = ${existing[0].id}
+            AND (activity_at IS NULL OR activity_at < ${new Date(activityAt).toISOString()}::timestamptz)
+        `);
+      } catch (err) {
+        console.error('[webhook] DB error during activity update:', err);
+      }
+    }
     return Response.json({ ok: true, duplicate: true });
   }
 
