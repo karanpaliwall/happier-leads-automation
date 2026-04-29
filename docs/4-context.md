@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-29 — Webhook reliability audit + preventive hardening
+
+- What changed: Full audit of the webhook pipeline after the WEBHOOK_SECRET breakage. No additional code bugs found. Two preventive changes made:
+  1. Added explicit `console.error` log when `WEBHOOK_SECRET` auth fails — makes silent 401s visible in Vercel Logs immediately, before you'd notice leads stopping in the dashboard.
+  2. Added "Webhook Reliability Rules" section to `CLAUDE.md` — five rules that must never be violated when touching the webhook route or db.js: WEBHOOK_SECRET is optional by design, must update HL URL and Vercel together, DB dedup errors return 200, INSERT errors return 500 (correct, lets HL retry), DATABASE_URL missing causes module crash.
+- Why: User asked for audit to prevent future breakage. The rules encode the lessons from the Apr 29 outage so future Claude sessions can't repeat the mistake.
+- Files affected: `src/app/api/webhook/happierleads/route.js`, `CLAUDE.md`
+
+---
+
 ## 2026-04-29 — Fix analytics % showing absurd values (e.g. ↑3282%)
 
 - What changed: `pct` is now `null` when `Math.abs(pct) > 999`. The previous fix (null when `beforeTotal < 5`) wasn't enough — a previous period with 11 leads vs current 372 still produced 3282%. When the % would be >999, the raw counts already tell the story; the giant number just looks broken.

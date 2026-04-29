@@ -36,6 +36,22 @@ Single Next.js 16 App Router project — backend API routes and frontend live in
 - `Sidebar.jsx` — collapsible nav; defaults collapsed; auto-collapses below 1100px; hamburger drawer on mobile (≤640px)
 - `filtered/page.jsx` — owns `expandedId` state; detail panel renders outside the `<table>` in `.lead-detail-outer` so it never scrolls with the table
 
+## Webhook Reliability Rules
+
+**The webhook is the only data ingestion path. If it breaks, leads are lost permanently.**
+
+Rules that must never be violated when touching `src/app/api/webhook/happierleads/route.js` or `src/lib/db.js`:
+
+1. **`WEBHOOK_SECRET` is optional by design.** If it is not set, the webhook accepts all requests and logs a warning. Never make it hard-required (no `return 500` when the env var is absent). Doing so killed ingestion for a full day (2026-04-29).
+
+2. **Never set `WEBHOOK_SECRET` in Vercel without simultaneously updating the HL webhook URL.** The URL must include `?secret=<value>`. Both changes must happen together or ingestion breaks immediately.
+
+3. **DB errors in the dedup check must return `200`.** A `500` triggers Happier Leads retry storms. The only exception is the final INSERT, where `500` is correct (lets HL retry until the DB recovers).
+
+4. **After any security-related change to the webhook route, verify it still works** by sending a test webhook from the Happier Leads automation panel and confirming a new lead appears in the dashboard.
+
+5. **If `DATABASE_URL` is ever missing from Vercel env vars**, `neon()` throws at module load and every request returns `500`. Vercel Logs will show a module initialization error. Fix: re-add `DATABASE_URL` to Vercel environment and redeploy.
+
 ## Key Constraints
 
 **Webhook payload is confirmed** — first real webhook was received 2026-04-22. See `docs/3-single-source-of-truth.md` for the full payload structure. Extraction keys are already correct in the webhook route.

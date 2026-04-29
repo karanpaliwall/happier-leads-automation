@@ -10,6 +10,7 @@ export async function POST(req) {
     const { searchParams } = new URL(req.url);
     const provided = searchParams.get('secret') || req.headers.get('x-hl-secret') || req.headers.get('authorization');
     if (provided !== secret) {
+      console.error('[webhook] Auth failed — WEBHOOK_SECRET is set but the request did not include a matching secret. If this is Happier Leads, update the webhook URL to include ?secret=<value>.');
       return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
     }
   } else {
