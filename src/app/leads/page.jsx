@@ -421,13 +421,30 @@ function LeadDetailPanel({ rawPayload }) {
   );
 }
 
-function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick }) {
+function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, onDelete }) {
   const pushBtnRef = useRef(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   function handlePushClick(e) {
     e.stopPropagation();
     const rect = pushBtnRef.current.getBoundingClientRect();
     onPushClick(lead.id, rect);
+  }
+
+  function handleDeleteClick(e) {
+    e.stopPropagation();
+    setDeleteConfirm(true);
+  }
+
+  function handleDeleteConfirm(e) {
+    e.stopPropagation();
+    setDeleteConfirm(false);
+    onDelete(lead.id);
+  }
+
+  function handleDeleteCancel(e) {
+    e.stopPropagation();
+    setDeleteConfirm(false);
   }
 
   const isPushed = pushed || lead.pushed_to_smart_lead;
@@ -478,6 +495,22 @@ function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick }) 
                 : 'Push to HeyReach'
               }
             </button>
+            {deleteConfirm ? (
+              <div className="del-confirm" onClick={e => e.stopPropagation()}>
+                <span style={{ color: 'var(--red-400, #f87171)', fontSize: 11 }}>Delete?</span>
+                <button className="del-confirm-yes" onClick={handleDeleteConfirm}>Yes</button>
+                <button className="del-confirm-no" onClick={handleDeleteCancel}>No</button>
+              </div>
+            ) : (
+              <button className="del-btn" onClick={handleDeleteClick} title="Delete lead">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            )}
             <span className={`expand-chevron${expanded ? ' expanded' : ''}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
@@ -615,6 +648,18 @@ export default function FilteredPage() {
   }, [fetchLeads]);
 
   const totalPages = Math.ceil(total / 25);
+
+  async function handleDeleteLead(id) {
+    try {
+      const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+      if (!res.ok) return;
+      setLeads(prev => prev.filter(l => l.id !== id));
+      setTotal(prev => prev - 1);
+      if (expandedId === id) setExpandedId(null);
+    } catch (err) {
+      console.error('[delete]', err);
+    }
+  }
 
   async function handleExportCSV() {
     setExporting(true);
@@ -799,6 +844,7 @@ export default function FilteredPage() {
                         onToggle={() => handleToggleExpand(lead.id)}
                         pushed={pushedIds.has(lead.id)}
                         onPushClick={(leadId, rect) => setPushTarget({ leadId, bottom: rect.bottom, left: rect.left })}
+                        onDelete={handleDeleteLead}
                       />
                     ))}
                   </tbody>

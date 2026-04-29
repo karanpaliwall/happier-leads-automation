@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Add delete lead button to dashboard
+
+- What changed: Each lead row now has a trash icon button in the action column. Clicking it shows an inline "Delete? Yes / No" confirmation (no browser alert). Confirming calls `DELETE /api/leads/[id]`, removes the row from the local state immediately, and decrements the total count. The backend endpoint already existed.
+- Why: User needs to remove test/junk entries directly from the dashboard without database access.
+- Files affected: `src/app/leads/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-30 — Happier Leads automation set back to "Only on first visit"
 
 - What changed: HL automation trigger reverted from "On every visit" back to "Only on first visit". No code changes — this is a Happier Leads config change.
