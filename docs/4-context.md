@@ -30,25 +30,6 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
-## 2026-04-30 — Design: HeyReach auto-push on new lead arrival (not yet built)
-
-- What changed: Architecture/design discussion only. No code changes.
-- Decision: Auto-push every new lead to HeyReach immediately after a successful DB INSERT — no manual button click required.
-- Architecture chosen: **Synchronous push inside the webhook handler** (not a background cron). After INSERT succeeds, call HeyReach API, then return 200. Reasoning: keeps it simple; the webhook already returns quickly and HeyReach API calls are fast enough. If HeyReach fails, the lead is still stored in DB (not lost), and the `pushed_to_smart_lead = false` default acts as a natural retry queue if we add a cron later.
-- Campaign strategy: **One universal campaign** — all leads go into a single HeyReach campaign regardless of `lead_type` or `fit_score`. Campaign ID will be stored as `HEYREACH_CAMPAIGN_ID` env var.
-- Push placement rule (from CLAUDE.md): push call goes inside the INSERT success block only — never in the duplicate/update path. Guard with `pushed_to_smart_lead = false` to prevent double-pushes.
-- Fields to push: `email`, `first_name`, `last_name`, `company_name`, `linkedin_url`
-- Open question before building: confirm whether the HeyReach campaign is email-based, LinkedIn-based, or both — this determines whether to skip the push when `email` is null or push anyway (LinkedIn-only leads may still be useful).
-- Edge cases identified:
-  - Lead has no email → skip push silently (still store in DB); only push if email is present
-  - HeyReach returns 429 (rate limit) → log the error, leave `pushed_to_smart_lead = false`, cron can retry later
-  - HeyReach API down → same as above — don't let it return 500 to Happier Leads
-  - Contact already exists in HeyReach → HeyReach deduplicates on email on their side; verify upsert behaviour
-  - Duplicate lead arrives (caught by our dedup) → push is skipped since the insert path is never reached for dupes
-- DB schema: no changes needed — `pushed_to_smart_lead` / `pushed_at` columns already exist and serve this purpose (legacy name, functionally "pushed to HeyReach")
-- Files to touch when building: `src/app/api/webhook/happierleads/route.js` (add push call after INSERT), possibly a new `src/lib/heyreach.js` helper
-
----
 
 ## 2026-04-30 — Data audit: random records investigation + New Today behaviour confirmed
 
