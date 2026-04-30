@@ -104,7 +104,7 @@ export async function POST(req) {
     // Use activityAt from payload if present; fall back to NOW() since HL firing
     // the webhook means the lead was active at this moment regardless of lastSession.date.
     // GREATEST(...) ensures the timestamp never moves backwards on out-of-order delivery.
-    const freshAt = activityAt ? new Date(activityAt).toISOString() : new Date().toISOString();
+    const freshAt = new Date().toISOString(); // use webhook receipt time, not lastSession.date
     try {
       await withRetry(() => sql`
         UPDATE leads
@@ -137,7 +137,7 @@ export async function POST(req) {
         ${leadType},
         ${fitScore},
         ${engagementScore},
-        ${activityAt ? new Date(activityAt).toISOString() : null},
+        ${new Date().toISOString()},
         ${JSON.stringify(body)}
       )
       RETURNING id

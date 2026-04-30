@@ -5,6 +5,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Fix: activity_at now uses webhook receipt time instead of lastSession.date
+
+- What changed: `activity_at` for both new leads (INSERT) and repeat-visit updates (UPDATE) is now set to `now()` (the moment the webhook is received), not to `body.summary.lastSession.date` from the payload.
+- Why: `lastSession.date` is when Happier Leads *recorded* the session — webhooks fire 30–60 min after the actual visit. This made our "Activity" column show leads as ~1h old while HL's own UI showed them as "21 min ago". Using webhook receipt time keeps our display in sync with HL's.
+- `lastSession.date` is still preserved in `raw_payload` for reference.
+- Files affected: `src/app/api/webhook/happierleads/route.js`
+
+---
+
 ## 2026-04-30 — Ops: Vercel env audit + HEYREACH_CAMPAIGN_ID added + production redeploy
 
 - What changed: Audited all Vercel production environment variables. Found `HEYREACH_CAMPAIGN_ID` was missing — added it via `vercel env add` (value: `413857`). Triggered a full production redeploy so the new env var is live.
