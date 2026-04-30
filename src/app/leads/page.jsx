@@ -1,106 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const PUSH_STATUS_COLORS = {
-  ACTIVE:    '#4ade80',
-  PAUSED:    '#facc15',
-  FINISHED:  '#60a5fa',
-  COMPLETED: '#60a5fa',
-  DRAFT:     '#9ca3af',
-};
 
-// ── Campaign picker popup rendered at fixed screen coords ──────────────────
-function PushDropdown({ leadId, coords, onPushed, onClose }) {
-  const [campaigns, setCampaigns] = useState(null); // null = loading
-  const [pushing, setPushing]     = useState(null);
-  const [err, setErr]             = useState(null);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const idsRes  = await fetch('/api/heyreach/campaign-ids');
-        const idsData = await idsRes.json();
-        const ids     = (idsData.ids ?? []).join(',');
-        if (!ids) { setCampaigns([]); return; }
-        const res  = await fetch(`/api/heyreach/campaigns?ids=${ids}`);
-        const data = await res.json();
-        setCampaigns(data.campaigns ?? []);
-      } catch { setCampaigns([]); }
-    }
-    load();
-  }, []);
-
-  useEffect(() => {
-    function h(e) { if (ref.current && !ref.current.contains(e.target)) onClose(); }
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [onClose]);
-
-  async function handlePush(campaignId) {
-    setPushing(campaignId);
-    setErr(null);
-    try {
-      const res  = await fetch(`/api/leads/${leadId}/push`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaignId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Push failed');
-      onPushed();
-    } catch (e) {
-      setErr(e.message);
-      setPushing(null);
-    }
-  }
-
-  // Flip above the button if there's not enough space below (~280px estimated height)
-  const DROPDOWN_H = 280;
-  const flipUp = coords.bottom + DROPDOWN_H + 8 > window.innerHeight;
-  const style = {
-    position: 'fixed',
-    ...(flipUp
-      ? { bottom: window.innerHeight - coords.top + 4 }
-      : { top: coords.bottom + 4 }),
-    left: Math.min(coords.left, window.innerWidth - 240),
-    zIndex: 1000,
-  };
-
-  return (
-    <div ref={ref} className="push-dropdown" style={style}>
-      <div className="push-dropdown-header">Push to HeyReach campaign</div>
-      {campaigns === null ? (
-        <div className="push-dropdown-state">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-          </svg>
-          Loading campaigns…
-        </div>
-      ) : campaigns.length === 0 ? (
-        <div className="push-dropdown-state">
-          No campaigns found in HeyReach.
-        </div>
-      ) : (
-        campaigns.map(c => (
-          <button key={c.id} className="push-dropdown-opt" disabled={!!pushing}
-            onClick={() => handlePush(c.id)}>
-            {pushing === c.id
-              ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                </svg>
-              : <span className="push-dropdown-dot" style={{ background: PUSH_STATUS_COLORS[c.status] || '#9ca3af' }} />
-            }
-            <span className="push-dropdown-name">{c.name}</span>
-          </button>
-        ))
-      )}
-      {err && <div className="push-dropdown-err">{err}</div>}
-    </div>
-  );
-}
 import CalendarPicker, { fmtCalDate } from '@/components/CalendarPicker';
 
 function timeAgo(dateStr) {
@@ -421,16 +322,7 @@ function LeadDetailPanel({ rawPayload }) {
   );
 }
 
-function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, selected, onSelect }) {
-  const pushBtnRef = useRef(null);
-
-  function handlePushClick(e) {
-    e.stopPropagation();
-    const rect = pushBtnRef.current.getBoundingClientRect();
-    onPushClick(lead.id, rect);
-  }
-
-  const isPushed = pushed || lead.pushed_to_smart_lead;
+function LeadRow({ lead, expanded, rawPayload, onToggle, selected, onSelect }) {
 
   return (
     <>
@@ -480,12 +372,17 @@ function LeadRow({ lead, expanded, rawPayload, onToggle, pushed, onPushClick, se
         <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{timeAgo(lead.activity_at || lead.received_at)}</td>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button ref={pushBtnRef} className="push-btn-live" onClick={handlePushClick}>
-              {isPushed
-                ? <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg> Re-push</>
-                : 'Push to HeyReach'
-              }
-            </button>
+            {lead.pushed_to_smart_lead ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--green-400)', fontWeight: 500 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green-400)', flexShrink: 0 }} />
+                Pushed
+              </span>
+            ) : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-muted)' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'rgba(156,163,175,0.35)', flexShrink: 0 }} />
+                Not pushed
+              </span>
+            )}
             <span className={`expand-chevron${expanded ? ' expanded' : ''}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
@@ -527,8 +424,6 @@ export default function FilteredPage() {
   const [editField, setEditField] = useState(null);
   const [exporting, setExporting]     = useState(false);
   const [pollError, setPollError]     = useState(false);
-  const [pushTarget, setPushTarget]       = useState(null); // { leadId, bottom, left }
-  const [pushedIds, setPushedIds]         = useState(new Set());
   const [selectedIds, setSelectedIds]     = useState(new Set());
   const [bulkDelConfirm, setBulkDelConfirm] = useState(false);
   const debounceRef = useRef(null);
@@ -841,7 +736,7 @@ export default function FilteredPage() {
                         />
                       </th>
                       <th>Activity</th>
-                      <th>Action</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -852,8 +747,6 @@ export default function FilteredPage() {
                         expanded={lead.id === expandedId}
                         rawPayload={detailCache[lead.id]}
                         onToggle={() => handleToggleExpand(lead.id)}
-                        pushed={pushedIds.has(lead.id)}
-                        onPushClick={(leadId, rect) => setPushTarget({ leadId, bottom: rect.bottom, left: rect.left })}
                         selected={selectedIds.has(lead.id)}
                         onSelect={handleSelectLead}
                       />
@@ -880,20 +773,6 @@ export default function FilteredPage() {
         )}
       </div>
 
-      {pushTarget && (
-        <PushDropdown
-          leadId={pushTarget.leadId}
-          coords={{ bottom: pushTarget.bottom, left: pushTarget.left }}
-          onPushed={() => {
-            setPushedIds(prev => new Set([...prev, pushTarget.leadId]));
-            setLeads(prev => prev.map(l =>
-              l.id === pushTarget.leadId ? { ...l, pushed_to_smart_lead: true } : l
-            ));
-            setPushTarget(null);
-          }}
-          onClose={() => setPushTarget(null)}
-        />
-      )}
     </>
   );
 }
