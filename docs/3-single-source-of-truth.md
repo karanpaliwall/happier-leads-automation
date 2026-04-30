@@ -416,7 +416,7 @@ Happier Leads sends a POST with this structure:
 - `contact.contactType` ("Exact Visitor" → `"exact"`, else `"suggested"`) → `lead_type`
 - `company.name/domain/logo` → `company_name`, `company_domain`, `company_logo_url`
 - `scores[].score` (or `scores[].fitScore`) summed → `fit_score`
-- `summary.lastSession.date` → `activity_at`
+- `summary.lastSession.date` → stored in `raw_payload` only; `activity_at` is set to **webhook receipt time** (`now()`) so the dashboard Activity column matches Happier Leads' display
 - `engagement_score` — **not present in payload**, derived from visits + duration (see below)
 
 ---
