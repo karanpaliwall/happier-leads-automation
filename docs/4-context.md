@@ -5,6 +5,16 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Ops: Vercel env audit + HEYREACH_CAMPAIGN_ID added + production redeploy
+
+- What changed: Audited all Vercel production environment variables. Found `HEYREACH_CAMPAIGN_ID` was missing — added it via `vercel env add` (value: `413857`). Triggered a full production redeploy so the new env var is live.
+- Why: Auto-push was implemented but silently skipped because the campaign ID env var was absent. Adding it completes the auto-push pipeline end-to-end.
+- Full env var state after audit: `DATABASE_URL` ✓, `LOGIN_PASSWORD` ✓, `SESSION_TOKEN` ✓, `HEYREACH_API_KEY` ✓, `HEYREACH_CAMPAIGN_ID` ✓ (added), `SMARTLEAD_API_KEY` ✓ (legacy). `WEBHOOK_SECRET` intentionally absent (open endpoint by design).
+- Production URL: `https://websitevisitors.growleads.io` — deploy confirmed READY.
+- Files affected: Vercel environment only (no code changes)
+
+---
+
 ## 2026-04-30 — Feat: replace Action column with Status badge
 
 - What changed: Removed the "Push to HeyReach" / "Re-push" action button from the leads table. The ACTION column is now STATUS and shows a green dot + "Pushed" for leads with `pushed_to_smart_lead = true`, or a muted dot + "Not pushed" for the rest. Removed `PushDropdown` component, all push-related state (`pushTarget`, `pushedIds`), and associated CSS (`.push-btn-live`, `.push-btn-done`, `.push-dropdown*`).
