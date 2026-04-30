@@ -5,6 +5,14 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Feat: replace Action column with Status badge
+
+- What changed: Removed the "Push to HeyReach" / "Re-push" action button from the leads table. The ACTION column is now STATUS and shows a green dot + "Pushed" for leads with `pushed_to_smart_lead = true`, or a muted dot + "Not pushed" for the rest. Removed `PushDropdown` component, all push-related state (`pushTarget`, `pushedIds`), and associated CSS (`.push-btn-live`, `.push-btn-done`, `.push-dropdown*`).
+- Why: Auto-push now handles all new leads automatically. The manual button is no longer needed as the primary flow.
+- Files affected: `src/app/leads/page.jsx`, `src/styles/custom.css`
+
+---
+
 ## 2026-04-30 — Feat: auto-push new leads to HeyReach Universe campaign
 
 - What changed: Webhook route now automatically pushes every newly inserted lead to HeyReach campaign `413857` (Growleads_May_Happier-leads) immediately after INSERT. Uses `RETURNING id` on the INSERT to get the UUID, then calls `AddLeadsToCampaignV2`. On HeyReach success, sets `pushed_to_smart_lead = true` and `pushed_at = now()`. On any failure (timeout, HeyReach error, DB flag update error), logs the error and continues — the webhook always returns 200 and the lead is always stored. Auto-push runs only in the INSERT path; duplicates (existing leads) never get auto-pushed.
