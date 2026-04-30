@@ -5,6 +5,19 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Ops: removed Audit Test lead from HeyReach campaign + discovered pause/resume API
+
+- What changed: Deleted the "Audit Test" lead (pushed during auto-push testing) from the `Growleads_May_Happier-Leads` HeyReach campaign (ID 413857). Also deleted from our Neon DB via dashboard bulk-delete.
+- How: HeyReach blocks lead deletion while a campaign is active. Used the undocumented query-param API pattern (`POST /api/public/campaign/Pause?campaignId=413857` / `POST .../campaign/Resume?campaignId=413857`) to pause the campaign, delete the lead from HeyReach UI, then resume.
+- HeyReach API notes (not in their public docs):
+  - Pause: `POST https://api.heyreach.io/api/public/campaign/Pause?campaignId={id}` — empty body, returns 200
+  - Resume: `POST https://api.heyreach.io/api/public/campaign/Resume?campaignId={id}` — empty body, returns 200
+  - **No remove-lead API exists** in HeyReach's public API — deletion must be done via UI after pausing
+- Why: Test lead was cluttering the outreach campaign; HeyReach would attempt to message it.
+- Files affected: None (ops only)
+
+---
+
 ## 2026-04-30 — Fix: activity_at now uses webhook receipt time instead of lastSession.date
 
 - What changed: `activity_at` for both new leads (INSERT) and repeat-visit updates (UPDATE) is now set to `now()` (the moment the webhook is received), not to `body.summary.lastSession.date` from the payload.
