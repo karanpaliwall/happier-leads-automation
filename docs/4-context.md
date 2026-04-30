@@ -5,6 +5,15 @@ Read this first when resuming work to get back up to speed.
 
 ---
 
+## 2026-04-30 — Feat: auto-push new leads to HeyReach Universe campaign
+
+- What changed: Webhook route now automatically pushes every newly inserted lead to HeyReach campaign `413857` (Growleads_May_Happier-leads) immediately after INSERT. Uses `RETURNING id` on the INSERT to get the UUID, then calls `AddLeadsToCampaignV2`. On HeyReach success, sets `pushed_to_smart_lead = true` and `pushed_at = now()`. On any failure (timeout, HeyReach error, DB flag update error), logs the error and continues — the webhook always returns 200 and the lead is always stored. Auto-push runs only in the INSERT path; duplicates (existing leads) never get auto-pushed.
+- Guarded by: both `HEYREACH_CAMPAIGN_ID` and `HEYREACH_API_KEY` env vars must be set — if either is absent, auto-push is silently skipped.
+- **Action required:** Add `HEYREACH_CAMPAIGN_ID=413857` to Vercel environment variables and redeploy.
+- Files affected: `src/app/api/webhook/happierleads/route.js`, `CLAUDE.md`, `docs/3-single-source-of-truth.md`
+
+---
+
 ## 2026-04-30 — Fix: tooltip text overflowing outside box on Leads page
 
 - What changed: Added `white-space: normal` to `.col-tip-fixed` in `src/styles/custom.css`.

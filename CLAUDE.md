@@ -108,4 +108,4 @@ The DB columns are `pushed_to_smart_lead` / `pushed_at` (legacy names — functi
 
 **Fields sent to HeyReach:** `firstName`, `lastName`, `companyName`, `position`, `emailAddress`, `profileUrl` (LinkedIn), `location` (city/state/country from `raw_payload.contact.geo`), `summary` (LinkedIn headline from `raw_payload.contact.headline`).
 
-**Auto-push (not yet built):** When adding auto-push on new lead arrival, place the push call inside the INSERT success block in the webhook route, never in the duplicate/update path.
+**Auto-push (live):** Every new lead is automatically pushed to the Universe campaign (`HEYREACH_CAMPAIGN_ID=413857`) immediately after INSERT in the webhook route. The push is guarded by `HEYREACH_CAMPAIGN_ID` and `HEYREACH_API_KEY` env vars — if either is absent, auto-push is silently skipped. Failures are logged but never fail the webhook (lead stays in DB, `pushed_to_smart_lead` remains `false` for manual retry). Auto-push is intentionally in the INSERT path only — duplicates never get re-pushed automatically.

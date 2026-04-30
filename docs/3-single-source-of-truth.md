@@ -351,6 +351,7 @@ The HeyReach campaign list (`heyreach_campaign_ids`) powers the "Push to HeyReac
 | `WEBHOOK_SECRET`     | Optional                | If set, webhook requires matching `?secret=` URL param or `x-hl-secret` header. If unset, all requests accepted (logs warning). |
 | `SMARTLEAD_API_KEY`  | Required for SmartLead  | SmartLead API key — used by `/api/smartlead/campaigns` (SmartLead Campaigns page). Not used by the push route (now HeyReach). |
 | `HEYREACH_API_KEY`   | Required for HeyReach   | HeyReach API key — passed as `X-API-KEY` header. Missing = 500 on `/api/heyreach/campaigns`. |
+| `HEYREACH_CAMPAIGN_ID` | Required for auto-push | Campaign ID for the Universe campaign (`413857`). If absent, auto-push on new lead arrival is silently skipped. |
 
 Set all in `.env.local` for local dev, and in Vercel environment settings for production. `DATABASE_URL`, `LOGIN_PASSWORD`, and `SESSION_TOKEN` must always be set — the app will not function without them.
 

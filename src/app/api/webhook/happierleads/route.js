@@ -121,8 +121,9 @@ export async function POST(req) {
     return Response.json({ ok: true, duplicate: true });
   }
 
+  let insertedId;
   try {
-    await withRetry(() => sql`
+    const rows = await withRetry(() => sql`
       INSERT INTO leads (
         happier_leads_id,
         first_name, last_name, full_name, email, linkedin_url,
@@ -139,7 +140,9 @@ export async function POST(req) {
         ${activityAt ? new Date(activityAt).toISOString() : null},
         ${JSON.stringify(body)}
       )
+      RETURNING id
     `);
+    insertedId = rows[0]?.id ?? null;
   } catch (err) {
     // 23505 = unique_violation — two webhooks raced past the dedup SELECT simultaneously.
     // Treat as duplicate: return 200 so Happier Leads doesn't retry.
@@ -148,6 +151,53 @@ export async function POST(req) {
     }
     console.error('[webhook] DB error during insert:', err);
     return Response.json({ ok: false, error: 'DB error' }, { status: 500 });
+  }
+
+  // Auto-push new lead to HeyReach Universe campaign
+  const campaignId = process.env.HEYREACH_CAMPAIGN_ID;
+  const apiKey     = process.env.HEYREACH_API_KEY;
+  if (campaignId && apiKey && insertedId) {
+    const geo      = body?.contact?.geo ?? {};
+    const location = [geo.city, geo.state, geo.country].filter(Boolean).join(', ');
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const hrRes = await fetch('https://api.heyreach.io/api/public/campaign/AddLeadsToCampaignV2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/plain', 'X-API-KEY': apiKey },
+        body: JSON.stringify({
+          campaignId: Number(campaignId),
+          accountLeadPairs: [{
+            lead: {
+              firstName:    firstName                ?? '',
+              lastName:     lastName                 ?? '',
+              companyName:  companyName              ?? '',
+              position:     body?.contact?.position  ?? '',
+              emailAddress: email                    ?? '',
+              profileUrl:   linkedinUrl              ?? '',
+              location,
+              summary:      body?.contact?.headline  ?? '',
+            },
+          }],
+          resumeFinishedCampaign: false,
+          resumePausedCampaign:   true,
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (hrRes.ok) {
+        // Best-effort — if this UPDATE fails the lead is still in HeyReach; don't throw
+        await withRetry(() => sql`
+          UPDATE leads SET pushed_to_smart_lead = true, pushed_at = now() WHERE id = ${insertedId}::uuid
+        `).catch(e => console.error('[webhook] DB flag update failed after auto-push:', e));
+      } else {
+        const errText = await hrRes.text().catch(() => '');
+        console.error('[webhook] Auto-push HeyReach rejected:', hrRes.status, errText);
+      }
+    } catch (err) {
+      clearTimeout(timer);
+      console.error('[webhook] Auto-push to HeyReach failed:', err);
+    }
   }
 
   return Response.json({ ok: true });
