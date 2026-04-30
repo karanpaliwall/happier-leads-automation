@@ -961,6 +961,7 @@ body { overflow-x: hidden; }
   pointer-events: none;
   text-transform: none;
   letter-spacing: 0;
+  white-space: normal;
 }
 .col-tip-fixed::after {
   content: '';
